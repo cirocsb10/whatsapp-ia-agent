@@ -1,0 +1,25 @@
+
+# Worktrees
+.worktrees/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Turborepo
+.turbo/
+
+# Build outputs
+dist/
+.next/
+.output/
+build/
+
+# Coverage
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
