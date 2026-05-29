@@ -10,9 +10,27 @@
     "test": "jest"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.4.2",
+    "@hookform/resolvers": "^5.4.0",
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.5.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
+    "ky": "^2.0.2",
+    "lucide-react": "^1.17.0",
     "next": "^14.2.0",
+    "postcss": "^8.5.15",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0"
+    "react-dom": "^18.3.0",
+    "react-hook-form": "^7.76.1",
+    "recharts": "^3.8.1",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

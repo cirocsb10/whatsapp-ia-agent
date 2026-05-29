@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base: #020617;
+    --bg-surface-1: #0F172A;
+    --bg-surface-2: #1E293B;
+    --bg-surface-3: #334155;
+    --color-primary: #22C55E;
+    --color-accent: #6366F1;
+    --text-primary: #F8FAFC;
+    --text-muted: #64748B;
+    --border-default: #1E293B;
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  html { color-scheme: dark; }
+  body { background-color: var(--bg-base); color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-surface-1); }
+  ::-webkit-scrollbar-thumb { background: var(--bg-surface-3); border-radius: 3px; }
+}
+
+@layer components {
+  .glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: var(--glass-shadow); }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: #94a3b8; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 150ms; text-decoration: none; }
+  .nav-item:hover { color: #f1f5f9; background: rgba(30, 41, 59, 0.6); }
+  .nav-item.active { color: white; background: #1E293B; box-shadow: inset 3px 0 0 #22C55E; }
+  .bubble-inbound { background: #1E293B; color: #f1f5f9; border-radius: 16px 16px 16px 4px; }
+  .bubble-ai { color: white; border-radius: 16px 16px 4px 16px; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); }
+  .bubble-outbound { color: white; border-radius: 16px 16px 4px 16px; background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%); }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  .animate-fade-in { animation: fade-in 0.15s ease-out; }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .animate-pulse-dot { animation: pulse-dot 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+}
