@@ -1,6 +1,8 @@
 import {
   Controller, Get, Post, Param, Query, UseGuards, Headers, Body, HttpCode,
+  UnauthorizedException,
 } from "@nestjs/common";
+import { timingSafeEqual } from "crypto";
 import { OrdersService } from "./orders.service";
 import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
@@ -31,8 +33,12 @@ export class OrdersController {
     @Headers("x-internal-token") token: string,
     @Body() body: any,
   ) {
-    if (token !== process.env.INTERNAL_API_TOKEN) {
-      throw new Error("Unauthorized");
+    const expectedToken = process.env.INTERNAL_API_TOKEN;
+    if (!expectedToken) {
+      throw new Error("INTERNAL_API_TOKEN is not configured");
+    }
+    if (!token || !timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken))) {
+      throw new UnauthorizedException("Unauthorized");
     }
     return this.service.createInternal(body);
   }

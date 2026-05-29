@@ -1,7 +1,12 @@
-import { Controller, Get, Post, Param, Query } from "@nestjs/common";
+import { Controller, Get, Post, Param, Query, UseGuards } from "@nestjs/common";
 import { SuperAdminService } from "./super-admin.service";
+import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 
 @Controller("super-admin")
+@UseGuards(ClerkAuthGuard, RolesGuard)
+@Roles("OWNER")
 export class SuperAdminController {
   constructor(private readonly service: SuperAdminService) {}
   @Get("tenants") getAllTenants(@Query("page") page?: string, @Query("limit") limit?: string) { return this.service.getAllTenants(Number(page??1), Number(limit??25)); }

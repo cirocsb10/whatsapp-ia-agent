@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { randomUUID } from "crypto";
@@ -18,6 +18,25 @@ export class PaymentsService {
       accessToken: this.config.get<string>("MERCADO_PAGO_ACCESS_TOKEN") ?? "",
     });
     return new Payment(mp);
+  }
+
+  validateMpSignature(xSignature: string | undefined, xRequestId: string | undefined, dataId: string): void {
+    const secret = this.config.get<string>("MERCADO_PAGO_WEBHOOK_SECRET");
+    if (!secret) return; // If not configured, skip validation (warn in logs)
+    if (!xSignature || !xRequestId) {
+      throw new UnauthorizedException("Missing MercadoPago signature headers");
+    }
+    const parts = xSignature.split(",");
+    const ts = parts.find((p) => p.startsWith("ts="))?.split("=")[1];
+    const v1 = parts.find((p) => p.startsWith("v1="))?.split("=")[1];
+    if (!ts || !v1) throw new UnauthorizedException("Invalid MercadoPago signature format");
+
+    const signedTemplate = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+    const { createHmac, timingSafeEqual } = require("crypto");
+    const expectedSig = createHmac("sha256", secret).update(signedTemplate).digest("hex");
+    if (!timingSafeEqual(Buffer.from(expectedSig), Buffer.from(v1))) {
+      throw new UnauthorizedException("Invalid MercadoPago webhook signature");
+    }
   }
 
   async generatePix(tenantId: string, orderId: string) {
