@@ -1,0 +1,277 @@
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from src.graph.state import ConversationState
+from src.graph.tools import ALL_TOOLS
+from src.services.prompt_builder import PromptBuilderService
+from src.services.guard_rail import GuardRailService
+from src.config import settings
+import structlog
+import time
+
+log = structlog.get_logger(__name__)
+
+
+def _get_llm_with_tools(model: str = None, temperature: float = None):
+    from src.services.llm import get_llm_with_tools
+    effective_model = model or settings.openai_model_simple
+    effective_temp = temperature if temperature is not None else settings.openai_temperature
+    return get_llm_with_tools(effective_model, ALL_TOOLS, temperature=effective_temp)
+
+
+async def _fetch_guard_rules(tenant_id: str) -> list[dict]:
+    from src.db.postgres import get_async_session
+    from sqlalchemy import text
+
+    async with get_async_session() as session:
+        result = await session.execute(
+            text("""
+                SELECT type, action, config, priority, fallback_message
+                FROM guard_rules
+                WHERE tenant_id = :tid AND is_active = true
+                ORDER BY priority ASC
+            """),
+            {"tid": tenant_id},
+        )
+        return [
+            {
+                "type": row[0],
+                "action": row[1],
+                "config": row[2],
+                "priority": row[3],
+                "fallback_message": row[4],
+            }
+            for row in result.fetchall()
+        ]
+
+
+async def entry_node(state: ConversationState) -> dict:
+    log.info("entry_node", tenant=state["tenant_id"], phone=state["contact_phone"])
+
+    pb = PromptBuilderService()
+    system_prompt = await pb.build(
+        tenant_id=state["tenant_id"],
+        agent_name=state.get("agent_name", "Assistente"),
+        tone=state.get("agent_tone", "FRIENDLY"),
+        business_hours_open=state.get("business_hours_open", True),
+    )
+
+    return {
+        "system_prompt": system_prompt,
+        "debug_trace": state.get("debug_trace", []) + ["entry_node:completed"],
+    }
+
+
+async def route_node(state: ConversationState) -> dict:
+    messages_count = len(state.get("messages", []))
+    cart = state.get("cart", [])
+    current_stage = state.get("current_stage", "greeting")
+
+    new_stage = current_stage
+
+    if messages_count == 0:
+        new_stage = "greeting"
+    elif cart and any("AWAITING_PAYMENT" in m.get("content", "") for m in state.get("messages", [])):
+        new_stage = "payment"
+    elif cart:
+        new_stage = "negotiation"
+    elif messages_count > 3:
+        new_stage = "catalog"
+    else:
+        new_stage = "discovery"
+
+    return {
+        "current_stage": new_stage,
+        "debug_trace": state.get("debug_trace", []) + [f"route_node:stage={new_stage}"],
+    }
+
+
+async def reasoning_node(state: ConversationState) -> dict:
+    llm = _get_llm_with_tools()
+
+    chat_messages = [SystemMessage(content=state["system_prompt"])]
+
+    for msg in state.get("messages", [])[-10:]:
+        content = msg["content"] if isinstance(msg, dict) else msg.content
+        role = msg["role"] if isinstance(msg, dict) else msg.role
+        if role == "user":
+            chat_messages.append(HumanMessage(content=content))
+        else:
+            chat_messages.append(AIMessage(content=content))
+
+    current_msg = state["current_message"]
+    if state.get("audio_transcript"):
+        current_msg = f"[Áudio transcrito]: {state['audio_transcript']}"
+
+    chat_messages.append(HumanMessage(content=current_msg))
+
+    response = await llm.ainvoke(chat_messages)
+
+    tool_calls = []
+    if hasattr(response, "tool_calls") and response.tool_calls:
+        for tc in response.tool_calls:
+            tool = next((t for t in ALL_TOOLS if t.name == tc["name"]), None)
+            if tool:
+                try:
+                    result = await tool.ainvoke(
+                        {**tc["args"], "tenant_id": state["tenant_id"]}
+                    )
+                    tool_calls.append({
+                        "tool_name": tc["name"],
+                        "args": tc["args"],
+                        "result": result,
+                        "error": None,
+                    })
+                except Exception as e:
+                    tool_calls.append({
+                        "tool_name": tc["name"],
+                        "args": tc["args"],
+                        "result": None,
+                        "error": str(e),
+                    })
+
+    if tool_calls:
+        tool_results_text = "\n".join(
+            f"[{tc['tool_name']}]: {tc['result'] or tc['error']}"
+            for tc in tool_calls
+        )
+        chat_messages.append(AIMessage(content=response.content or ""))
+        chat_messages.append(HumanMessage(content=f"Resultados das ferramentas:\n{tool_results_text}"))
+        final_response = await llm.ainvoke(chat_messages)
+        llm_text = final_response.content
+    else:
+        llm_text = response.content
+
+    return {
+        "llm_response": llm_text,
+        "llm_tool_calls": tool_calls,
+        "debug_trace": state.get("debug_trace", []) + [
+            f"reasoning_node:tools_called={[tc['tool_name'] for tc in tool_calls]}"
+        ],
+    }
+
+
+async def guard_rail_node(state: ConversationState) -> dict:
+    llm_response = state.get("llm_response", "") or ""
+
+    if not llm_response:
+        return {"guard_rail_triggered": False}
+
+    rules = await _fetch_guard_rules(state["tenant_id"])
+    guard = GuardRailService(rules)
+    result = await guard.validate(llm_response, state)
+
+    if result.triggered:
+        log.warning(
+            "guard_rail triggered",
+            tenant=state["tenant_id"],
+            action=result.action,
+            reason=result.reason,
+        )
+        return {
+            "guard_rail_triggered": True,
+            "guard_rail_action": result.action,
+            "guard_rail_reason": result.reason,
+            "guard_rail_fallback": result.fallback_message,
+            "debug_trace": state.get("debug_trace", []) + [
+                f"guard_rail:triggered action={result.action}"
+            ],
+        }
+
+    return {"guard_rail_triggered": False}
+
+
+async def output_node(state: ConversationState) -> dict:
+    llm_response = state.get("llm_response", "") or ""
+    guard_triggered = state.get("guard_rail_triggered", False)
+
+    should_handoff = False
+    handoff_reason = None
+    for tc in state.get("llm_tool_calls", []):
+        tc_dict = tc if isinstance(tc, dict) else tc.__dict__
+        if tc_dict.get("tool_name") == "transfer_to_human_tool" or tc_dict.get("result") == "__HANDOFF_REQUESTED__":
+            should_handoff = True
+            handoff_reason = tc_dict.get("args", {}).get("reason", "Handoff solicitado")
+            break
+
+    if should_handoff:
+        handoff_msg = "Estou transferindo para um atendente. Aguarde um momento."
+        try:
+            from src.db.postgres import get_async_session
+            from sqlalchemy import text
+            async with get_async_session() as session:
+                result = await session.execute(
+                    text("SELECT handoff_message FROM agent_configs WHERE tenant_id = :tid"),
+                    {"tid": state["tenant_id"]},
+                )
+                row = result.fetchone()
+                if row and row[0]:
+                    handoff_msg = row[0]
+        except Exception:
+            pass
+
+        final_messages = [{"type": "text", "text": handoff_msg}]
+
+    elif guard_triggered:
+        if state.get("guard_rail_action") == "block":
+            response_text = state.get("guard_rail_fallback") or "Posso ajudar com outras questões?"
+        elif state.get("guard_rail_action") == "rewrite":
+            response_text = await _rewrite_response(llm_response, state)
+        elif state.get("guard_rail_action") == "handoff":
+            should_handoff = True
+            response_text = state.get("guard_rail_fallback") or "Vou transferir para um atendente."
+        else:
+            response_text = llm_response
+
+        final_messages = [{"type": "text", "text": response_text}]
+
+    else:
+        final_messages = _split_into_messages(llm_response)
+
+    new_message = {
+        "role": "assistant",
+        "content": llm_response,
+        "timestamp": int(time.time()),
+    }
+
+    return {
+        "final_messages": final_messages,
+        "should_handoff": should_handoff,
+        "handoff_reason": handoff_reason,
+        "messages": [new_message],
+        "debug_trace": state.get("debug_trace", []) + [
+            f"output_node:messages={len(final_messages)},handoff={should_handoff}"
+        ],
+    }
+
+
+async def _rewrite_response(original: str, state: ConversationState) -> str:
+    from langchain_openai import ChatOpenAI
+    llm = ChatOpenAI(model=settings.openai_model_simple, temperature=0.1)
+    prompt = (
+        f"Reescreva a seguinte resposta de assistente de forma que não mencione concorrentes, "
+        f"não faça promessas de desconto, e mantenha-se dentro do escopo dos produtos da loja.\n\n"
+        f"Resposta original: {original}\n\nResposta corrigida:"
+    )
+    response = await llm.ainvoke([HumanMessage(content=prompt)])
+    return response.content
+
+
+def _split_into_messages(text: str, max_chars: int = 1000) -> list[dict]:
+    if len(text) <= max_chars:
+        return [{"type": "text", "text": text}]
+
+    paragraphs = text.split("\n\n")
+    messages = []
+    current = ""
+
+    for p in paragraphs:
+        if len(current) + len(p) + 2 <= max_chars:
+            current = f"{current}\n\n{p}".strip()
+        else:
+            if current:
+                messages.append({"type": "text", "text": current})
+            current = p
+
+    if current:
+        messages.append({"type": "text", "text": current})
+
+    return messages if messages else [{"type": "text", "text": text[:max_chars]}]
