@@ -1,11 +1,20 @@
 import { NestFactory } from "@nestjs/core";
-import { ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { ValidationPipe, Logger } from "@nestjs/common";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  await app.listen(process.env.PORT ?? 3001);
+  const config = app.get(ConfigService);
+  const port = config.get<number>("port") ?? 3001;
+
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  );
+  app.enableCors({ origin: process.env["BACKOFFICE_API_URL"] ?? "http://localhost:3002" });
+
+  await app.listen(port);
+  Logger.log(`🚀 Channel Service on http://localhost:${port}`, "Bootstrap");
 }
 
 bootstrap();
