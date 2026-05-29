@@ -33,6 +33,30 @@ async def _get_product_stock(product_id: str, tenant_id: str) -> dict:
         return {"qty": row[0], "reserved": row[1]}
 
 
+async def _get_authoritative_price(product_id: str, tenant_id: str) -> dict | None:
+    """Fetches authoritative product price and name from DB. Returns None if product not found or wrong tenant."""
+    from src.db.postgres import get_async_session
+    from sqlalchemy import text
+
+    async with get_async_session() as session:
+        result = await session.execute(
+            text("""
+                SELECT name, price_cents, stock_qty, reserved_qty
+                FROM products
+                WHERE id = :product_id AND tenant_id = :tenant_id AND status = 'ACTIVE'
+            """),
+            {"product_id": product_id, "tenant_id": tenant_id},
+        )
+        row = result.fetchone()
+        if not row:
+            return None
+        return {
+            "name": row[0],
+            "price_cents": row[1],
+            "available_qty": row[2] - row[3],
+        }
+
+
 @tool
 async def catalog_search_tool(query: str, tenant_id: str) -> str:
     """
@@ -113,8 +137,8 @@ async def add_to_cart_tool(
 
     Args:
         product_id: ID do produto
-        product_name: Nome do produto
-        price_cents: Preço em centavos
+        product_name: Nome do produto (usado apenas como fallback de display)
+        price_cents: Preço em centavos (será validado contra o banco de dados)
         quantity: Quantidade desejada
         tenant_id: ID do tenant
         variation_selected: JSON string com variações selecionadas (ex: '{"Cor": "Preto", "Tamanho": "M"}')
@@ -122,16 +146,30 @@ async def add_to_cart_tool(
     Returns:
         Confirmação com resumo do carrinho atualizado
     """
-    variation = json.loads(variation_selected) if variation_selected else {}
-    subtotal = price_cents * quantity / 100
+    try:
+        # Always fetch authoritative price from DB — never trust LLM-supplied price
+        db_product = await _get_authoritative_price(product_id, tenant_id)
+        if not db_product:
+            return f"Produto não encontrado no catálogo. Por favor, busque o produto novamente."
 
-    return (
-        f"✅ Adicionado ao carrinho!\n"
-        f"   Produto: {product_name}\n"
-        f"   Quantidade: {quantity}\n"
-        f"   Valor: R$ {subtotal:.2f}"
-        + (f"\n   Variação: {json.dumps(variation, ensure_ascii=False)}" if variation else "")
-    )
+        if quantity > db_product["available_qty"]:
+            return f"Desculpe, temos apenas {db_product['available_qty']} unidades disponíveis deste produto."
+
+        authoritative_price = db_product["price_cents"]
+        authoritative_name = db_product["name"]
+        variation = json.loads(variation_selected) if variation_selected else {}
+        subtotal = authoritative_price * quantity / 100
+
+        return (
+            f"✅ Adicionado ao carrinho!\n"
+            f"   Produto: {authoritative_name}\n"
+            f"   Quantidade: {quantity}\n"
+            f"   Valor: R$ {subtotal:.2f}".replace(".", ",")
+            + (f"\n   Variação: {json.dumps(variation, ensure_ascii=False)}" if variation else "")
+        )
+    except Exception as e:
+        log.error("add_to_cart_tool failed", error=str(e))
+        return "Erro ao adicionar produto ao carrinho. Por favor, tente novamente."
 
 
 @tool
@@ -157,7 +195,28 @@ async def generate_payment_link_tool(
     try:
         import os
         items = json.loads(items_json)
-        total_cents = sum(i["price_cents"] * i["quantity"] for i in items)
+
+        # Re-validate all prices against DB — never trust LLM-supplied price_cents
+        validated_items = []
+        for item in items:
+            product_id = item.get("product_id") or item.get("productId")
+            quantity = int(item.get("quantity", 1))
+
+            if not product_id:
+                return "Erro: item sem product_id no carrinho. Por favor, adicione os produtos novamente."
+
+            db_product = await _get_authoritative_price(product_id, tenant_id)
+            if not db_product:
+                return f"Produto '{item.get('name', product_id)}' não encontrado ou indisponível. Por favor, verifique o carrinho."
+
+            validated_items.append({
+                "product_id": product_id,
+                "name": db_product["name"],
+                "price_cents": db_product["price_cents"],  # authoritative price from DB
+                "quantity": quantity,
+            })
+
+        total_cents = sum(i["price_cents"] * i["quantity"] for i in validated_items)
         total_brl = total_cents / 100
 
         import httpx
@@ -170,7 +229,7 @@ async def generate_payment_link_tool(
                 json={
                     "tenantId": tenant_id,
                     "contactPhone": contact_phone,
-                    "items": items,
+                    "items": validated_items,
                 },
                 headers={"X-Internal-Token": internal_token},
             )
@@ -243,7 +302,7 @@ async def verify_business_hours_tool(
         else:
             return f"fechado - encerrou às {close_time}"
     except Exception:
-        return "aberto"  # Safe fallback: assume open on error
+        return "fechado"  # Fail-safe: assume closed on error
 
 
 @tool
