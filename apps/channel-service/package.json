@@ -17,6 +17,7 @@
     "@nestjs/platform-express": "^10.4.0",
     "@nestjs/config": "^3.3.0",
     "@nestjs/bullmq": "^10.2.0",
+    "@prisma/client": "^5.20.0",
     "bullmq": "^5.13.0",
     "amqplib": "^0.10.4",
     "axios": "^1.7.0",

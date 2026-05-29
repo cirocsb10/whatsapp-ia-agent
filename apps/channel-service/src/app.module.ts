@@ -12,10 +12,12 @@ import { MessagingService } from "./messaging/messaging.service";
 import { InboundProducer } from "./queue/inbound.producer";
 import { OutboundConsumer } from "./queue/outbound.consumer";
 import { HmacGuard } from "./common/guards/hmac.guard";
+import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    PrismaModule,
   ],
   controllers: [HealthController, WebhookController],
   providers: [

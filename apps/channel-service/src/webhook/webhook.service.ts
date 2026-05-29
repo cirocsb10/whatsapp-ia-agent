@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { InboundProducer } from "../queue/inbound.producer";
 import { SessionService } from "../session/session.service";
 import { AudioService } from "../audio/audio.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { MetaWebhookBody, MetaMessage } from "./dto/meta-webhook.dto";
 
 @Injectable()
@@ -14,6 +15,7 @@ export class WebhookService {
     private readonly inbound: InboundProducer,
     private readonly session: SessionService,
     private readonly audio: AudioService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async processWebhook(body: MetaWebhookBody): Promise<void> {
@@ -37,7 +39,10 @@ export class WebhookService {
     }
 
     const tenantId = await this.resolveTenantId(phoneNumberId);
-    if (!tenantId) return;
+    if (!tenantId) {
+      this.logger.warn(`Rejecting webhook — no tenant for phone number ID: ${phoneNumberId}`);
+      return;
+    }
 
     // Opt-out check: if client sends opt-out keywords, skip
     const optOutKeywords = ["parar", "stop", "cancelar", "sair", "não quero"];
@@ -80,16 +85,30 @@ export class WebhookService {
     }
 
     await this.inbound.publishInbound(event);
-    this.logger.log(`📨 Published: ${msg.type} from ${msg.from}`);
+    this.logger.log(`Published: ${msg.type} from ${msg.from}`);
   }
 
   private async resolveTenantId(phoneNumberId: string): Promise<string | null> {
     const key = `tenant:phone:${phoneNumberId}`;
+
+    // Try Redis cache first
     const cached = await this.session.get(key);
     if (cached) return cached;
-    const devId = process.env["DEV_TENANT_ID"] ?? "dev-tenant-uuid";
-    await this.session.set(key, devId, 3600);
-    return devId;
+
+    // Look up in database — NEVER fall back to a hardcoded value
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { whatsappPhoneId: phoneNumberId },
+      select: { id: true },
+    });
+
+    if (!tenant) {
+      this.logger.warn(`No tenant found for phone number ID: ${phoneNumberId}`);
+      return null; // Reject — do not route to wrong tenant
+    }
+
+    // Cache the authoritative mapping
+    await this.session.set(key, tenant.id, 3600);
+    return tenant.id;
   }
 
   verifyWebhook(mode: string, token: string, challenge: string): string | null {

@@ -3,12 +3,22 @@ import { WebhookService } from "./webhook.service";
 import { InboundProducer } from "../queue/inbound.producer";
 import { SessionService } from "../session/session.service";
 import { AudioService } from "../audio/audio.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
 
 const mockProducer = { publishInbound: jest.fn() };
-const mockSession = { isDuplicate: jest.fn().mockResolvedValue(false), get: jest.fn().mockResolvedValue(null), set: jest.fn() };
+const mockSession = {
+  isDuplicate: jest.fn().mockResolvedValue(false),
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn(),
+};
 const mockAudio = { downloadAndTranscribe: jest.fn() };
 const mockConfig = { get: jest.fn().mockReturnValue("test_token") };
+const mockPrisma = {
+  tenant: {
+    findFirst: jest.fn().mockResolvedValue({ id: "tenant-uuid-123" }),
+  },
+};
 
 function makeTextPayload(text: string) {
   return {
@@ -41,6 +51,7 @@ describe("WebhookService", () => {
         { provide: SessionService, useValue: mockSession },
         { provide: AudioService, useValue: mockAudio },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
     service = module.get(WebhookService);
@@ -48,6 +59,7 @@ describe("WebhookService", () => {
     // Reset mock implementations to defaults after clearAllMocks
     mockSession.isDuplicate.mockResolvedValue(false);
     mockSession.get.mockResolvedValue(null);
+    mockPrisma.tenant.findFirst.mockResolvedValue({ id: "tenant-uuid-123" });
   });
 
   it("publishes inbound event for text message", async () => {
@@ -66,6 +78,21 @@ describe("WebhookService", () => {
   it("skips opt-out messages", async () => {
     await service.processWebhook(makeTextPayload("parar"));
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+  });
+
+  it("rejects webhook when no tenant found for phone number", async () => {
+    mockPrisma.tenant.findFirst.mockResolvedValue(null);
+    await service.processWebhook(makeTextPayload("Quero comprar"));
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+  });
+
+  it("uses cached tenant ID from Redis without hitting DB", async () => {
+    mockSession.get.mockResolvedValue("cached-tenant-id");
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.tenant.findFirst).not.toHaveBeenCalled();
+    expect(mockProducer.publishInbound).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: "cached-tenant-id" }),
+    );
   });
 
   it("transcribes audio before publishing", async () => {
