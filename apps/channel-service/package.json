@@ -24,7 +24,8 @@
     "minio": "^8.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
-    "ioredis": "^5.4.0"
+    "ioredis": "^5.4.0",
+    "redis": "^4.7.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",
