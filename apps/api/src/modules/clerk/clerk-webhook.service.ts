@@ -1,11 +1,13 @@
+import { randomUUID } from "crypto";
 import { Injectable, Logger } from "@nestjs/common";
+import { PlanType, TenantStatus } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
 
 interface ClerkUserPayload {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  image_url: string;
+  image_url: string | null;
   primary_email_address_id: string;
   email_addresses: Array<{ id: string; email_address: string }>;
 }
@@ -31,23 +33,25 @@ export class ClerkWebhookService {
     const name: string = rawName || (email.split("@")[0] ?? "unknown");
     const slug = this.buildSlug(email);
 
-    const tenant = await this.prisma.tenant.create({
-      data: { name, slug, status: "TRIAL", planType: "STARTER" },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      const tenant = await tx.tenant.create({
+        data: { name, slug, status: TenantStatus.TRIAL, planType: PlanType.STARTER },
+      });
 
-    await this.prisma.user.create({
-      data: {
-        tenantId: tenant.id,
-        clerkId: data.id,
-        email,
-        name,
-        avatarUrl: data.image_url || null,
-        role: "OWNER",
-        isActive: true,
-      },
-    });
+      await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          clerkId: data.id,
+          email,
+          name,
+          avatarUrl: data.image_url,
+          role: "OWNER",
+          isActive: true,
+        },
+      });
 
-    this.logger.log(`Tenant + User criados para ${email} (tenant: ${tenant.id})`);
+      this.logger.log(`Tenant + User criados para ${email} (tenant: ${tenant.id})`);
+    });
   }
 
   async handleUserUpdated(data: ClerkUserPayload): Promise<void> {
@@ -56,15 +60,17 @@ export class ClerkWebhookService {
 
     const email =
       data.email_addresses.find((e) => e.id === data.primary_email_address_id)
-        ?.email_address ?? data.email_addresses[0]?.email_address ?? (existing as { email: string }).email;
+        ?.email_address ?? data.email_addresses[0]?.email_address ?? existing.email;
 
     const rawName = [data.first_name, data.last_name].filter(Boolean).join(" ");
     const name: string = rawName || (email.split("@")[0] ?? "unknown");
 
     await this.prisma.user.update({
       where: { clerkId: data.id },
-      data: { name, email, avatarUrl: data.image_url || null },
+      data: { name, email, avatarUrl: data.image_url },
     });
+
+    this.logger.log(`User atualizado: clerkId ${data.id}`);
   }
 
   async handleUserDeleted(clerkId: string): Promise<void> {
@@ -82,7 +88,7 @@ export class ClerkWebhookService {
       .replace(/[^a-z0-9]/g, "-")
       .replace(/-+/g, "-")
       .slice(0, 30);
-    const suffix = Math.random().toString(36).slice(2, 6);
+    const suffix = randomUUID().replace(/-/g, "").slice(0, 6);
     return `${prefix}-${suffix}`;
   }
 }

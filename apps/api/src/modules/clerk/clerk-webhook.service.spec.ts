@@ -2,7 +2,14 @@ import { Test } from "@nestjs/testing";
 import { ClerkWebhookService } from "./clerk-webhook.service";
 import { PrismaService } from "../../common/prisma/prisma.service";
 
-const mockPrisma = {
+type MockPrisma = {
+  $transaction: jest.Mock;
+  tenant: { create: jest.Mock };
+  user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
+};
+
+const mockPrisma: MockPrisma = {
+  $transaction: jest.fn((fn: (tx: MockPrisma) => Promise<void>) => fn(mockPrisma as MockPrisma)),
   tenant: { create: jest.fn() },
   user: {
     findUnique: jest.fn(),
@@ -32,6 +39,9 @@ describe("ClerkWebhookService", () => {
     }).compile();
     service = module.get<ClerkWebhookService>(ClerkWebhookService);
     jest.clearAllMocks();
+    mockPrisma.$transaction.mockImplementation(
+      (fn: (tx: MockPrisma) => Promise<void>) => fn(mockPrisma),
+    );
   });
 
   describe("handleUserCreated", () => {
@@ -69,6 +79,7 @@ describe("ClerkWebhookService", () => {
 
       await service.handleUserCreated(clerkUserPayload);
 
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
       expect(mockPrisma.tenant.create).not.toHaveBeenCalled();
       expect(mockPrisma.user.create).not.toHaveBeenCalled();
     });
@@ -90,7 +101,7 @@ describe("ClerkWebhookService", () => {
 
   describe("handleUserUpdated", () => {
     it("deve atualizar name, email e avatarUrl se usuario existe", async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ id: "user_abc" });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: "user_abc", email: "joao@exemplo.com.br" });
 
       await service.handleUserUpdated(clerkUserPayload);
 
@@ -110,6 +121,18 @@ describe("ClerkWebhookService", () => {
       await service.handleUserUpdated(clerkUserPayload);
 
       expect(mockPrisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it("usa prefixo do email como nome quando first_name e null", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ id: "user_abc", email: "joao@exemplo.com.br" });
+
+      await service.handleUserUpdated({ ...clerkUserPayload, first_name: null, last_name: null });
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "joao" }),
+        }),
+      );
     });
   });
 
