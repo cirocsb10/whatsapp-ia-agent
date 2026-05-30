@@ -80,6 +80,9 @@ importers:
       stripe:
         specifier: ^22.2.0
         version: 22.2.0(@types/node@22.19.19)
+      svix:
+        specifier: ^1.95.1
+        version: 1.95.1
     devDependencies:
       '@nestjs/cli':
         specifier: ^10.4.0
@@ -3713,6 +3716,9 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  svix@1.95.1:
+    resolution: {integrity: sha512-Vtsbzsvs4lzXJneruB5HiZmV7dlhAjbo6dGid2Qxi9bv+LutLz7Yt3NORI4SYqRTNWPhVoFAA8TG/WXB+mIzNQ==}
 
   symbol-observable@4.0.0:
     resolution: {integrity: sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==}
@@ -7903,6 +7909,10 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  svix@1.95.1:
+    dependencies:
+      standardwebhooks: 1.0.0
 
   symbol-observable@4.0.0: {}
 

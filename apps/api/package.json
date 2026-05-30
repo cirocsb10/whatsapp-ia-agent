@@ -29,7 +29,8 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
     "socket.io": "^4.8.3",
-    "stripe": "^22.2.0"
+    "stripe": "^22.2.0",
+    "svix": "^1.95.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.0",
