@@ -2,55 +2,108 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, MessageSquare, Bot, Package, ShoppingCart, BarChart3, PhoneCall, Settings, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import {
+  LayoutDashboard, MessageSquare, Bot, Package,
+  ShoppingCart, BarChart3, PhoneCall, Settings,
+} from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
+import { useSidebarStore, SIDEBAR_WIDTH } from "@/lib/store/sidebar.store";
 
 const NAV = [
-  { href: "/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/inbox", label: "Conversas", icon: MessageSquare, badgeKey: "active_conversations" },
-  { href: "/support", label: "Suporte", icon: PhoneCall, badgeKey: "pending_handoffs" },
-  { href: "/agent", label: "Agente IA", icon: Bot },
-  { href: "/catalog", label: "Catálogo", icon: Package },
-  { href: "/orders", label: "Pedidos", icon: ShoppingCart, badgeKey: "pending_orders" },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/settings", label: "Configurações", icon: Settings },
+  { section: "Menu", items: [
+    { href: "/overview",  label: "Overview",    icon: LayoutDashboard },
+    { href: "/inbox",     label: "Conversas",   icon: MessageSquare, badge: "active_conversations" },
+    { href: "/support",   label: "Suporte",     icon: PhoneCall,     badge: "pending_handoffs" },
+    { href: "/analytics", label: "Analytics",   icon: BarChart3 },
+  ]},
+  { section: "Configurar", items: [
+    { href: "/agent",    label: "Agente IA",    icon: Bot },
+    { href: "/catalog",  label: "Catálogo",     icon: Package },
+    { href: "/orders",   label: "Pedidos",      icon: ShoppingCart, badge: "pending_orders" },
+    { href: "/settings", label: "Configurações",icon: Settings },
+  ]},
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const path = usePathname();
+  const collapsed = useSidebarStore((s) => s.collapsed);
   const badges = useNotificationsStore((s) => s.badges);
+  const width = collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded;
+
   return (
-    <aside className={cn("relative flex flex-col h-screen bg-[#0F172A] border-r border-[#1E293B] transition-all duration-300 shrink-0", collapsed ? "w-16" : "w-60")}>
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-[#1E293B]">
-        <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-500/10 border border-green-500/20 shrink-0"><MessageSquare className="w-5 h-5 text-green-400" /></div>
-        {!collapsed && <span className="font-bold text-white text-lg">Whats<span className="text-green-400">Agent</span></span>}
-      </div>
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {NAV.map(({ href, label, icon: Icon, badgeKey }) => {
-          const isActive = pathname === href || pathname.startsWith(href + "/");
-          const count = badgeKey ? (badges[badgeKey] ?? 0) : 0;
-          return (
-            <Link key={href} href={href} className={cn("nav-item", isActive && "active", collapsed && "justify-center px-0")} title={collapsed ? label : undefined}>
-              <div className="relative shrink-0">
-                <Icon className="w-5 h-5" />
-                {count > 0 && <span className="absolute -top-1.5 -right-1.5 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">{count > 9 ? "9+" : count}</span>}
-              </div>
-              {!collapsed && <span>{label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
-      <button onClick={() => setCollapsed(!collapsed)} className="absolute -right-3 top-20 w-6 h-6 bg-[#1E293B] border border-[#334155] rounded-full text-slate-400 hover:text-white cursor-pointer flex items-center justify-center z-10">
-        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
-      </button>
-      {!collapsed && (
-        <div className="px-4 py-3 border-t border-[#1E293B] flex items-center gap-2">
-          <span className="relative inline-flex h-2 w-2"><span className="absolute animate-ping inline-flex h-full w-full rounded-full bg-green-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" /></span>
-          <span className="text-xs text-slate-400">WhatsApp conectado</span>
+    <aside
+      style={{ width }}
+      className="relative flex flex-col h-screen shrink-0 bg-[#070d1a] border-r border-[#1a2d47] transition-[width] duration-200 overflow-hidden"
+    >
+      {/* Brand */}
+      <Link
+        href="/overview"
+        className={cn("sidebar-brand", collapsed && "sidebar-brand-collapsed")}
+        title="WhatsAgent"
+      >
+        <div className="brand-logo">
+          <MessageSquare strokeWidth={2} />
         </div>
-      )}
+        {!collapsed && (
+          <span className="brand-name">
+            Whats<span className="brand-name-accent">Agent</span>
+          </span>
+        )}
+      </Link>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-3">
+        {NAV.map(({ section, items }) => (
+          <div key={section}>
+            {!collapsed && <p className="section-title px-2 pb-1">{section}</p>}
+            <div className="space-y-0.5">
+              {items.map(({ href, label, icon: Icon, badge }) => {
+                const active = path === href || path.startsWith(href + "/");
+                const count  = badge ? (badges[badge] ?? 0) : 0;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    title={collapsed ? label : undefined}
+                    className={cn("nav-item", active && "active", collapsed && "justify-center px-0")}
+                  >
+                    <div className="relative shrink-0">
+                      <Icon className="w-[15px] h-[15px]" strokeWidth={1.8} />
+                      {count > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 text-[8px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+                          {count > 9 ? "9+" : count}
+                        </span>
+                      )}
+                    </div>
+                    {!collapsed && <span>{label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Status footer */}
+      <div className={cn("border-t border-[#1a2d47] py-3 shrink-0", collapsed ? "px-0 flex justify-center" : "px-3")}>
+        {collapsed ? (
+          <span className="relative flex h-1.5 w-1.5" title="WhatsApp conectado">
+            <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
+            <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
+          </span>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
+              <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] text-[#94a3b8] font-medium leading-none truncate">WhatsApp conectado</p>
+              <p className="text-[10px] text-[#334155] mt-0.5 leading-none">Meta Cloud API</p>
+            </div>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

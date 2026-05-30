@@ -1,26 +1,178 @@
 "use client";
+
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ArrowRight } from "lucide-react";
+import {
+  Check,
+  ArrowRight,
+  ArrowLeft,
+  Zap,
+  Rocket,
+  Crown,
+  CreditCard,
+  Shield,
+  Sparkles,
+  LayoutDashboard,
+} from "lucide-react";
 
 const PLANS = [
-  { id: "STARTER", name: "Starter", price: "R$ 197", features: ["500 conversas/mês","100 produtos","2 agentes humanos","Analytics básico"] },
-  { id: "GROWTH", name: "Growth", price: "R$ 497", highlight: true, features: ["3.000 conversas/mês","1.000 produtos","5 agentes humanos","Analytics completo"] },
-  { id: "SCALE", name: "Scale", price: "R$ 997", features: ["10.000 conversas/mês","Produtos ilimitados","15 agentes humanos","Analytics avançado + Export"] },
-];
+  {
+    id: "STARTER",
+    name: "Starter",
+    desc: "Ideal para começar a vender no WhatsApp",
+    price: "197",
+    icon: Zap,
+    iconColor: "#818cf8",
+    features: [
+      "500 conversas/mês",
+      "100 produtos",
+      "2 agentes humanos",
+      "Analytics básico",
+    ],
+  },
+  {
+    id: "GROWTH",
+    name: "Growth",
+    desc: "O mais escolhido por lojas em crescimento",
+    price: "497",
+    icon: Rocket,
+    iconColor: "#4ade80",
+    highlight: true,
+    features: [
+      "3.000 conversas/mês",
+      "1.000 produtos",
+      "5 agentes humanos",
+      "Analytics completo",
+    ],
+  },
+  {
+    id: "SCALE",
+    name: "Scale",
+    desc: "Volume alto e operação completa",
+    price: "997",
+    icon: Crown,
+    iconColor: "#fbbf24",
+    features: [
+      "10.000 conversas/mês",
+      "Produtos ilimitados",
+      "15 agentes humanos",
+      "Analytics avançado + Export",
+    ],
+  },
+] as const;
 
 export default function PlanPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function selectPlan(planId: string) {
+    setLoading(planId);
+    console.log("Plan selected:", planId);
+    router.push("/overview");
+  }
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="text-center"><h1 className="text-2xl font-bold text-white">Escolha seu plano</h1><p className="text-slate-500 mt-1.5 text-sm">14 dias grátis em qualquer plano. Cancele quando quiser.</p></div>
-      <div className="space-y-3">
-        {PLANS.map((p) => (
-          <div key={p.id} className={`glass-card p-5 ${p.highlight ? "border-green-500/30 bg-green-500/5" : ""}`}>
-            <div className="flex items-start justify-between mb-3"><div className="flex items-center gap-2"><h3 className="text-lg font-bold text-white">{p.name}</h3>{p.highlight && <span className="text-[10px] px-2 py-0.5 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">Recomendado</span>}</div><p className="text-2xl font-bold text-white">{p.price}<span className="text-sm text-slate-500 font-normal">/mês</span></p></div>
-            <ul className="space-y-1.5 mb-4">{p.features.map((f) => <li key={f} className="flex items-center gap-2 text-xs text-slate-400"><Check className="w-3.5 h-3.5 text-green-400 shrink-0" />{f}</li>)}</ul>
-            <button onClick={() => router.push("/overview")} className={`w-full h-10 rounded-xl font-medium text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors ${p.highlight ? "bg-green-500 hover:bg-green-400 text-white" : "bg-[#1E293B] hover:bg-[#334155] text-slate-300"}`}>Começar 14 dias grátis <ArrowRight className="w-4 h-4" /></button>
+    <div className="onboarding-content-wide stagger-1">
+      <div className="onboarding-plan-shell">
+        {/* Progress */}
+        <div className="onboarding-card-progress">
+          <span className="section-title">Passo 5 de 5</span>
+          <div className="prog-track h-1">
+            <div className="prog-fill bg-green-500" style={{ width: "100%" }} />
           </div>
-        ))}
+          <span className="text-[10px] font-semibold text-green-400 uppercase tracking-wider">
+            Plano
+          </span>
+        </div>
+
+        {/* Header */}
+        <header className="onboarding-plan-header">
+          <div className="onboarding-icon-wrap mx-auto">
+            <CreditCard className="w-6 h-6 text-indigo-400 relative z-10" />
+          </div>
+          <h1>Escolha seu plano</h1>
+          <p>Comece grátis por 14 dias. Cancele quando quiser, sem burocracia.</p>
+          <div className="onboarding-trial-pill">
+            <Sparkles className="w-3 h-3" />
+            14 dias grátis em qualquer plano
+          </div>
+        </header>
+
+        {/* Plan cards */}
+        <div className="onboarding-plans-grid">
+          {PLANS.map((plan) => {
+            const Icon = plan.icon;
+            const isFeatured = "highlight" in plan && plan.highlight;
+            const isLoading = loading === plan.id;
+
+            return (
+              <article
+                key={plan.id}
+                className={`plan-card${isFeatured ? " plan-card-featured" : ""}`}
+              >
+                {isFeatured && (
+                  <span className="plan-card-badge">Mais popular</span>
+                )}
+
+                <div
+                  className="plan-card-icon"
+                  style={!isFeatured ? { color: plan.iconColor } : undefined}
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
+
+                <h2 className="plan-card-name">{plan.name}</h2>
+                <p className="plan-card-desc">{plan.desc}</p>
+
+                <div className="plan-card-price">
+                  <p className="plan-card-price-value">
+                    R$ {plan.price}
+                    <span>/mês</span>
+                  </p>
+                </div>
+
+                <ul className="plan-card-features">
+                  {plan.features.map((feature) => (
+                    <li key={feature}>
+                      <Check className="w-3.5 h-3.5" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => selectPlan(plan.id)}
+                  className={isFeatured ? "onboarding-btn-primary" : "onboarding-btn-secondary"}
+                  style={{ height: 42, fontSize: 13 }}
+                >
+                  {isLoading ? "Ativando…" : "Começar 14 dias grátis"}
+                  {!isLoading && <ArrowRight className="w-4 h-4" />}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <footer className="onboarding-plan-footer">
+          <div className="onboarding-plan-guarantee">
+            <Shield className="w-3.5 h-3.5 text-green-400" />
+            Sem cartão de crédito · Cancele a qualquer momento
+          </div>
+          <Link href="/setup/company" className="onboarding-btn-ghost">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Voltar
+          </Link>
+        </footer>
+
+        {/* Next step hint */}
+        <div className="onboarding-next-hint">
+          <LayoutDashboard className="w-3.5 h-3.5 text-green-400" />
+          <span>Próximo: acessar seu dashboard e conectar o WhatsApp</span>
+        </div>
       </div>
     </div>
   );
