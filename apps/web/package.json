@@ -12,6 +12,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.4.2",
     "@hookform/resolvers": "^5.4.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/typography": "^0.5.19",
     "autoprefixer": "^10.5.0",
     "class-variance-authority": "^0.7.1",

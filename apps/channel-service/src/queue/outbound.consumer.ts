@@ -36,8 +36,8 @@ export class OutboundConsumer implements OnModuleInit {
           for (const m of event.messages) {
             await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
               type: m.type as "text" | "image" | "template",
-              text: m.text,
-              imageUrl: m.imageUrl,
+              ...(m.text !== undefined && { text: m.text }),
+              ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
             });
             await new Promise((r) => setTimeout(r, 400));
           }
