@@ -7,6 +7,10 @@ import { Webhook } from "svix";
 import { ClerkWebhookService } from "./clerk-webhook.service";
 import { Request } from "express";
 
+interface RawBodyRequest extends Request {
+  rawBody?: Buffer;
+}
+
 @Controller("webhooks")
 export class ClerkWebhookController {
   private readonly logger = new Logger(ClerkWebhookController.name);
@@ -19,7 +23,7 @@ export class ClerkWebhookController {
   @Post("clerk")
   @HttpCode(200)
   async receive(
-    @Req() req: Request,
+    @Req() req: RawBodyRequest,
     @Headers("svix-id") svixId: string,
     @Headers("svix-timestamp") svixTimestamp: string,
     @Headers("svix-signature") svixSignature: string,
@@ -47,10 +51,10 @@ export class ClerkWebhookController {
     try {
       switch (event.type) {
         case "user.created":
-          await this.service.handleUserCreated(event.data as Parameters<ClerkWebhookService["handleUserCreated"]>[0]);
+          await this.service.handleUserCreated(event.data as unknown as Parameters<ClerkWebhookService["handleUserCreated"]>[0]);
           break;
         case "user.updated":
-          await this.service.handleUserUpdated(event.data as Parameters<ClerkWebhookService["handleUserUpdated"]>[0]);
+          await this.service.handleUserUpdated(event.data as unknown as Parameters<ClerkWebhookService["handleUserUpdated"]>[0]);
           break;
         case "user.deleted":
           await this.service.handleUserDeleted(event.data.id as string);
