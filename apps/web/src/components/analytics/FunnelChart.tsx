@@ -1,29 +1,92 @@
 "use client";
-export function ConversionFunnel({ data }: { data: { conversations: number; catalog_viewed: number; cart_started: number; payment_generated: number; payment_confirmed: number } }) {
-  const stages = [
-    { name: "Conversas Iniciadas", value: data.conversations, fill: "#6366F1" },
-    { name: "Catálogo Consultado", value: data.catalog_viewed, fill: "#8B5CF6" },
-    { name: "Carrinho Adicionado", value: data.cart_started, fill: "#EC4899" },
-    { name: "Pagamento Gerado", value: data.payment_generated, fill: "#F59E0B" },
-    { name: "Pagamento Confirmado", value: data.payment_confirmed, fill: "#22C55E" },
-  ];
-  const max = stages[0]?.value ?? 1;
+import { TrendingDown, ArrowRight } from "lucide-react";
+
+interface FunnelData {
+  conversations: number;
+  catalog_viewed: number;
+  cart_started: number;
+  payment_generated: number;
+  payment_confirmed: number;
+}
+
+const STAGES = [
+  { key: "conversations"      as const, label: "Conversas Iniciadas",  color: "#6366f1" },
+  { key: "catalog_viewed"     as const, label: "Catálogo Consultado",  color: "#8b5cf6" },
+  { key: "cart_started"       as const, label: "Carrinho Adicionado",  color: "#ec4899" },
+  { key: "payment_generated"  as const, label: "Pagamento Gerado",     color: "#f59e0b" },
+  { key: "payment_confirmed"  as const, label: "Pagamento Confirmado", color: "#22c55e" },
+];
+
+export function ConversionFunnel({ data }: { data: FunnelData }) {
+  const isEmpty = data.conversations === 0;
+  const max = data.conversations || 1;
+
   return (
-    <div className="glass-card p-5">
-      <h3 className="text-sm font-semibold text-white mb-1">Funil de Conversão</h3>
-      <p className="text-xs text-slate-500 mb-4">Jornada do contato à compra confirmada</p>
-      <div className="space-y-2">
-        {stages.map((s, i) => {
-          const pct = Math.round((s.value / max) * 100);
-          const drop = i > 0 ? Math.round(((stages[i-1]!.value - s.value) / stages[i-1]!.value) * 100) : 0;
-          return (
-            <div key={s.name}>
-              <div className="flex items-center justify-between mb-1"><span className="text-xs text-slate-400">{s.name}</span><div className="flex items-center gap-2">{i > 0 && drop > 0 && <span className="text-[10px] text-red-400">-{drop}%</span>}<span className="text-xs font-semibold text-white">{s.value.toLocaleString("pt-BR")}</span></div></div>
-              <div className="h-7 bg-[#0F172A] rounded-lg overflow-hidden"><div className="h-full rounded-lg flex items-center px-3" style={{ width: `${pct}%`, backgroundColor: s.fill + "33", borderLeft: `2px solid ${s.fill}` }}><span className="text-[10px] font-bold" style={{ color: s.fill }}>{pct}%</span></div></div>
-            </div>
-          );
-        })}
+    <div className="analytics-panel">
+      {/* Header */}
+      <div className="analytics-panel-header">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="analytics-panel-icon" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}>
+            <TrendingDown className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-[#e2e8f0]">Funil de Conversão</p>
+            <p className="text-[11px] text-[#475569] mt-0.5">Jornada do contato à compra confirmada</p>
+          </div>
+        </div>
+        {!isEmpty && (
+          <span className="tag tag-green">
+            {Math.round((data.payment_confirmed / data.conversations) * 100)}% taxa final
+          </span>
+        )}
       </div>
+
+      {isEmpty ? (
+        <div className="analytics-empty-inner">
+          <TrendingDown className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
+          <p className="text-[12px] text-[#475569]">Sem conversas no período</p>
+        </div>
+      ) : (
+        <div className="analytics-funnel-list">
+          {STAGES.map((s, i) => {
+            const value = data[s.key];
+            const pct = Math.round((value / max) * 100);
+            const prev = i > 0 ? data[STAGES[i - 1]!.key] : value;
+            const drop = i > 0 && prev > 0 ? Math.round(((prev - value) / prev) * 100) : 0;
+
+            return (
+              <div key={s.key} className="analytics-funnel-row">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-medium text-[#94a3b8]">{s.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {i > 0 && drop > 0 && (
+                      <span className="flex items-center gap-1 text-[10px] text-red-400 tabular-nums">
+                        <ArrowRight className="w-2.5 h-2.5 rotate-90" strokeWidth={2} />
+                        -{drop}%
+                      </span>
+                    )}
+                    <span className="text-[13px] font-semibold text-[#e2e8f0] tabular-nums">
+                      {value.toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                </div>
+                <div className="analytics-funnel-track">
+                  <div
+                    className="analytics-funnel-fill"
+                    style={{ width: `${pct}%`, background: `${s.color}22`, borderColor: s.color }}
+                  >
+                    <span className="text-[10px] font-bold px-2" style={{ color: s.color }}>
+                      {pct}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

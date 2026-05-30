@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, RefreshCw, Bot } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
@@ -14,29 +13,171 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
 
   async function send() {
     if (!input.trim() || loading) return;
-    const msg = input.trim(); setInput(""); setLoading(true);
+    const msg = input.trim();
+    setInput("");
+    setLoading(true);
     setMessages((p) => [...p, { role: "user", content: msg }]);
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 900));
     setMessages((p) => [...p, { role: "assistant", content: `Resposta simulada para: "${msg}". Configure o AI Orchestrator para respostas reais.` }]);
     setLoading(false);
   }
 
   return (
-    <div className="glass-card flex flex-col h-[500px]">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#1E293B]">
-        <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center"><Bot className="w-4 h-4 text-green-400" /></div><p className="text-sm font-semibold text-white">Simulador de Teste</p></div>
-        <button onClick={() => setMessages([])} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[#334155] text-slate-500 hover:text-slate-300 cursor-pointer"><RefreshCw className="w-3.5 h-3.5" /> Resetar</button>
+    <div className="simulator-shell">
+      {/* Header */}
+      <div className="simulator-header">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="simulator-icon">
+            <Bot className="w-3.5 h-3.5 text-green-400" strokeWidth={1.8} />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-[#e2e8f0]">Simulador de Teste</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
+                <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
+              </span>
+              <span className="text-[10px] text-[#475569]">Simulação local — sem integração real</span>
+            </div>
+          </div>
+        </div>
+        <button onClick={() => setMessages([])} className="simulator-reset-btn">
+          <RefreshCw className="w-3 h-3" />
+          Resetar
+        </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 && <div className="flex flex-col items-center justify-center h-full text-center"><Bot className="w-10 h-10 text-slate-700 mb-3" /><p className="text-sm text-slate-600">Envie uma mensagem para testar</p></div>}
-        {messages.map((m, i) => <div key={i} className={cn("flex gap-2 mb-2", m.role === "user" ? "justify-end" : "justify-start")}><div className={cn("max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm", m.role === "user" ? "bg-green-500/20 text-green-100 rounded-br-sm" : "bg-[#1E293B] text-slate-100 rounded-bl-sm")}><p className="whitespace-pre-wrap">{m.content}</p></div></div>)}
-        {loading && <div className="flex gap-2"><div className="bg-[#1E293B] px-4 py-3 rounded-2xl rounded-bl-sm"><div className="flex gap-1">{[0,1,2].map((i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-pulse-dot" style={{ animationDelay: `${i*150}ms` }} />)}</div></div></div>}
+
+      {/* Messages */}
+      <div className="simulator-body">
+        {messages.length === 0 && (
+          <div className="simulator-empty">
+            <div className="simulator-empty-icon">
+              <Sparkles className="w-5 h-5 text-indigo-400" strokeWidth={1.5} />
+            </div>
+            <p className="text-[13px] font-semibold text-[#e2e8f0]">Teste seu agente</p>
+            <p className="text-[12px] text-[#475569] text-center max-w-[220px] leading-relaxed">
+              Envie uma mensagem como se fosse um cliente no WhatsApp
+            </p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {messages.map((m, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                gap: 8,
+                justifyContent: m.role === "user" ? "flex-end" : "flex-start",
+                alignItems: "flex-end",
+              }}
+            >
+              {/* Bot avatar */}
+              {m.role === "assistant" && (
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: "rgba(99,102,241,0.12)",
+                  border: "1px solid rgba(99,102,241,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <Bot style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+                </div>
+              )}
+
+              {/* Bubble */}
+              <div style={{
+                maxWidth: "72%",
+                padding: "10px 14px",
+                borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
+                fontSize: 13,
+                lineHeight: 1.55,
+                wordBreak: "break-word",
+                ...(m.role === "user"
+                  ? {
+                      background: "rgba(99,102,241,0.18)",
+                      border: "1px solid rgba(99,102,241,0.3)",
+                      color: "#e2e8f0",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      color: "#cbd5e1",
+                    }
+                ),
+              }}>
+                <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{m.content}</p>
+              </div>
+
+              {/* User avatar */}
+              {m.role === "user" && (
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: "rgba(99,102,241,0.12)",
+                  border: "1px solid rgba(99,102,241,0.22)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <User style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Typing indicator */}
+          {loading && (
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: 8,
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.22)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <Bot style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+              </div>
+              <div style={{
+                padding: "10px 16px",
+                borderRadius: "14px 14px 14px 4px",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}>
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      style={{
+                        width: 6, height: 6, borderRadius: "50%",
+                        background: "#6366f1",
+                        opacity: 0.6,
+                        animation: "pulse-dot 1.4s ease-in-out infinite",
+                        animationDelay: `${i * 180}ms`,
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div ref={bottomRef} />
       </div>
-      <div className="px-4 py-3 border-t border-[#1E293B]">
-        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="flex items-center gap-2">
-          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Digite uma mensagem de teste..." className="flex-1 bg-[#0F172A] border border-[#334155] rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500/50" disabled={loading} />
-          <button type="submit" disabled={loading || !input.trim()} className="w-10 h-10 rounded-xl bg-green-500 hover:bg-green-400 disabled:bg-slate-700 text-white cursor-pointer flex items-center justify-center"><Send className="w-4 h-4" /></button>
+
+      {/* Input */}
+      <div className="simulator-input-bar">
+        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="simulator-input-form">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Simule uma mensagem do cliente…"
+            className="simulator-input"
+            disabled={loading}
+          />
+          <button type="submit" disabled={loading || !input.trim()} className="simulator-send-btn">
+            <Send className="w-3.5 h-3.5" />
+          </button>
         </form>
       </div>
     </div>

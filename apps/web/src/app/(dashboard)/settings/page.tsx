@@ -1,0 +1,551 @@
+"use client";
+import { Header } from "@/components/layout/Header";
+import {
+  User, Bell, Shield, Smartphone, Plug, CreditCard,
+  Camera, ChevronRight, Check, X, AlertTriangle,
+  Globe, Clock, Zap, CheckCircle2, XCircle,
+  ExternalLink, Key, Trash2, LogOut, Sparkles,
+  DollarSign, Package, BarChart3, ArrowUpRight,
+  Mail, MessageSquare, ShoppingCart, Bot,
+} from "lucide-react";
+import { useState } from "react";
+
+type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
+
+const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: "conta",        label: "Conta",        icon: User       },
+  { key: "notificacoes", label: "Notificações",  icon: Bell       },
+  { key: "seguranca",    label: "Segurança",     icon: Shield     },
+  { key: "integracoes",  label: "Integrações",   icon: Plug       },
+  { key: "plano",        label: "Plano",         icon: CreditCard },
+];
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`settings-toggle ${checked ? "settings-toggle-on" : ""}`}
+    >
+      <span className="settings-toggle-thumb" />
+    </button>
+  );
+}
+
+function SectionPanel({ title, description, accent, children }: {
+  title: string;
+  description?: string;
+  accent?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="settings-panel" style={{ "--panel-accent": accent } as React.CSSProperties}>
+      <div className="settings-panel-head">
+        <div>
+          <p className="settings-panel-title">{title}</p>
+          {description && <p className="settings-panel-desc">{description}</p>}
+        </div>
+      </div>
+      <div className="settings-panel-body">{children}</div>
+    </div>
+  );
+}
+
+function FieldRow({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="settings-field-row">
+      <div className="settings-field-label-wrap">
+        <label className="settings-field-label">{label}</label>
+        {hint && <p className="settings-field-hint">{hint}</p>}
+      </div>
+      <div className="settings-field-control">{children}</div>
+    </div>
+  );
+}
+
+/* ── Tab content components ───────────────────────────────── */
+
+function TabConta() {
+  const [name, setName] = useState("Minha Loja");
+  const [email] = useState("contato@minhaloja.com");
+  const [timezone, setTimezone] = useState("America/Sao_Paulo");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => setSaving(false), 1400);
+  };
+
+  return (
+    <div className="settings-tab-content">
+      {/* Avatar */}
+      <SectionPanel title="Perfil" description="Informações visíveis no painel e relatórios." accent="#6366f1">
+        <div className="settings-avatar-row">
+          <div className="settings-avatar">
+            <span className="text-[18px] font-bold text-indigo-400">ML</span>
+            <button className="settings-avatar-btn" aria-label="Trocar foto">
+              <Camera className="w-3 h-3" />
+            </button>
+          </div>
+          <div>
+            <p className="text-[13px] font-medium text-[#e2e8f0]">Foto do perfil</p>
+            <p className="text-[11px] text-[#64748b] mt-1">PNG ou JPG. Máximo 2 MB.</p>
+            <button className="settings-link-btn mt-2">Fazer upload</button>
+          </div>
+        </div>
+
+        <div className="settings-divider" />
+
+        <FieldRow label="Nome da loja" hint="Usado em relatórios e notificações.">
+          <input className="settings-input" value={name} onChange={(e) => setName(e.target.value)} />
+        </FieldRow>
+
+        <div className="settings-divider" />
+
+        <FieldRow label="E-mail" hint="Endereço associado à conta Clerk.">
+          <input className="settings-input" value={email} disabled style={{ opacity: 0.5, cursor: "not-allowed" }} />
+        </FieldRow>
+
+        <div className="settings-divider" />
+
+        <FieldRow label="Fuso horário" hint="Usado para relatórios e timestamps.">
+          <select
+            className="settings-input"
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+          >
+            <option value="America/Sao_Paulo">América/São Paulo (UTC−3)</option>
+            <option value="America/Manaus">América/Manaus (UTC−4)</option>
+            <option value="America/Belem">América/Belém (UTC−3)</option>
+            <option value="America/Fortaleza">América/Fortaleza (UTC−3)</option>
+          </select>
+        </FieldRow>
+      </SectionPanel>
+
+      {/* Store */}
+      <SectionPanel title="Loja" description="Dados do tenant no sistema." accent="#22c55e">
+        <FieldRow label="Slug da loja" hint="Identificador único, não pode ser alterado.">
+          <div className="settings-slug-wrap">
+            <span className="settings-slug-prefix">whatsagent.app/</span>
+            <input className="settings-input settings-slug-input" value="minhaloja" disabled style={{ opacity: 0.5, cursor: "not-allowed" }} />
+          </div>
+        </FieldRow>
+
+        <div className="settings-divider" />
+
+        <FieldRow label="Segmento" hint="Ajuda o agente IA a adaptar o tom das respostas.">
+          <select className="settings-input">
+            <option>E-commerce / Varejo</option>
+            <option>Serviços</option>
+            <option>Alimentação / Delivery</option>
+            <option>Moda / Beleza</option>
+            <option>Tecnologia</option>
+          </select>
+        </FieldRow>
+      </SectionPanel>
+
+      {/* Danger zone */}
+      <div className="settings-danger-zone">
+        <div className="settings-danger-head">
+          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" strokeWidth={1.8} />
+          <div>
+            <p className="text-[13px] font-semibold text-[#f87171]">Zona de perigo</p>
+            <p className="text-[11px] text-[#64748b] mt-0.5">Ações irreversíveis para a sua conta.</p>
+          </div>
+        </div>
+        <div className="settings-danger-actions">
+          <button className="settings-danger-btn">
+            <Trash2 className="w-3.5 h-3.5" />
+            Excluir conta
+          </button>
+          <button className="settings-danger-btn">
+            <LogOut className="w-3.5 h-3.5" />
+            Encerrar todas as sessões
+          </button>
+        </div>
+      </div>
+
+      {/* Save */}
+      <div className="settings-save-bar">
+        <button className="settings-save-btn" onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <>
+              <span className="settings-save-spinner" />
+              Salvando…
+            </>
+          ) : (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              Salvar alterações
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TabNotificacoes() {
+  const [prefs, setPrefs] = useState({
+    new_message:    true,
+    handoff:        true,
+    order_created:  true,
+    order_paid:     true,
+    weekly_report:  false,
+    marketing:      false,
+  });
+
+  const toggle = (k: keyof typeof prefs) => setPrefs((p) => ({ ...p, [k]: !p[k] }));
+
+  const GROUPS = [
+    {
+      title: "Conversas",
+      icon: MessageSquare,
+      color: "#6366f1",
+      bg: "rgba(99,102,241,0.1)",
+      border: "rgba(99,102,241,0.2)",
+      items: [
+        { key: "new_message" as const, label: "Nova mensagem recebida", desc: "Quando um contato enviar uma mensagem." },
+        { key: "handoff" as const,     label: "Handoff pendente",       desc: "Quando o agente solicitar atendimento humano." },
+      ],
+    },
+    {
+      title: "Pedidos",
+      icon: ShoppingCart,
+      color: "#22c55e",
+      bg: "rgba(34,197,94,0.1)",
+      border: "rgba(34,197,94,0.2)",
+      items: [
+        { key: "order_created" as const, label: "Pedido criado",  desc: "Quando o agente criar um novo pedido." },
+        { key: "order_paid" as const,    label: "Pagamento confirmado", desc: "Quando o pagamento de um pedido for aprovado." },
+      ],
+    },
+    {
+      title: "Relatórios",
+      icon: BarChart3,
+      color: "#f59e0b",
+      bg: "rgba(245,158,11,0.1)",
+      border: "rgba(245,158,11,0.2)",
+      items: [
+        { key: "weekly_report" as const, label: "Relatório semanal", desc: "Resumo de desempenho toda segunda-feira." },
+        { key: "marketing" as const,     label: "Novidades e dicas",  desc: "Atualizações de produto e boas práticas." },
+      ],
+    },
+  ];
+
+  return (
+    <div className="settings-tab-content">
+      {GROUPS.map(({ title, icon: Icon, color, bg, border, items }) => (
+        <SectionPanel key={title} title={title} accent={color}>
+          <div className="settings-notif-group-icon" style={{ background: bg, borderColor: border }}>
+            <Icon className="w-3.5 h-3.5" style={{ color }} strokeWidth={1.8} />
+            <span className="text-[12px] font-semibold" style={{ color }}>{title}</span>
+          </div>
+          {items.map(({ key, label, desc }, i) => (
+            <div key={key}>
+              {i > 0 && <div className="settings-divider" />}
+              <div className="settings-notif-row">
+                <div>
+                  <p className="text-[13px] font-medium text-[#e2e8f0]">{label}</p>
+                  <p className="text-[11px] text-[#64748b] mt-0.5">{desc}</p>
+                </div>
+                <Toggle checked={prefs[key]} onChange={() => toggle(key)} />
+              </div>
+            </div>
+          ))}
+        </SectionPanel>
+      ))}
+    </div>
+  );
+}
+
+function TabSeguranca() {
+  const [show2fa] = useState(false);
+
+  return (
+    <div className="settings-tab-content">
+      <SectionPanel title="Senha" description="Altere a senha da sua conta Clerk." accent="#6366f1">
+        <FieldRow label="Senha atual">
+          <input type="password" className="settings-input" placeholder="••••••••" />
+        </FieldRow>
+        <div className="settings-divider" />
+        <FieldRow label="Nova senha">
+          <input type="password" className="settings-input" placeholder="••••••••" />
+        </FieldRow>
+        <div className="settings-divider" />
+        <FieldRow label="Confirmar nova senha">
+          <input type="password" className="settings-input" placeholder="••••••••" />
+        </FieldRow>
+        <div className="flex justify-end mt-4">
+          <button className="settings-save-btn" style={{ width: "auto", padding: "0 20px" }}>
+            <Key className="w-3.5 h-3.5" />
+            Alterar senha
+          </button>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel title="Autenticação em dois fatores" description="Adicione uma camada extra de segurança." accent="#f59e0b">
+        <div className="settings-2fa-row">
+          <div className="settings-2fa-icon">
+            <Smartphone className="w-5 h-5 text-amber-400" strokeWidth={1.6} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-medium text-[#e2e8f0]">Autenticador por aplicativo</p>
+            <p className="text-[11px] text-[#64748b] mt-0.5">
+              {show2fa ? "Ativado — Google Authenticator ou Authy." : "Não configurado ainda."}
+            </p>
+          </div>
+          <span className={`tag ${show2fa ? "tag-green" : "tag-slate"}`}>
+            {show2fa ? "Ativo" : "Inativo"}
+          </span>
+          <button className="settings-link-btn shrink-0">
+            {show2fa ? "Desativar" : "Configurar"}
+          </button>
+        </div>
+      </SectionPanel>
+
+      <SectionPanel title="Sessões ativas" description="Dispositivos com acesso à sua conta." accent="#22c55e">
+        {[
+          { device: "Chrome — Windows 11", location: "São Paulo, BR", current: true,  time: "Agora"       },
+          { device: "Safari — iPhone 15",  location: "São Paulo, BR", current: false, time: "Há 2 dias"   },
+        ].map(({ device, location, current, time }) => (
+          <div key={device} className="settings-session-row">
+            <div className="settings-session-dot" style={{ background: current ? "#22c55e" : "#475569" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium text-[#e2e8f0]">{device}</p>
+              <p className="text-[10px] text-[#64748b] mt-0.5">{location} · {time}</p>
+            </div>
+            {current
+              ? <span className="tag tag-green">Este dispositivo</span>
+              : <button className="settings-danger-btn" style={{ padding: "3px 10px", fontSize: "11px" }}>Encerrar</button>
+            }
+          </div>
+        ))}
+      </SectionPanel>
+    </div>
+  );
+}
+
+function TabIntegracoes() {
+  type ConnStatus = "connected" | "disconnected" | "error";
+
+  const INTEGRATIONS: {
+    id: string; name: string; desc: string; icon: React.ElementType;
+    color: string; bg: string; border: string; status: ConnStatus; badge: string;
+  }[] = [
+    {
+      id: "mercadopago", name: "MercadoPago", desc: "Links de pagamento para pedidos.",
+      icon: DollarSign, color: "#06b6d4", bg: "rgba(6,182,212,0.1)", border: "rgba(6,182,212,0.2)",
+      status: "disconnected", badge: "Não conectado",
+    },
+    {
+      id: "stripe", name: "Stripe", desc: "Cobrança da assinatura do plano.",
+      icon: CreditCard, color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.2)",
+      status: "connected", badge: "Conectado",
+    },
+    {
+      id: "openai", name: "OpenAI", desc: "Modelo de linguagem e Whisper.",
+      icon: Sparkles, color: "#4ade80", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)",
+      status: "connected", badge: "Conectado",
+    },
+    {
+      id: "meta", name: "Meta Cloud API", desc: "Envio e recebimento via WhatsApp.",
+      icon: MessageSquare, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)",
+      status: "disconnected", badge: "Não configurado",
+    },
+  ];
+
+  const statusIcon = (s: ConnStatus) => {
+    if (s === "connected")    return <CheckCircle2 className="w-3.5 h-3.5 text-green-400"  strokeWidth={2} />;
+    if (s === "error")        return <XCircle      className="w-3.5 h-3.5 text-red-400"    strokeWidth={2} />;
+    return <div className="w-3.5 h-3.5 rounded-full border border-[#334155] flex-shrink-0" />;
+  };
+
+  return (
+    <div className="settings-tab-content">
+      <SectionPanel
+        title="Serviços conectados"
+        description="Gerencie as integrações externas do WhatsAgent."
+        accent="#6366f1"
+      >
+        <div className="settings-integ-grid">
+          {INTEGRATIONS.map(({ id, name, desc, icon: Icon, color, bg, border, status, badge }) => (
+            <div key={id} className="settings-integ-card">
+              <div className="settings-integ-card-top">
+                <div className="settings-integ-icon" style={{ background: bg, borderColor: border }}>
+                  <Icon className="w-4 h-4" style={{ color }} strokeWidth={1.8} />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {statusIcon(status)}
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{ color: status === "connected" ? "#4ade80" : "#475569" }}
+                  >
+                    {badge}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[13px] font-semibold text-[#e2e8f0] mt-3">{name}</p>
+              <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">{desc}</p>
+              <button className={`settings-integ-btn mt-4 ${status === "connected" ? "settings-integ-btn-connected" : ""}`}>
+                {status === "connected" ? "Gerenciar" : "Conectar"}
+                {status === "connected"
+                  ? <ExternalLink className="w-3 h-3" />
+                  : <ChevronRight className="w-3 h-3" />
+                }
+              </button>
+            </div>
+          ))}
+        </div>
+      </SectionPanel>
+
+      <SectionPanel title="Webhook" description="Endpoint para receber eventos externos." accent="#22c55e">
+        <FieldRow label="URL do webhook" hint="Configure no painel de cada serviço externo.">
+          <div className="settings-webhook-wrap">
+            <input
+              className="settings-input settings-webhook-input"
+              value="https://api.whatsagent.app/webhooks/meta"
+              readOnly
+            />
+            <button className="settings-webhook-copy" onClick={() => navigator.clipboard.writeText("https://api.whatsagent.app/webhooks/meta")}>
+              Copiar
+            </button>
+          </div>
+        </FieldRow>
+      </SectionPanel>
+    </div>
+  );
+}
+
+function TabPlano() {
+  const FEATURES = [
+    "Conversas ilimitadas",
+    "Agente IA com LangGraph",
+    "Catálogo de produtos",
+    "Links de pagamento (MercadoPago)",
+    "Analytics avançado",
+    "Suporte prioritário",
+  ];
+
+  const USAGE = [
+    { label: "Conversas",  used: 0, limit: 1000, color: "#6366f1" },
+    { label: "Pedidos",    used: 0, limit: 500,  color: "#22c55e" },
+    { label: "Produtos",   used: 0, limit: 200,  color: "#f59e0b" },
+  ];
+
+  return (
+    <div className="settings-tab-content">
+      {/* Plan card */}
+      <div className="settings-plan-card">
+        <div className="settings-plan-glow" />
+        <div className="settings-plan-header">
+          <div className="settings-plan-icon">
+            <Sparkles className="w-5 h-5 text-green-400" strokeWidth={1.6} />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold text-[#4ade80] uppercase tracking-widest">Plano atual</p>
+            <p className="text-[22px] font-bold text-[#f1f5f9] leading-tight mt-0.5 tracking-tight">Growth</p>
+          </div>
+          <span className="tag tag-green ml-auto shrink-0">Ativo</span>
+        </div>
+
+        <div className="settings-plan-price">
+          <span className="text-[32px] font-bold text-[#f1f5f9] tracking-tight">R$ 297</span>
+          <span className="text-[13px] text-[#64748b]">/mês</span>
+        </div>
+
+        <ul className="settings-plan-features">
+          {FEATURES.map((f) => (
+            <li key={f} className="flex items-center gap-2 text-[12px] text-[#94a3b8]">
+              <Check className="w-3 h-3 text-green-400 shrink-0" strokeWidth={2.5} />
+              {f}
+            </li>
+          ))}
+        </ul>
+
+        <div className="settings-plan-footer">
+          <p className="text-[11px] text-[#475569]">Próxima renovação: <span className="text-[#94a3b8]">15 Jun 2026</span></p>
+          <button className="settings-plan-upgrade-btn">
+            <ArrowUpRight className="w-3.5 h-3.5" />
+            Ver planos
+          </button>
+        </div>
+      </div>
+
+      {/* Usage */}
+      <SectionPanel title="Uso do mês" description="Consumo atual do seu plano." accent="#22c55e">
+        <div className="settings-usage-list">
+          {USAGE.map(({ label, used, limit, color }) => {
+            const pct = limit > 0 ? Math.round((used / limit) * 100) : 0;
+            return (
+              <div key={label} className="settings-usage-row">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[12px] font-medium text-[#94a3b8]">{label}</span>
+                  <span className="text-[11px] text-[#475569] font-variant-numeric tabular-nums">
+                    {used} / {limit}
+                  </span>
+                </div>
+                <div className="prog-track">
+                  <div className="prog-fill" style={{ width: `${pct}%`, background: color }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-[#334155] px-1 mt-2">Reinicia em 1 de junho.</p>
+      </SectionPanel>
+
+      {/* Billing history */}
+      <SectionPanel title="Histórico de pagamentos" accent="#6366f1">
+        <div className="settings-billing-empty">
+          <CreditCard className="w-5 h-5 text-[#334155]" strokeWidth={1.5} />
+          <p className="text-[12px] text-[#475569]">Nenhum pagamento registrado ainda.</p>
+        </div>
+      </SectionPanel>
+    </div>
+  );
+}
+
+/* ── Main page ────────────────────────────────────────────── */
+
+export default function SettingsPage() {
+  const [tab, setTab] = useState<Tab>("conta");
+
+  const content: Record<Tab, React.ReactNode> = {
+    conta:        <TabConta />,
+    notificacoes: <TabNotificacoes />,
+    seguranca:    <TabSeguranca />,
+    integracoes:  <TabIntegracoes />,
+    plano:        <TabPlano />,
+  };
+
+  return (
+    <div className="fade-up flex flex-col h-screen overflow-hidden">
+      <Header title="Configurações" subtitle="Gerencie sua conta, integrações e plano" />
+
+      <div className="settings-shell">
+        {/* Left nav */}
+        <nav className="settings-nav">
+          <p className="section-title px-3 mb-2">Menu</p>
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`settings-nav-item ${tab === key ? "settings-nav-item-active" : ""}`}
+            >
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
+              {label}
+              {tab === key && <ChevronRight className="w-3 h-3 ml-auto opacity-40" />}
+            </button>
+          ))}
+        </nav>
+
+        {/* Right content */}
+        <div className="settings-content">
+          {content[tab]}
+        </div>
+      </div>
+    </div>
+  );
+}
