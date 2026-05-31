@@ -27,13 +27,14 @@ describe("SettingsService", () => {
   describe("updateWhatsappSettings", () => {
     it("deve atualizar whatsappPhoneId e metaAccessToken do tenant", async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({ id: "t-1", name: "Loja" });
-      mockPrisma.tenant.update.mockResolvedValue({ id: "t-1", whatsappPhoneId: "1168626729666802", metaAccessToken: "tok123" });
+      mockPrisma.tenant.update.mockResolvedValue({ id: "t-1", whatsappPhoneId: "1168626729666802", metaAccessToken: "tok123", whatsappStatus: "CONNECTED" });
 
       const result = await service.updateWhatsappSettings("t-1", {
         whatsappPhoneId: "1168626729666802",
         metaAccessToken: "tok123",
       });
 
+      expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({ where: { id: "t-1" } });
       expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
         where: { id: "t-1" },
         data: { whatsappPhoneId: "1168626729666802", metaAccessToken: "tok123" },
@@ -52,7 +53,7 @@ describe("SettingsService", () => {
 
     it("deve atualizar apenas whatsappPhoneId quando metaAccessToken nao fornecido", async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({ id: "t-1", name: "Loja" });
-      mockPrisma.tenant.update.mockResolvedValue({ id: "t-1", whatsappPhoneId: "999" });
+      mockPrisma.tenant.update.mockResolvedValue({ id: "t-1", whatsappPhoneId: "999", whatsappStatus: "DISCONNECTED" });
 
       await service.updateWhatsappSettings("t-1", { whatsappPhoneId: "999" });
 
