@@ -1,11 +1,7 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { Prisma } from "@prisma/client";
-
-interface UpdateWhatsappSettingsDto {
-  whatsappPhoneId: string;
-  metaAccessToken?: string;
-}
+import { UpdateWhatsappSettingsDto } from "./dto/update-whatsapp-settings.dto";
 
 @Injectable()
 export class SettingsService {
