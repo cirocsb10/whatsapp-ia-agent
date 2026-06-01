@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNotEmpty } from "class-validator";
+import { IsString, IsOptional, IsNotEmpty, MinLength } from "class-validator";
 
 export class UpdateWhatsappSettingsDto {
   @IsString()
@@ -7,6 +7,6 @@ export class UpdateWhatsappSettingsDto {
 
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  @MinLength(1)
   metaAccessToken?: string;
 }
