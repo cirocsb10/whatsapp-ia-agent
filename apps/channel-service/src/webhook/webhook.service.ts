@@ -45,49 +45,64 @@ export class WebhookService {
       return;
     }
 
-    const contact = await this.prisma.contact.upsert({
-      where: { tenantId_phone: { tenantId, phone: msg.from } },
-      update: { lastSeenAt: new Date() },
-      create: { tenantId, phone: msg.from, firstSeenAt: new Date(), lastSeenAt: new Date() },
-    });
-
-    if (msg.text?.body && this.optOutKeywords.some((k) => msg.text?.body.toLowerCase().includes(k))) {
-      this.logger.log(`Opt-out detected from ${msg.from}`);
-      await this.prisma.contact.update({
+    const { contact, conversation } = await this.prisma.$transaction(async (tx) => {
+      const contact = await tx.contact.upsert({
         where: { tenantId_phone: { tenantId, phone: msg.from } },
-        data: { isOptedOut: true, optOutAt: new Date() },
+        update: { lastSeenAt: new Date() },
+        create: { tenantId, phone: msg.from, firstSeenAt: new Date(), lastSeenAt: new Date() },
       });
-      return;
-    }
 
-    let conversation = await this.prisma.conversation.findFirst({
-      where: { contactId: contact.id, status: { in: ["ACTIVE", "HUMAN_HANDOFF"] } },
-    });
+      // Block opted-out contacts — do not process any further
+      if (contact.isOptedOut) {
+        this.logger.warn(`Blocked opted-out contact: ${msg.from}`);
+        return { contact, conversation: null };
+      }
 
-    if (!conversation) {
-      conversation = await this.prisma.conversation.create({
-        data: { tenantId, contactId: contact.id, status: "ACTIVE", startedAt: new Date() },
+      // Opt-out keyword detection
+      if (msg.text?.body && this.optOutKeywords.some((k) => msg.text?.body.toLowerCase().includes(k))) {
+        this.logger.log(`Opt-out detected from ${msg.from}`);
+        await tx.contact.update({
+          where: { id: contact.id },
+          data: { isOptedOut: true, optOutAt: new Date() },
+        });
+        return { contact, conversation: null };
+      }
+
+      let conversation = await tx.conversation.findFirst({
+        where: { contactId: contact.id, status: { in: ["ACTIVE", "HUMAN_HANDOFF"] } },
+        orderBy: { startedAt: "desc" },
       });
-    }
 
-    const msgType = msg.type.toUpperCase() as "TEXT" | "AUDIO" | "IMAGE" | "DOCUMENT";
+      if (!conversation) {
+        conversation = await tx.conversation.create({
+          data: { tenantId, contactId: contact.id, status: "ACTIVE", startedAt: new Date() },
+        });
+      }
 
-    await this.prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        tenantId,
-        waMessageId: msg.id,
-        direction: "INBOUND",
-        type: msgType,
-        text: msg.text?.body ?? null,
-        sentAt: new Date(parseInt(msg.timestamp, 10) * 1000),
-      },
+      const msgType = this.resolveMessageType(msg.type);
+
+      await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          tenantId,
+          waMessageId: msg.id,
+          direction: "INBOUND",
+          type: msgType,
+          text: msg.text?.body ?? null,
+          sentAt: new Date(parseInt(msg.timestamp, 10) * 1000),
+        },
+      });
+
+      await tx.conversation.update({
+        where: { id: conversation.id },
+        data: { lastMessageAt: new Date() },
+      });
+
+      return { contact, conversation };
     });
 
-    await this.prisma.conversation.update({
-      where: { id: conversation.id },
-      data: { lastMessageAt: new Date() },
-    });
+    // After transaction — if opt-out or blocked, return early
+    if (!conversation) return;
 
     const event: Record<string, unknown> = {
       tenantId,
@@ -126,11 +141,18 @@ export class WebhookService {
     this.logger.log(`Published: ${msg.type} from ${msg.from} (conv: ${conversation.id})`);
   }
 
+  private resolveMessageType(type: string): "TEXT" | "AUDIO" | "IMAGE" | "DOCUMENT" | "STICKER" | "LOCATION" | "INTERACTIVE" {
+    const known = ["TEXT", "AUDIO", "IMAGE", "DOCUMENT", "STICKER", "LOCATION", "INTERACTIVE"];
+    const upper = type.toUpperCase();
+    return (known.includes(upper) ? upper : "TEXT") as ReturnType<typeof this.resolveMessageType>;
+  }
+
   private async resolveTenantId(phoneNumberId: string): Promise<string | null> {
     const key = `tenant:phone:${phoneNumberId}`;
     const cached = await this.session.get(key);
     if (cached) return cached;
 
+    // Look up in database — NEVER fall back to a hardcoded value
     const tenant = await this.prisma.tenant.findFirst({
       where: { whatsappPhoneId: phoneNumberId },
       select: { id: true },
@@ -138,7 +160,7 @@ export class WebhookService {
 
     if (!tenant) {
       this.logger.warn(`No tenant found for phone number ID: ${phoneNumberId}`);
-      return null;
+      return null; // Reject — do not route to wrong tenant
     }
 
     await this.session.set(key, tenant.id, 3600);

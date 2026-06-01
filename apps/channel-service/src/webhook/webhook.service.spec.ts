@@ -16,7 +16,9 @@ const mockAudio = { downloadAndTranscribe: jest.fn() };
 const mockConfig = { get: jest.fn().mockReturnValue("test_token") };
 const mockContact = { id: "contact-1", isOptedOut: false, phone: "5511999" };
 const mockConversation = { id: "conv-1", status: "ACTIVE" };
-const mockPrisma = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockPrisma: Record<string, any> = {
+  $transaction: jest.fn((fn: (tx: Record<string, unknown>) => Promise<unknown>) => fn(mockPrisma)),
   tenant: {
     findFirst: jest.fn().mockResolvedValue({ id: "tenant-uuid-123" }),
   },
@@ -70,6 +72,7 @@ describe("WebhookService", () => {
     }).compile();
     service = module.get(WebhookService);
     jest.clearAllMocks();
+    mockPrisma.$transaction.mockImplementation((fn: (tx: Record<string, unknown>) => Promise<unknown>) => fn(mockPrisma));
     mockSession.isDuplicate.mockResolvedValue(false);
     mockSession.get.mockResolvedValue(null);
     mockPrisma.tenant.findFirst.mockResolvedValue({ id: "tenant-uuid-123" });
@@ -160,6 +163,13 @@ describe("WebhookService", () => {
       }),
     );
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+  });
+
+  it("bloqueia contato com isOptedOut=true e nao publica", async () => {
+    mockPrisma.contact.upsert.mockResolvedValue({ ...mockContact, isOptedOut: true });
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+    expect(mockPrisma.message.create).not.toHaveBeenCalled();
   });
 
   it("transcribes audio before publishing", async () => {
