@@ -15,7 +15,18 @@ const mockPrisma = { tenant: { findUnique: jest.fn(), update: jest.fn() } };
 describe("BillingService", () => {
   let service: BillingService;
   beforeEach(async () => {
-    const module = await Test.createTestingModule({ providers: [BillingService, { provide: PrismaService, useValue: mockPrisma }, { provide: ConfigService, useValue: { get: jest.fn().mockReturnValue("sk_test") } }] }).compile();
+    const configGetMock = jest.fn().mockImplementation((key: string) => {
+      const values: Record<string, string> = {
+        STRIPE_SECRET_KEY: "sk_test",
+        STRIPE_WEBHOOK_SECRET: "whsec_test",
+        STRIPE_PRICE_STARTER_MONTHLY: "price_starter",
+        STRIPE_PRICE_GROWTH_MONTHLY: "price_growth",
+        STRIPE_PRICE_SCALE_MONTHLY: "price_scale",
+        FRONTEND_URL: "http://localhost:3000",
+      };
+      return values[key];
+    });
+    const module = await Test.createTestingModule({ providers: [BillingService, { provide: PrismaService, useValue: mockPrisma }, { provide: ConfigService, useValue: { get: configGetMock } }] }).compile();
     service = module.get<BillingService>(BillingService);
     jest.clearAllMocks();
   });
