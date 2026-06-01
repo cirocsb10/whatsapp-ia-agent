@@ -13,7 +13,7 @@ import { SettingsModule } from "./modules/settings/settings.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: ["../../.env.local", "../../.env", ".env"] }),
     PrismaModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     ClerkWebhookModule, SettingsModule,
