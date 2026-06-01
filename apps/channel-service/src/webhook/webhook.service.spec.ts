@@ -81,7 +81,12 @@ describe("WebhookService", () => {
   it("publishes inbound event for text message", async () => {
     await service.processWebhook(makeTextPayload("Quero comprar"));
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "text", text: "Quero comprar" }),
+      expect.objectContaining({
+        type: "text",
+        text: "Quero comprar",
+        conversationId: "conv-1",
+        contactId: "contact-1",
+      }),
     );
   });
 
@@ -141,6 +146,10 @@ describe("WebhookService", () => {
         }),
       }),
     );
+    expect(mockPrisma.conversation.update).toHaveBeenCalledWith({
+      where: { id: "conv-1" },
+      data: { lastMessageAt: expect.any(Date) },
+    });
   });
 
   it("opt-out persiste isOptedOut no banco e nao publica", async () => {
