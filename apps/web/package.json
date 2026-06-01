@@ -10,7 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.4.2",
+    "@clerk/nextjs": "^5.7.6",
     "@hookform/resolvers": "^5.4.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/typography": "^0.5.19",
