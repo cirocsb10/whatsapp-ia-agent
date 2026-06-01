@@ -5,6 +5,9 @@ node_modules/
 # Worktrees
 .worktrees/
 
+# Claude Code
+.claude/
+
 # Env files
 .env
 .env.local
