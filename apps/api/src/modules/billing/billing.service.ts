@@ -2,16 +2,18 @@ import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../common/prisma/prisma.service";
 
-const STRIPE_PRICE_MAP: Record<string, string> = {
-  STARTER: process.env.STRIPE_PRICE_STARTER ?? "price_starter",
-  GROWTH: process.env.STRIPE_PRICE_GROWTH ?? "price_growth",
-  SCALE: process.env.STRIPE_PRICE_SCALE ?? "price_scale",
-};
-
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
   constructor(private readonly config: ConfigService, private readonly prisma: PrismaService) {}
+
+  private getPriceMap(): Record<string, string> {
+    return {
+      STARTER: this.config.get("STRIPE_PRICE_STARTER_MONTHLY") ?? "",
+      GROWTH: this.config.get("STRIPE_PRICE_GROWTH_MONTHLY") ?? "",
+      SCALE: this.config.get("STRIPE_PRICE_SCALE_MONTHLY") ?? "",
+    };
+  }
 
   private getStripe() {
     const Stripe = require("stripe");
@@ -22,11 +24,16 @@ export class BillingService {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException("Tenant not found");
     const stripe = this.getStripe();
-    const customer = await stripe.customers.create({ name: tenant.name, metadata: { tenantId } });
+    let customerId = tenant.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({ name: tenant.name, metadata: { tenantId } });
+      customerId = customer.id;
+      await this.prisma.tenant.update({ where: { id: tenantId }, data: { stripeCustomerId: customerId } });
+    }
     const frontendUrl = this.config.get<string>("FRONTEND_URL") ?? "http://localhost:3000";
     const session = await stripe.checkout.sessions.create({
-      customer: customer.id, mode: "subscription", payment_method_types: ["card"],
-      line_items: [{ price: STRIPE_PRICE_MAP[plan] ?? "price_starter", quantity: 1 }],
+      customer: customerId, mode: "subscription", payment_method_types: ["card"],
+      line_items: [{ price: this.getPriceMap()[plan] ?? "", quantity: 1 }],
       success_url: `${frontendUrl}/overview?checkout=success`, cancel_url: `${frontendUrl}/setup/plan?canceled=true`,
       metadata: { tenantId, plan }, subscription_data: { metadata: { tenantId }, trial_period_days: 14 },
     });
@@ -44,7 +51,7 @@ export class BillingService {
       const tenantId = sub.metadata?.tenantId;
       if (!tenantId) return;
       const priceId = sub.items?.data?.[0]?.price?.id;
-      const plan = Object.entries(STRIPE_PRICE_MAP).find(([, v]) => v === priceId)?.[0];
+      const plan = Object.entries(this.getPriceMap()).find(([, v]) => v === priceId)?.[0];
       if (plan) await this.prisma.tenant.update({ where: { id: tenantId }, data: { planType: plan as any, status: sub.status === "active" || sub.status === "trialing" ? "ACTIVE" : "SUSPENDED" } });
     } else if (event.type === "customer.subscription.deleted") {
       const tenantId = event.data.object.metadata?.tenantId;
