@@ -14,9 +14,23 @@ const mockSession = {
 };
 const mockAudio = { downloadAndTranscribe: jest.fn() };
 const mockConfig = { get: jest.fn().mockReturnValue("test_token") };
+const mockContact = { id: "contact-1", isOptedOut: false, phone: "5511999" };
+const mockConversation = { id: "conv-1", status: "ACTIVE" };
 const mockPrisma = {
   tenant: {
     findFirst: jest.fn().mockResolvedValue({ id: "tenant-uuid-123" }),
+  },
+  contact: {
+    upsert: jest.fn().mockResolvedValue(mockContact),
+    update: jest.fn().mockResolvedValue({ ...mockContact, isOptedOut: true }),
+  },
+  conversation: {
+    findFirst: jest.fn().mockResolvedValue(mockConversation),
+    create: jest.fn().mockResolvedValue(mockConversation),
+    update: jest.fn(),
+  },
+  message: {
+    create: jest.fn(),
   },
 };
 
@@ -56,10 +70,12 @@ describe("WebhookService", () => {
     }).compile();
     service = module.get(WebhookService);
     jest.clearAllMocks();
-    // Reset mock implementations to defaults after clearAllMocks
     mockSession.isDuplicate.mockResolvedValue(false);
     mockSession.get.mockResolvedValue(null);
     mockPrisma.tenant.findFirst.mockResolvedValue({ id: "tenant-uuid-123" });
+    mockPrisma.contact.upsert.mockResolvedValue(mockContact);
+    mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
+    mockPrisma.conversation.create.mockResolvedValue(mockConversation);
   });
 
   it("publishes inbound event for text message", async () => {
@@ -72,11 +88,6 @@ describe("WebhookService", () => {
   it("skips duplicate messages", async () => {
     mockSession.isDuplicate.mockResolvedValue(true);
     await service.processWebhook(makeTextPayload("dup"));
-    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
-  });
-
-  it("skips opt-out messages", async () => {
-    await service.processWebhook(makeTextPayload("parar"));
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
   });
 
@@ -93,6 +104,53 @@ describe("WebhookService", () => {
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
       expect.objectContaining({ tenantId: "cached-tenant-id" }),
     );
+  });
+
+  it("faz upsert de Contact antes de publicar", async () => {
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.contact.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId_phone: { tenantId: "tenant-uuid-123", phone: "5511999" } },
+      }),
+    );
+  });
+
+  it("cria Conversation se nao existe", async () => {
+    mockPrisma.conversation.findFirst.mockResolvedValue(null);
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.conversation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          tenantId: "tenant-uuid-123",
+          contactId: "contact-1",
+          status: "ACTIVE",
+        }),
+      }),
+    );
+  });
+
+  it("salva Message no banco antes de publicar", async () => {
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          direction: "INBOUND",
+          type: "TEXT",
+          text: "Olá",
+          waMessageId: "wamid.1",
+        }),
+      }),
+    );
+  });
+
+  it("opt-out persiste isOptedOut no banco e nao publica", async () => {
+    await service.processWebhook(makeTextPayload("parar"));
+    expect(mockPrisma.contact.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isOptedOut: true }),
+      }),
+    );
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
   });
 
   it("transcribes audio before publishing", async () => {

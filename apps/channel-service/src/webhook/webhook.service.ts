@@ -9,6 +9,7 @@ import { MetaWebhookBody, MetaMessage } from "./dto/meta-webhook.dto";
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
+  private readonly optOutKeywords = ["parar", "stop", "cancelar", "sair", "não quero"];
 
   constructor(
     private readonly config: ConfigService,
@@ -44,22 +45,59 @@ export class WebhookService {
       return;
     }
 
-    // Opt-out check: if client sends opt-out keywords, skip
-    const optOutKeywords = ["parar", "stop", "cancelar", "sair", "não quero"];
-    if (msg.text?.body && optOutKeywords.some((k) => msg.text?.body.toLowerCase().includes(k))) {
+    const contact = await this.prisma.contact.upsert({
+      where: { tenantId_phone: { tenantId, phone: msg.from } },
+      update: { lastSeenAt: new Date() },
+      create: { tenantId, phone: msg.from, firstSeenAt: new Date(), lastSeenAt: new Date() },
+    });
+
+    if (msg.text?.body && this.optOutKeywords.some((k) => msg.text?.body.toLowerCase().includes(k))) {
       this.logger.log(`Opt-out detected from ${msg.from}`);
-      // In production: update contact.isOptedOut = true via back-office API
+      await this.prisma.contact.update({
+        where: { tenantId_phone: { tenantId, phone: msg.from } },
+        data: { isOptedOut: true, optOutAt: new Date() },
+      });
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const event: Record<string, any> = {
+    let conversation = await this.prisma.conversation.findFirst({
+      where: { contactId: contact.id, status: { in: ["ACTIVE", "HUMAN_HANDOFF"] } },
+    });
+
+    if (!conversation) {
+      conversation = await this.prisma.conversation.create({
+        data: { tenantId, contactId: contact.id, status: "ACTIVE", startedAt: new Date() },
+      });
+    }
+
+    const msgType = msg.type.toUpperCase() as "TEXT" | "AUDIO" | "IMAGE" | "DOCUMENT";
+
+    await this.prisma.message.create({
+      data: {
+        conversationId: conversation.id,
+        tenantId,
+        waMessageId: msg.id,
+        direction: "INBOUND",
+        type: msgType,
+        text: msg.text?.body ?? null,
+        sentAt: new Date(parseInt(msg.timestamp, 10) * 1000),
+      },
+    });
+
+    await this.prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { lastMessageAt: new Date() },
+    });
+
+    const event: Record<string, unknown> = {
       tenantId,
       whatsappPhoneId: phoneNumberId,
       waMessageId: msg.id,
       from: msg.from,
       timestamp: parseInt(msg.timestamp, 10),
       type: msg.type,
+      conversationId: conversation.id,
+      contactId: contact.id,
     };
 
     if (msg.type === "text") {
@@ -85,17 +123,14 @@ export class WebhookService {
     }
 
     await this.inbound.publishInbound(event);
-    this.logger.log(`Published: ${msg.type} from ${msg.from}`);
+    this.logger.log(`Published: ${msg.type} from ${msg.from} (conv: ${conversation.id})`);
   }
 
   private async resolveTenantId(phoneNumberId: string): Promise<string | null> {
     const key = `tenant:phone:${phoneNumberId}`;
-
-    // Try Redis cache first
     const cached = await this.session.get(key);
     if (cached) return cached;
 
-    // Look up in database — NEVER fall back to a hardcoded value
     const tenant = await this.prisma.tenant.findFirst({
       where: { whatsappPhoneId: phoneNumberId },
       select: { id: true },
@@ -103,10 +138,9 @@ export class WebhookService {
 
     if (!tenant) {
       this.logger.warn(`No tenant found for phone number ID: ${phoneNumberId}`);
-      return null; // Reject — do not route to wrong tenant
+      return null;
     }
 
-    // Cache the authoritative mapping
     await this.session.set(key, tenant.id, 3600);
     return tenant.id;
   }
