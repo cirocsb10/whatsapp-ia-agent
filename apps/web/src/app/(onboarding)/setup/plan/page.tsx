@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import {
   Check,
   ArrowRight,
@@ -62,14 +63,31 @@ const PLANS = [
   },
 ] as const;
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+
 export default function PlanPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function selectPlan(planId: string) {
     setLoading(planId);
-    console.log("Plan selected:", planId);
-    router.push("/overview");
+    setError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/billing/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ plan: planId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const { checkoutUrl } = await res.json();
+      router.push(checkoutUrl);
+    } catch {
+      setError("Não foi possível iniciar o checkout. Tente novamente.");
+      setLoading(null);
+    }
   }
 
   return (
@@ -155,6 +173,11 @@ export default function PlanPage() {
             );
           })}
         </div>
+
+        {/* Error */}
+        {error && (
+          <p className="text-center text-[12px] text-red-400">{error}</p>
+        )}
 
         {/* Footer */}
         <footer className="onboarding-plan-footer">
