@@ -81,17 +81,26 @@ export class WebhookService {
 
       const msgType = this.resolveMessageType(msg.type);
 
-      await tx.message.create({
-        data: {
-          conversationId: conversation.id,
-          tenantId,
-          waMessageId: msg.id,
-          direction: "INBOUND",
-          type: msgType,
-          text: msg.text?.body ?? null,
-          sentAt: new Date(parseInt(msg.timestamp, 10) * 1000),
-        },
-      });
+      try {
+        await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            tenantId,
+            waMessageId: msg.id,
+            direction: "INBOUND",
+            type: msgType,
+            text: msg.text?.body ?? null,
+            sentAt: new Date(parseInt(msg.timestamp, 10) * 1000),
+          },
+        });
+      } catch (e: unknown) {
+        // P2002 = unique constraint — waMessageId already processed (Redis TTL expired but DB has it)
+        if ((e as { code?: string })?.code === "P2002") {
+          this.logger.warn(`Already processed waMessageId: ${msg.id}`);
+          return { contact, conversation: null };
+        }
+        throw e;
+      }
 
       await tx.conversation.update({
         where: { id: conversation.id },
