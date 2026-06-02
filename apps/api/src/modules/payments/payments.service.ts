@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, Logger, UnauthorizedException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { randomUUID } from "crypto";
@@ -21,8 +27,12 @@ export class PaymentsService {
   }
 
   validateMpSignature(xSignature: string | undefined, xRequestId: string | undefined, dataId: string): void {
-    const secret = this.config.get<string>("MERCADO_PAGO_WEBHOOK_SECRET");
-    if (!secret) return; // If not configured, skip validation (warn in logs)
+    const secret =
+      this.config.get<string>("MERCADOPAGO_WEBHOOK_SECRET") ??
+      this.config.get<string>("MERCADO_PAGO_WEBHOOK_SECRET");
+    if (!secret) {
+      throw new InternalServerErrorException("MercadoPago webhook secret not configured");
+    }
     if (!xSignature || !xRequestId) {
       throw new UnauthorizedException("Missing MercadoPago signature headers");
     }

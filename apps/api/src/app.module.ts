@@ -16,7 +16,19 @@ import { AgentModule } from "./modules/agent/agent.module";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: ["../../.env.local", "../../.env", ".env"] }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ["../../.env.local", "../../.env", ".env"],
+      validate: (env) => {
+        if (!env.MERCADOPAGO_WEBHOOK_SECRET) {
+          throw new Error("MERCADOPAGO_WEBHOOK_SECRET env var is required");
+        }
+        if (!env.FRONTEND_URL) {
+          throw new Error("FRONTEND_URL env var is required");
+        }
+        return env;
+      },
+    }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

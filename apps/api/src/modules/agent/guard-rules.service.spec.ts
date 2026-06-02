@@ -31,7 +31,7 @@ describe("GuardRulesService", () => {
       name: "Bloqueia desconto",
       type: "TEXT_BLOCK",
       action: "BLOCK",
-      config: { terms: ["desconto"] },
+      config: { term: "desconto" },
     });
 
     expect(mockPrisma.guardRule.create).toHaveBeenCalledWith({

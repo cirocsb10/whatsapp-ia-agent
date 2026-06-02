@@ -5,11 +5,33 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
   MaxLength,
   Min,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { GuardRuleAction, GuardRuleType } from "@prisma/client";
+
+@ValidatorConstraint({ name: "GuardRuleConfigConstraint", async: false })
+class GuardRuleConfigConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length > 20) return false;
+
+    return entries.every(([, entryValue]) => {
+      const type = typeof entryValue;
+      return type === "string" || type === "number" || type === "boolean";
+    });
+  }
+
+  defaultMessage(): string {
+    return "config must contain at most 20 primitive properties (string, number or boolean)";
+  }
+}
 
 export class CreateGuardRuleDto {
   @IsString()
@@ -33,7 +55,8 @@ export class CreateGuardRuleDto {
   priority?: number;
 
   @IsObject()
-  config!: Record<string, unknown>;
+  @Validate(GuardRuleConfigConstraint)
+  config!: Record<string, string | number | boolean>;
 
   @IsOptional()
   @IsString()
@@ -66,7 +89,8 @@ export class UpdateGuardRuleDto {
 
   @IsOptional()
   @IsObject()
-  config?: Record<string, unknown>;
+  @Validate(GuardRuleConfigConstraint)
+  config?: Record<string, string | number | boolean>;
 
   @IsOptional()
   @IsString()

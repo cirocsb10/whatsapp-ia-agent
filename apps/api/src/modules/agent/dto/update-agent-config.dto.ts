@@ -57,6 +57,7 @@ export class UpdateAgentConfigDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   systemPromptBase?: string;
 
   @IsOptional()
