@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     # Internal
     backoffice_api_url: str = Field(default="http://api:3002")
     internal_api_token: str = Field(default="")
+    frontend_url: str = Field(default="")
 
 
 settings = Settings()

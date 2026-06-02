@@ -23,6 +23,11 @@ async def lifespan(app: FastAPI):
 
     log.info("Starting AI Orchestrator...", debug=settings.debug)
 
+    if not settings.internal_api_token:
+        raise RuntimeError("INTERNAL_API_TOKEN must be set")
+    if not settings.frontend_url:
+        raise RuntimeError("FRONTEND_URL must be set")
+
     await create_db_engine()
 
     session_service = SessionService(settings.redis_url)
@@ -57,7 +62,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3002"],
+    allow_origins=[settings.frontend_url],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )

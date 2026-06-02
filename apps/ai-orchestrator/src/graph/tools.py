@@ -221,7 +221,9 @@ async def generate_payment_link_tool(
 
         import httpx
         api_base = os.environ.get("BACKOFFICE_API_URL", "http://api:3002")
-        internal_token = os.environ.get("INTERNAL_API_TOKEN", "")
+        internal_token = os.environ.get("INTERNAL_API_TOKEN")
+        if not internal_token:
+            raise RuntimeError("INTERNAL_API_TOKEN must be set")
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             order_resp = await client.post(
