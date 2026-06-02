@@ -5,31 +5,96 @@ import { PrismaService } from "../../common/prisma/prisma.service";
 export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getKpis(tenantId: string): Promise<Record<string, number>> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  async getKpis(tenantId: string): Promise<Record<string, number | null>> {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
-    const [conversationsToday, ordersToday, revenueToday, pendingHandoffs, newContactsToday] =
-      await Promise.all([
-        this.prisma.conversation.count({ where: { tenantId, startedAt: { gte: today } } }),
-        this.prisma.order.count({ where: { tenantId, createdAt: { gte: today } } }),
-        this.prisma.payment.aggregate({
-          where: { tenantId, status: "APPROVED", paidAt: { gte: today } },
-          _sum: { amountCents: true },
-        }),
-        this.prisma.conversation.count({ where: { tenantId, status: "HUMAN_HANDOFF" } }),
-        this.prisma.contact.count({ where: { tenantId, firstSeenAt: { gte: today } } }),
-      ]);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      conversationsToday,
+      ordersToday,
+      revenueToday,
+      pendingHandoffs,
+      newContactsToday,
+      closedToday,
+      closedByAiToday,
+      latencyResult,
+      csatResult,
+      tokensResult,
+    ] = await Promise.all([
+      this.prisma.conversation.count({ where: { tenantId, startedAt: { gte: startOfDay } } }),
+      this.prisma.order.count({ where: { tenantId, createdAt: { gte: startOfDay } } }),
+      this.prisma.payment.aggregate({
+        where: { tenantId, status: "APPROVED", paidAt: { gte: startOfDay } },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.conversation.count({ where: { tenantId, status: "HUMAN_HANDOFF" } }),
+      this.prisma.contact.count({ where: { tenantId, firstSeenAt: { gte: startOfDay } } }),
+      this.prisma.conversation.count({
+        where: { tenantId, status: "CLOSED", closedAt: { gte: startOfDay } },
+      }),
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          status: "CLOSED",
+          closedAt: { gte: startOfDay },
+          messages: { some: { isFromAi: true } },
+          handoffEvents: { none: {} },
+        },
+      }),
+      this.prisma.message.aggregate({
+        where: {
+          tenantId,
+          isFromAi: true,
+          aiLatencyMs: { not: null },
+          sentAt: { gte: startOfDay },
+        },
+        _avg: { aiLatencyMs: true },
+      }),
+      this.prisma.conversation.aggregate({
+        where: {
+          tenantId,
+          csatScore: { not: null },
+          closedAt: { gte: sevenDaysAgo },
+        },
+        _avg: { csatScore: true },
+      }),
+      this.prisma.message.aggregate({
+        where: {
+          tenantId,
+          isFromAi: true,
+          aiTokensUsed: { not: null },
+          sentAt: { gte: startOfDay },
+        },
+        _sum: { aiTokensUsed: true },
+      }),
+    ]);
+
+    const ai_resolution_rate =
+      closedToday > 0 ? Math.round((closedByAiToday / closedToday) * 100) : 0;
+
+    const avg_response_time_sec = latencyResult._avg.aiLatencyMs
+      ? Math.round(latencyResult._avg.aiLatencyMs / 1000)
+      : 0;
+
+    const avg_csat_score = csatResult._avg.csatScore
+      ? Number(csatResult._avg.csatScore.toFixed(1))
+      : null;
+
+    const ai_tokens_today = tokensResult._sum.aiTokensUsed ?? 0;
 
     return {
       conversations_today: conversationsToday,
-      ai_resolution_rate: 85,
+      ai_resolution_rate,
       revenue_today: revenueToday._sum.amountCents ?? 0,
       pending_handoffs: pendingHandoffs,
-      avg_response_time_sec: 4,
+      avg_response_time_sec,
       new_contacts_today: newContactsToday,
       orders_today: ordersToday,
       conversion_rate: conversationsToday > 0 ? Math.round((ordersToday / conversationsToday) * 100) : 0,
+      avg_csat_score,
+      ai_tokens_today,
     };
   }
 

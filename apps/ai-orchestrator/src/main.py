@@ -73,3 +73,7 @@ async def graph_info():
     from src.graph.agent import get_agent_graph
     graph = get_agent_graph()
     return {"nodes": list(graph.nodes.keys()), "status": "compiled"}
+
+
+from src.routes.internal import router as internal_router
+app.include_router(internal_router)

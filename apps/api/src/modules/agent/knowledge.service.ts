@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { CreateKnowledgeDto } from "./dto/create-knowledge.dto";
+import { KnowledgeIndexingService } from "./knowledge-indexing.service";
 
 @Injectable()
 export class KnowledgeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly knowledgeIndexingService: KnowledgeIndexingService,
+  ) {}
 
   findAll(tenantId: string) {
     return this.prisma.knowledgeBase.findMany({
@@ -21,7 +25,7 @@ export class KnowledgeService {
     });
   }
 
-  create(tenantId: string, dto: CreateKnowledgeDto) {
+  async create(tenantId: string, dto: CreateKnowledgeDto) {
     const data = {
       tenantId,
       name: dto.name,
@@ -31,9 +35,9 @@ export class KnowledgeService {
       ...(dto.fileUrl !== undefined && { fileUrl: dto.fileUrl }),
     };
 
-    return this.prisma.knowledgeBase.create({
-      data,
-    });
+    const created = await this.prisma.knowledgeBase.create({ data });
+    await this.knowledgeIndexingService.enqueueIndexing(created.id, tenantId);
+    return created;
   }
 
   async remove(tenantId: string, id: string) {

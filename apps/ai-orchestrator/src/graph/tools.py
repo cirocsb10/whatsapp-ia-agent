@@ -384,6 +384,55 @@ async def get_conversation_history_tool(
         return "Sem histórico disponível."
 
 
+@tool
+async def knowledge_search_tool(query: str, tenant_id: str, limit: int = 4) -> str:
+    """
+    Search the tenant's knowledge base for information relevant to the query.
+    Use this when the user asks about topics that may be in the company's FAQ,
+    policies, product descriptions, or any indexed knowledge.
+
+    Args:
+        query: The question or topic to search for
+        tenant_id: Tenant identifier
+        limit: Max chunks to return (default 4)
+
+    Returns:
+        Relevant knowledge base excerpts, or a message if nothing found
+    """
+    from sqlalchemy import text
+    from src.db.postgres import get_async_session
+    from src.services.embeddings import EmbeddingsService
+
+    _embeddings = EmbeddingsService()
+    embedding = await _embeddings.embed(query)
+    embedding_str = f"[{','.join(str(v) for v in embedding)}]"
+
+    async with get_async_session() as session:
+        result = await session.execute(
+            text("""
+                SELECT kc.content,
+                       kb.name AS source,
+                       1 - (kc.embedding <=> :embedding::vector) AS similarity
+                FROM knowledge_chunks kc
+                JOIN knowledge_bases kb ON kb.id = kc."knowledgeBaseId"
+                WHERE kc."tenantId" = :tenant_id
+                  AND 1 - (kc.embedding <=> :embedding::vector) > 0.6
+                ORDER BY kc.embedding <=> :embedding::vector
+                LIMIT :limit
+            """),
+            {"embedding": embedding_str, "tenant_id": tenant_id, "limit": limit},
+        )
+        rows = result.fetchall()
+
+    if not rows:
+        return "Nenhuma informação relevante encontrada na base de conhecimento."
+
+    parts = []
+    for row in rows:
+        parts.append(f"[{row[1]}] {row[0]}")
+    return "\n\n---\n\n".join(parts)
+
+
 ALL_TOOLS = [
     catalog_search_tool,
     get_stock_tool,
@@ -392,4 +441,5 @@ ALL_TOOLS = [
     verify_business_hours_tool,
     transfer_to_human_tool,
     get_conversation_history_tool,
+    knowledge_search_tool,
 ]
