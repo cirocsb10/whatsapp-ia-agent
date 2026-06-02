@@ -10,13 +10,15 @@ import { BillingModule } from "./modules/billing/billing.module";
 import { SuperAdminModule } from "./modules/super-admin/super-admin.module";
 import { ClerkWebhookModule } from "./modules/clerk/clerk-webhook.module";
 import { SettingsModule } from "./modules/settings/settings.module";
+import { ConversationsModule } from "./modules/conversations/conversations.module";
+import { AgentModule } from "./modules/agent/agent.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ["../../.env.local", "../../.env", ".env"] }),
     PrismaModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
-    ClerkWebhookModule, SettingsModule,
+    ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
   ],
 })
 export class AppModule {}

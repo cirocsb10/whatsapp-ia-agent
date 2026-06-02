@@ -24,6 +24,76 @@ describe("SettingsService", () => {
     jest.clearAllMocks();
   });
 
+  describe("getCompanySettings", () => {
+    it("deve retornar dados do tenant", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        id: "t-1",
+        name: "Loja",
+        slug: "loja-abc",
+        timezone: "America/Sao_Paulo",
+      });
+
+      const result = await service.getCompanySettings("t-1");
+
+      expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
+        where: { id: "t-1" },
+        select: { id: true, name: true, slug: true, timezone: true },
+      });
+      expect(result).toEqual({
+        id: "t-1",
+        name: "Loja",
+        slug: "loja-abc",
+        timezone: "America/Sao_Paulo",
+      });
+    });
+
+    it("deve lancar NotFoundException se tenant nao existe", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue(null);
+
+      await expect(service.getCompanySettings("bad")).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("updateCompanySettings", () => {
+    it("deve atualizar nome e fuso horario", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({ id: "t-1" });
+      mockPrisma.tenant.update.mockResolvedValue({
+        id: "t-1",
+        name: "Nova",
+        slug: "nova-abc",
+        timezone: "America/Manaus",
+      });
+
+      const result = await service.updateCompanySettings("t-1", {
+        name: "Nova",
+        timezone: "America/Manaus",
+      });
+
+      expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
+        where: { id: "t-1" },
+        data: { name: "Nova", timezone: "America/Manaus" },
+        select: { id: true, name: true, slug: true, timezone: true },
+      });
+      expect(result.name).toBe("Nova");
+    });
+
+    it("deve omitir timezone quando nao fornecido", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({ id: "t-1" });
+      mockPrisma.tenant.update.mockResolvedValue({
+        id: "t-1",
+        name: "Nova",
+        slug: "nova-abc",
+        timezone: "America/Sao_Paulo",
+      });
+
+      await service.updateCompanySettings("t-1", { name: "Nova" });
+
+      expect(mockPrisma.tenant.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { name: "Nova" } }),
+      );
+    });
+  });
+
   describe("updateWhatsappSettings", () => {
     it("deve atualizar whatsappPhoneId e metaAccessToken do tenant", async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({ id: "t-1", name: "Loja" });

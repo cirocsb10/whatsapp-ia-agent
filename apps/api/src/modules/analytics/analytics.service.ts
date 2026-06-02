@@ -47,4 +47,59 @@ export class AnalyticsService {
       handoffs: Math.round(r._count.id * 0.15),
     }));
   }
+
+  async getFunnel(tenantId: string, days = 30) {
+    const since = new Date(Date.now() - days * 86400000);
+    const [conversations, catalogViewed, cartStarted, paymentGenerated, paymentConfirmed] =
+      await Promise.all([
+        this.prisma.conversation.count({ where: { tenantId, startedAt: { gte: since } } }),
+        this.prisma.analyticsEvent.count({ where: { tenantId, eventType: "catalog_viewed", occurredAt: { gte: since } } }),
+        this.prisma.analyticsEvent.count({ where: { tenantId, eventType: "cart_started", occurredAt: { gte: since } } }),
+        this.prisma.payment.count({ where: { tenantId, createdAt: { gte: since } } }),
+        this.prisma.payment.count({ where: { tenantId, status: "APPROVED", paidAt: { gte: since } } }),
+      ]);
+
+    return {
+      conversations,
+      catalog_viewed: catalogViewed,
+      cart_started: cartStarted,
+      payment_generated: paymentGenerated,
+      payment_confirmed: paymentConfirmed,
+    };
+  }
+
+  async getHeatmap(tenantId: string, days = 30) {
+    const since = new Date(Date.now() - days * 86400000);
+    const messages = await this.prisma.message.findMany({
+      where: { tenantId, sentAt: { gte: since } },
+      select: { sentAt: true },
+    });
+    const buckets = Array.from({ length: 7 * 24 }, (_, i) => ({
+      day: Math.floor(i / 24),
+      hour: i % 24,
+      value: 0,
+    }));
+
+    for (const msg of messages) {
+      const date = new Date(msg.sentAt);
+      const bucket = buckets[date.getDay() * 24 + date.getHours()];
+      if (bucket) bucket.value += 1;
+    }
+
+    return buckets;
+  }
+
+  async getHandoffReasons(tenantId: string, days = 30) {
+    const since = new Date(Date.now() - days * 86400000);
+    const rows = await this.prisma.handoffEvent.groupBy({
+      by: ["reason"],
+      where: { tenantId, createdAt: { gte: since } },
+      _count: { id: true },
+    });
+
+    return rows.reduce<Record<string, number>>((acc, row) => {
+      acc[row.reason] = row._count.id;
+      return acc;
+    }, {});
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { AnalyticsService } from "./analytics.service";
 import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
@@ -14,7 +14,25 @@ export class AnalyticsController {
   }
 
   @Get("conversations-chart")
-  getConversationsChart(@CurrentTenantId() tenantId: string) {
-    return this.service.getConversationsChart(tenantId);
+  getConversationsChart(
+    @CurrentTenantId() tenantId: string,
+    @Query("days") days?: string,
+  ) {
+    return this.service.getConversationsChart(tenantId, Number(days ?? 30));
+  }
+
+  @Get("funnel")
+  getFunnel(@CurrentTenantId() tenantId: string, @Query("days") days?: string) {
+    return this.service.getFunnel(tenantId, Number(days ?? 30));
+  }
+
+  @Get("heatmap")
+  getHeatmap(@CurrentTenantId() tenantId: string, @Query("days") days?: string) {
+    return this.service.getHeatmap(tenantId, Number(days ?? 30));
+  }
+
+  @Get("handoff-reasons")
+  getHandoffReasons(@CurrentTenantId() tenantId: string, @Query("days") days?: string) {
+    return this.service.getHandoffReasons(tenantId, Number(days ?? 30));
   }
 }
