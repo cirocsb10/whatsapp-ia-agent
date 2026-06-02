@@ -4,12 +4,21 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package,
-  ShoppingCart, BarChart3, PhoneCall, Settings,
+  ShoppingCart, BarChart3, PhoneCall, Settings, Shield,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
 import { useSidebarStore, SIDEBAR_WIDTH } from "@/lib/store/sidebar.store";
 
-const NAV = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  badge?: string;
+  admin?: boolean;
+};
+
+const NAV: { section: string; items: NavItem[] }[] = [
   { section: "Menu", items: [
     { href: "/overview",  label: "Overview",    icon: LayoutDashboard },
     { href: "/inbox",     label: "Conversas",   icon: MessageSquare, badge: "active_conversations" },
@@ -21,6 +30,9 @@ const NAV = [
     { href: "/catalog",  label: "Catálogo",     icon: Package },
     { href: "/orders",   label: "Pedidos",      icon: ShoppingCart, badge: "pending_orders" },
     { href: "/settings", label: "Configurações",icon: Settings },
+  ]},
+  { section: "Plataforma", items: [
+    { href: "/tenants", label: "Super Admin", icon: Shield, admin: true },
   ]},
 ];
 
@@ -57,7 +69,7 @@ export function Sidebar() {
           <div key={section}>
             {!collapsed && <p className="section-title px-2 pb-1">{section}</p>}
             <div className="space-y-0.5">
-              {items.map(({ href, label, icon: Icon, badge }) => {
+              {items.map(({ href, label, icon: Icon, badge, admin }) => {
                 const active = path === href || path.startsWith(href + "/");
                 const count  = badge ? (badges[badge] ?? 0) : 0;
                 return (
@@ -65,7 +77,12 @@ export function Sidebar() {
                     key={href}
                     href={href}
                     title={collapsed ? label : undefined}
-                    className={cn("nav-item", active && "active", collapsed && "justify-center px-0")}
+                    className={cn(
+                      "nav-item",
+                      active && "active",
+                      admin && "nav-item-admin",
+                      collapsed && "justify-center px-0",
+                    )}
                   >
                     <div className="relative shrink-0">
                       <Icon className="w-[15px] h-[15px]" strokeWidth={1.8} />
