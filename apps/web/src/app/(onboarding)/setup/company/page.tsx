@@ -14,18 +14,12 @@ import {
   Link2,
   Clock,
   Sparkles,
-  CheckCircle2,
   AlertCircle,
   MessageCircle,
 } from "lucide-react";
 
 const schema = z.object({
   name: z.string().min(2, "Nome muito curto").max(100),
-  slug: z
-    .string()
-    .min(3, "Mínimo 3 caracteres")
-    .max(50)
-    .regex(/^[a-z0-9-]+$/, "Apenas letras minúsculas, números e hífens"),
   timezone: z.string(),
 });
 type F = z.infer<typeof schema>;
@@ -41,16 +35,6 @@ const TIMEZONES = [
   { value: "America/Rio_Branco", label: "Rio Branco (GMT-5)" },
 ];
 
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 50);
-}
-
 function getInitial(name?: string): string | null {
   const trimmed = (name ?? "").trim();
   return trimmed ? (trimmed[0]?.toUpperCase() ?? null) : null;
@@ -59,17 +43,16 @@ function getInitial(name?: string): string | null {
 export default function CompanySetupPage() {
   const router = useRouter();
   const { getToken } = useAuth();
-  const [slugTouched, setSlugTouched] = useState(false);
+  const [slugDisplay, setSlugDisplay] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
   const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const form = useForm<F>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", slug: "", timezone: "America/Sao_Paulo" },
+    defaultValues: { name: "", timezone: "America/Sao_Paulo" },
   });
 
   const name = form.watch("name");
-  const slug = form.watch("slug");
 
   useEffect(() => {
     async function load() {
@@ -82,22 +65,15 @@ export default function CompanySetupPage() {
         const data = await res.json();
         form.reset({
           name: data.name ?? "",
-          slug: data.slug ?? "",
           timezone: data.timezone ?? "America/Sao_Paulo",
         });
-        setSlugTouched(Boolean(data.slug));
+        setSlugDisplay(data.slug ?? "");
       } catch {
         // best-effort prefill
       }
     }
     void load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!slugTouched && name) {
-      form.setValue("slug", slugify(name), { shouldValidate: true });
-    }
-  }, [name, slugTouched, form]);
 
   async function onSubmit(data: F) {
     setApiError(null);
@@ -124,8 +100,7 @@ export default function CompanySetupPage() {
     }
   }
 
-  const slugValid = slug && slug.length >= 3 && /^[a-z0-9-]+$/.test(slug);
-  const displaySlug = slug || "sua-loja";
+  const displaySlug = slugDisplay || "sua-loja";
   const displayName = (name ?? "").trim() || "Sua Empresa";
 
   return (
@@ -216,38 +191,24 @@ export default function CompanySetupPage() {
                     htmlFor="company-slug"
                     className="text-[13px] font-medium text-[#94a3b8] mb-1.5 block"
                   >
-                    Subdomínio único <span className="text-indigo-400">*</span>
+                    Subdomínio único
                   </label>
                   <div className="onboarding-field-wrap">
                     <Link2 className="field-icon" />
                     <div className="onboarding-slug-group">
                       <input
                         id="company-slug"
-                        {...form.register("slug", {
-                          onChange: () => setSlugTouched(true),
-                        })}
-                        placeholder="minha-loja"
-                        className="onboarding-input font-mono text-[13px]"
+                        value={slugDisplay}
+                        readOnly
+                        className="onboarding-input font-mono text-[13px] opacity-60 cursor-not-allowed"
                         spellCheck={false}
                       />
                       <span className="onboarding-slug-suffix">.whatsagent.com.br</span>
                     </div>
                   </div>
-                  {form.formState.errors.slug ? (
-                    <p className="field-error">
-                      <AlertCircle className="w-3 h-3 shrink-0" />
-                      {form.formState.errors.slug.message}
-                    </p>
-                  ) : slugValid ? (
-                    <p className="slug-status slug-status-valid">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Disponível para uso
-                    </p>
-                  ) : (
-                    <p className="field-hint">
-                      Gerado automaticamente. Apenas letras minúsculas, números e hífens.
-                    </p>
-                  )}
+                  <p className="field-hint">
+                    Definido durante o cadastro. Entre em contato para alterar.
+                  </p>
                 </div>
               </div>
             </section>
@@ -294,7 +255,7 @@ export default function CompanySetupPage() {
             <div className="onboarding-tip">
               <Sparkles className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
               <p className="text-[12px] text-[#94a3b8] leading-relaxed">
-                Você poderá alterar o nome e subdomínio depois nas configurações da conta.
+                Você poderá alterar o nome e fuso horário depois nas configurações da conta.
               </p>
             </div>
 
