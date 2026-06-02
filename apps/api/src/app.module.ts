@@ -21,7 +21,7 @@ import { AgentModule } from "./modules/agent/agent.module";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        connection: { url: config.get<string>("REDIS_URL") },
+        connection: { url: config.get<string>("REDIS_URL") ?? "" },
       }),
     }),
     PrismaModule, ProductsModule, OrdersModule, PaymentsModule,
