@@ -21,6 +21,7 @@ import { CreateKnowledgeDto } from "./dto/create-knowledge.dto";
 import { GuardRulesService } from "./guard-rules.service";
 import { CreateGuardRuleDto, UpdateGuardRuleDto } from "./dto/create-guard-rule.dto";
 import { ChatSimulatorService } from "./chat-simulator.service";
+import { ChatRequestDto } from "./dto/chat-request.dto";
 
 @Controller("agent")
 @UseGuards(ClerkAuthGuard, RolesGuard)
@@ -90,7 +91,7 @@ export class AgentConfigController {
   }
 
   @Post("chat")
-  chatReply(@CurrentTenantId() tenantId: string, @Body("message") message: string) {
-    return this.chat.reply(tenantId, message);
+  chatReply(@CurrentTenantId() tenantId: string, @Body() dto: ChatRequestDto) {
+    return this.chat.reply(tenantId, dto.message);
   }
 }
