@@ -34,6 +34,11 @@ export class WebhookService {
   }
 
   private async processMessage(msg: MetaMessage, phoneNumberId: string): Promise<void> {
+    if (!msg.from || !msg.id) {
+      this.logger.warn(`Skipping message without required fields (from: ${msg.from}, id: ${msg.id}, type: ${msg.type})`);
+      return;
+    }
+
     if (await this.session.isDuplicate(msg.id)) {
       this.logger.warn(`Duplicate: ${msg.id}`);
       return;
