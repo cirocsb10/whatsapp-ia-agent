@@ -19,7 +19,11 @@ export class AgentConfigService {
     const data: Prisma.AgentConfigUncheckedUpdateInput = {
       ...dto,
     };
-    if (dto.isPublished) data.publishedAt = new Date();
+    if (dto.isPublished) {
+      data.publishedAt = new Date();
+    } else if (dto.isPublished === false) {
+      data.publishedAt = null;
+    }
 
     return this.prisma.agentConfig.upsert({
       where: { tenantId },

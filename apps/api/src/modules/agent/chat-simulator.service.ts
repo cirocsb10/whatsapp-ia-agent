@@ -1,16 +1,28 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AgentConfigService } from "./agent-config.service";
 
 @Injectable()
 export class ChatSimulatorService {
+  private readonly logger = new Logger(ChatSimulatorService.name);
+  private readonly configCache = new Map<string, { config: any; expiresAt: number }>();
+  private readonly CACHE_TTL_MS = 60_000;
+
   constructor(
     private readonly config: ConfigService,
     private readonly agentConfig: AgentConfigService,
   ) {}
 
+  private async getCachedConfig(tenantId: string) {
+    const cached = this.configCache.get(tenantId);
+    if (cached && Date.now() < cached.expiresAt) return cached.config;
+    const config = await this.agentConfig.getConfig(tenantId);
+    this.configCache.set(tenantId, { config, expiresAt: Date.now() + this.CACHE_TTL_MS });
+    return config;
+  }
+
   async reply(tenantId: string, message: string) {
-    const cfg = await this.agentConfig.getConfig(tenantId);
+    const cfg = await this.getCachedConfig(tenantId);
     const apiKey = this.config.get<string>("OPENAI_API_KEY");
 
     if (!apiKey) {
@@ -47,7 +59,8 @@ export class ChatSimulatorService {
       const reply = body.choices[0]?.message?.content;
 
       return { reply: reply || "Nao consegui gerar uma resposta agora." };
-    } catch {
+    } catch (err) {
+      this.logger.error("OpenAI chat request failed", err);
       return {
         reply: `${cfg.agentName}: nao consegui acessar o modelo agora, mas recebi sua mensagem.`,
       };

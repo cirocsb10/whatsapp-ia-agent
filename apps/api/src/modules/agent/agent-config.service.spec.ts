@@ -28,6 +28,13 @@ describe("AgentConfigService", () => {
     });
   });
 
+  it("clears publishedAt when isPublished is set to false", async () => {
+    mockPrisma.agentConfig.upsert.mockResolvedValue({ tenantId: "t-1", isPublished: false, publishedAt: null });
+    await service.updateConfig("t-1", { isPublished: false });
+    const upsertCall = mockPrisma.agentConfig.upsert.mock.calls[0][0];
+    expect(upsertCall.update.publishedAt).toBeNull();
+  });
+
   it("sets publishedAt when publishing", async () => {
     mockPrisma.agentConfig.upsert.mockResolvedValue({ tenantId: "t-1", isPublished: true });
 

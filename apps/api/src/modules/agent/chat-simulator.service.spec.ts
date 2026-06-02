@@ -7,8 +7,10 @@ describe("ChatSimulatorService", () => {
   let service: ChatSimulatorService;
   const mockConfig = { get: jest.fn() };
   const mockAgentConfig = { getConfig: jest.fn() };
+  let originalFetch: typeof globalThis.fetch;
 
   beforeEach(async () => {
+    originalFetch = globalThis.fetch;
     const module = await Test.createTestingModule({
       providers: [
         ChatSimulatorService,
@@ -18,6 +20,10 @@ describe("ChatSimulatorService", () => {
     }).compile();
     service = module.get(ChatSimulatorService);
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
   });
 
   it("returns local fallback when OPENAI_API_KEY is missing", async () => {
