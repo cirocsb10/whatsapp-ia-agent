@@ -20,7 +20,7 @@ export class ChatSimulatorService {
     }
 
     try {
-      const res = await fetch("https://api.openai.com/v1/responses", {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export class ChatSimulatorService {
         },
         body: JSON.stringify({
           model: cfg.llmModel,
-          input: [
+          messages: [
             {
               role: "system",
               content:
@@ -38,18 +38,13 @@ export class ChatSimulatorService {
             { role: "user", content: message },
           ],
           temperature: cfg.llmTemperature,
-          max_output_tokens: cfg.maxResponseLength,
+          max_tokens: cfg.maxResponseLength,
         }),
       });
 
       if (!res.ok) throw new Error(`OpenAI request failed: ${res.status}`);
       const body: any = await res.json();
-      const reply =
-        body.output_text ??
-        body.output?.flatMap((item: any) => item.content ?? [])
-          ?.map((item: any) => item.text)
-          ?.filter(Boolean)
-          ?.join("\n");
+      const reply = body.choices[0]?.message?.content;
 
       return { reply: reply || "Nao consegui gerar uma resposta agora." };
     } catch {
