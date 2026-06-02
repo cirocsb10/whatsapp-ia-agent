@@ -1,10 +1,13 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
 export function TestSimulator({ tenantId }: { tenantId: string }) {
+  const { getToken } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,8 +20,18 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
     setInput("");
     setLoading(true);
     setMessages((p) => [...p, { role: "user", content: msg }]);
-    await new Promise((r) => setTimeout(r, 900));
-    setMessages((p) => [...p, { role: "assistant", content: `Resposta simulada para: "${msg}". Configure o AI Orchestrator para respostas reais.` }]);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/agent/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ message: msg, tenantId }),
+      });
+      const data = res.ok ? await res.json() : null;
+      setMessages((p) => [...p, { role: "assistant", content: data?.reply ?? "Nao consegui responder agora." }]);
+    } catch {
+      setMessages((p) => [...p, { role: "assistant", content: "Erro de conexao com o simulador." }]);
+    }
     setLoading(false);
   }
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -57,7 +58,10 @@ function getInitial(name?: string): string | null {
 
 export default function CompanySetupPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [slugTouched, setSlugTouched] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const form = useForm<F>({
     resolver: zodResolver(schema),
@@ -68,14 +72,56 @@ export default function CompanySetupPage() {
   const slug = form.watch("slug");
 
   useEffect(() => {
+    async function load() {
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_URL}/settings/company`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        form.reset({
+          name: data.name ?? "",
+          slug: data.slug ?? "",
+          timezone: data.timezone ?? "America/Sao_Paulo",
+        });
+        setSlugTouched(Boolean(data.slug));
+      } catch {
+        // best-effort prefill
+      }
+    }
+    void load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (!slugTouched && name) {
       form.setValue("slug", slugify(name), { shouldValidate: true });
     }
   }, [name, slugTouched, form]);
 
   async function onSubmit(data: F) {
-    console.log("Company setup:", data);
-    router.push("/setup/plan");
+    setApiError(null);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/settings/company`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: data.name, timezone: data.timezone }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setApiError((body as { message?: string }).message ?? "Erro ao salvar configuracoes.");
+        return;
+      }
+
+      router.push("/setup/plan");
+    } catch {
+      setApiError("Erro de conexao. Tente novamente.");
+    }
   }
 
   const slugValid = slug && slug.length >= 3 && /^[a-z0-9-]+$/.test(slug);
@@ -251,6 +297,10 @@ export default function CompanySetupPage() {
                 Você poderá alterar o nome e subdomínio depois nas configurações da conta.
               </p>
             </div>
+
+            {apiError && (
+              <p className="text-sm text-red-400 text-center">{apiError}</p>
+            )}
 
             {/* Actions */}
             <div className="onboarding-actions">

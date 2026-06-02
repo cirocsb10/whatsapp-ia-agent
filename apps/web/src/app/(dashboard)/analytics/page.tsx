@@ -1,20 +1,24 @@
+"use client";
+
 import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversionFunnel } from "@/components/analytics/FunnelChart";
 import { ActivityHeatmap } from "@/components/analytics/HeatmapChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
+import { useAuth } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 import {
   Target, Users, ShoppingCart, DollarSign, Clock, Zap,
   CalendarDays,
 } from "lucide-react";
 
 const KPI_CARDS = [
-  { title: "Conversas",     icon: Users,        iconColor: "text-indigo-400",  accent: "#6366f1" },
-  { title: "Viram Catálogo",icon: Target,        iconColor: "text-violet-400",  accent: "#8b5cf6" },
-  { title: "Adicionaram",   icon: ShoppingCart,  iconColor: "text-pink-400",    accent: "#ec4899" },
-  { title: "Converteram",   icon: Zap,           iconColor: "text-green-400",   accent: "#22c55e" },
-  { title: "Pedidos",       icon: DollarSign,    iconColor: "text-yellow-400",  accent: "#f59e0b" },
-  { title: "Tempo Médio",   icon: Clock,         iconColor: "text-cyan-400",    accent: "#06b6d4" },
+  { key: "conversations_today", title: "Conversas", icon: Users, iconColor: "text-indigo-400", accent: "#6366f1" },
+  { key: "catalog_viewed", title: "Viram Catalogo", icon: Target, iconColor: "text-violet-400", accent: "#8b5cf6" },
+  { key: "cart_started", title: "Adicionaram", icon: ShoppingCart, iconColor: "text-pink-400", accent: "#ec4899" },
+  { key: "conversion_rate", title: "Converteram", icon: Zap, iconColor: "text-green-400", accent: "#22c55e", suffix: "%" },
+  { key: "revenue_today", title: "Receita", icon: DollarSign, iconColor: "text-yellow-400", accent: "#f59e0b", money: true },
+  { key: "avg_response_time_sec", title: "Tempo Medio", icon: Clock, iconColor: "text-cyan-400", accent: "#06b6d4", suffix: "s" },
 ];
 
 const EMPTY_FUNNEL = {
@@ -31,51 +35,107 @@ const EMPTY_HEATMAP = Array.from({ length: 7 * 24 }, (_, i) => ({
   value: 0,
 }));
 
+const PERIODS = [
+  { label: "Hoje", days: 1 },
+  { label: "7 dias", days: 7 },
+  { label: "30 dias", days: 30 },
+];
+
 export default function AnalyticsPage() {
+  const { getToken } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const [period, setPeriod] = useState(30);
+  const [kpis, setKpis] = useState<Record<string, number>>({});
+  const [funnel, setFunnel] = useState(EMPTY_FUNNEL);
+  const [heatmap, setHeatmap] = useState(EMPTY_HEATMAP);
+  const [handoffs, setHandoffs] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const token = await getToken();
+        const headers = { Authorization: `Bearer ${token}` };
+        const [kpiRes, funnelRes, heatmapRes, handoffRes] = await Promise.all([
+          fetch(`${API_URL}/analytics/kpis`, { headers }),
+          fetch(`${API_URL}/analytics/funnel?days=${period}`, { headers }),
+          fetch(`${API_URL}/analytics/heatmap?days=${period}`, { headers }),
+          fetch(`${API_URL}/analytics/handoff-reasons?days=${period}`, { headers }),
+        ]);
+        if (kpiRes.ok) setKpis(await kpiRes.json());
+        if (funnelRes.ok) setFunnel(await funnelRes.json());
+        if (heatmapRes.ok) setHeatmap(await heatmapRes.json());
+        if (handoffRes.ok) setHandoffs(await handoffRes.json());
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
+  }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function formatCard(card: (typeof KPI_CARDS)[number]) {
+    const value = card.key in funnel ? funnel[card.key as keyof typeof funnel] : (kpis[card.key] ?? 0);
+    if (card.money) {
+      return ((kpis[card.key] ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+    return `${value.toLocaleString("pt-BR")}${card.suffix ?? ""}`;
+  }
+
   return (
     <div className="fade-up flex flex-col h-screen">
-      <Header title="Analytics" subtitle="Métricas e performance do agente" />
+      <Header title="Analytics" subtitle="Metricas e performance do agente" />
 
       <div className="dashboard-page">
-        {/* Page intro */}
         <div className="analytics-intro">
           <div>
-            <p className="dashboard-greeting-title">Relatório de Performance</p>
+            <p className="dashboard-greeting-title">Relatorio de Performance</p>
             <p className="dashboard-greeting-sub">
-              Acompanhe conversões, funil de vendas e atividade do agente IA.
+              Acompanhe conversoes, funil de vendas e atividade do agente IA.
             </p>
           </div>
           <div className="analytics-period-pills">
             <CalendarDays className="w-3.5 h-3.5 text-[#475569]" />
-            {["Hoje", "7 dias", "30 dias"].map((p, i) => (
-              <button key={p} className={`analytics-period-pill ${i === 2 ? "analytics-period-pill-active" : ""}`}>
-                {p}
+            {PERIODS.map((p) => (
+              <button
+                key={p.days}
+                onClick={() => setPeriod(p.days)}
+                className={`analytics-period-pill ${period === p.days ? "analytics-period-pill-active" : ""}`}
+              >
+                {p.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* KPI grid */}
         <section>
           <div className="dashboard-section-head">
-            <p className="section-title">Métricas do período</p>
-            <span className="text-[10px] text-[#475569]">Últimos 30 dias</span>
+            <p className="section-title">Metricas do periodo</p>
+            <span className="text-[10px] text-[#475569]">Ultimos {period} dias</span>
           </div>
           <div className="analytics-kpi-grid">
-            {KPI_CARDS.map((c) => (
-              <KpiCard key={c.title} {...c} value={0} empty />
-            ))}
+            {KPI_CARDS.map((card) => {
+              const { key: metricKey, ...cardProps } = card;
+              const value = formatCard(card);
+              return (
+                <KpiCard
+                  key={card.title}
+                  {...cardProps}
+                  value={value}
+                  loading={loading}
+                  empty={!loading && value.replace(/\D/g, "") === "0"}
+                />
+              );
+            })}
           </div>
         </section>
 
-        {/* Bento: Funnel + Handoff reasons */}
         <div className="analytics-bento-top">
-          <ConversionFunnel data={EMPTY_FUNNEL} />
-          <HandoffReasons />
+          <ConversionFunnel data={funnel} />
+          <HandoffReasons data={handoffs} />
         </div>
 
-        {/* Heatmap full width */}
-        <ActivityHeatmap data={EMPTY_HEATMAP} />
+        <ActivityHeatmap data={heatmap} />
       </div>
     </div>
   );

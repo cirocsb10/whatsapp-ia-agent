@@ -8,6 +8,7 @@ interface InboxStore {
   messages: Record<string, Message[]>;
   activeConversationId: string | null;
   setConversations: (c: Conversation[]) => void;
+  setMessages: (conversationId: string, messages: Message[]) => void;
   setActiveConversation: (id: string | null) => void;
   addMessage: (msg: any) => void;
   updateConversationStatus: (u: any) => void;
@@ -20,6 +21,9 @@ export const useInboxStore = create<InboxStore>((set) => ({
   messages: {},
   activeConversationId: null,
   setConversations: (conversations) => set({ conversations }),
+  setMessages: (conversationId, messages) => set((s) => ({
+    messages: { ...s.messages, [conversationId]: messages },
+  })),
   setActiveConversation: (id) => set({ activeConversationId: id }),
   addMessage: (msg) => set((s) => ({
     messages: { ...s.messages, [msg.conversationId]: [...(s.messages[msg.conversationId] ?? []), { id: msg.messageId ?? String(Date.now()), conversationId: msg.conversationId, direction: msg.direction, type: msg.type ?? "text", text: msg.text, sentAt: msg.sentAt ?? new Date().toISOString(), isFromAi: msg.isFromAi ?? false }] },

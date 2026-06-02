@@ -3,11 +3,12 @@ import { Header } from "@/components/layout/Header";
 import { useSocket } from "@/hooks/useSocket";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import { MessageBubble } from "@/components/chat/MessageBubble";
+import { useAuth } from "@clerk/nextjs";
 import {
   MessageSquare, Search, Bot, Phone, User,
   ArrowUpRight, Inbox, SlidersHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function getInitials(name?: string, phone?: string): string {
   if (name && name.trim()) {
@@ -49,9 +50,13 @@ type FilterTab = "all" | "ai" | "handoff";
 
 export default function InboxPage() {
   useSocket();
+  const { getToken } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const conversations = useInboxStore((s) => s.conversations);
   const messages = useInboxStore((s) => s.messages);
   const activeId = useInboxStore((s) => s.activeConversationId);
+  const setConversations = useInboxStore((s) => s.setConversations);
+  const setMessages = useInboxStore((s) => s.setMessages);
   const setActive = useInboxStore((s) => s.setActiveConversation);
   const markAsRead = useInboxStore((s) => s.markAsRead);
   const activeMessages = activeId ? (messages[activeId] ?? []) : [];
@@ -59,6 +64,23 @@ export default function InboxPage() {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterTab>("all");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_URL}/conversations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setConversations(await res.json());
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = conversations.filter((c) => {
     const matchSearch =
@@ -72,9 +94,15 @@ export default function InboxPage() {
     return matchSearch && matchFilter;
   });
 
-  function handleSelectConv(id: string) {
+  async function handleSelectConv(id: string) {
     setActive(id);
     markAsRead(id);
+    if (messages[id]?.length) return;
+    const token = await getToken();
+    const res = await fetch(`${API_URL}/conversations/${id}/messages`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setMessages(id, await res.json());
   }
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
@@ -130,7 +158,7 @@ export default function InboxPage() {
                   <Inbox className="w-5 h-5 text-slate-600" />
                 </div>
                 <p className="text-[13px] text-slate-600 leading-relaxed">
-                  {search ? "Nenhuma conversa encontrada" : "Nenhuma conversa ativa"}
+                  {loading ? "Carregando conversas..." : search ? "Nenhuma conversa encontrada" : "Nenhuma conversa ativa"}
                 </p>
               </div>
             ) : (
@@ -141,7 +169,7 @@ export default function InboxPage() {
                 return (
                   <button
                     key={conv.id}
-                    onClick={() => handleSelectConv(conv.id)}
+                    onClick={() => void handleSelectConv(conv.id)}
                     className={`inbox-conv-item ${isActive ? "inbox-conv-item-active" : ""}`}
                   >
                     {/* Avatar */}

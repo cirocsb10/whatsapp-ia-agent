@@ -8,7 +8,8 @@ import {
   DollarSign, Package, BarChart3, ArrowUpRight,
   Mail, MessageSquare, ShoppingCart, Bot,
 } from "lucide-react";
-import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
 
@@ -67,14 +68,43 @@ function FieldRow({ label, hint, children }: { label: string; hint?: string; chi
 /* ── Tab content components ───────────────────────────────── */
 
 function TabConta() {
+  const { getToken } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const [name, setName] = useState("Minha Loja");
   const [email] = useState("contato@minhaloja.com");
+  const [slug, setSlug] = useState("minhaloja");
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    async function load() {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/settings/company`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setName(data.name ?? "Minha Loja");
+      setSlug(data.slug ?? "minhaloja");
+      setTimezone(data.timezone ?? "America/Sao_Paulo");
+    }
+    void load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSave = async () => {
     setSaving(true);
-    setTimeout(() => setSaving(false), 1400);
+    const token = await getToken();
+    const res = await fetch(`${API_URL}/settings/company`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, timezone }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    }
   };
 
   return (
@@ -128,7 +158,7 @@ function TabConta() {
         <FieldRow label="Slug da loja" hint="Identificador único, não pode ser alterado.">
           <div className="settings-slug-wrap">
             <span className="settings-slug-prefix">whatsagent.app/</span>
-            <input className="settings-input settings-slug-input" value="minhaloja" disabled style={{ opacity: 0.5, cursor: "not-allowed" }} />
+            <input className="settings-input settings-slug-input" value={slug} disabled style={{ opacity: 0.5, cursor: "not-allowed" }} />
           </div>
         </FieldRow>
 
@@ -177,7 +207,7 @@ function TabConta() {
           ) : (
             <>
               <Check className="w-3.5 h-3.5" />
-              Salvar alterações
+              {saved ? "Salvo" : "Salvar alteracoes"}
             </>
           )}
         </button>
