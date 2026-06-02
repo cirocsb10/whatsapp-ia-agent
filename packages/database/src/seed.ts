@@ -27,6 +27,7 @@ async function main() {
       email: "owner@dev-tenant.com",
       name: "Admin Dev",
       role: UserRole.OWNER,
+      isSuperAdmin: true,
     },
   });
 

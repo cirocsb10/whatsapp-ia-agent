@@ -10,6 +10,9 @@ interface ClerkUserPayload {
   image_url: string | null;
   primary_email_address_id: string;
   email_addresses: Array<{ id: string; email_address: string }>;
+  public_metadata?: {
+    tenantId?: string;
+  };
 }
 
 @Injectable()
@@ -34,9 +37,19 @@ export class ClerkWebhookService {
     const slug = this.buildSlug(email);
 
     await this.prisma.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: { name, slug, status: TenantStatus.TRIAL, planType: PlanType.STARTER },
-      });
+      const metadataTenantId = data.public_metadata?.tenantId;
+      let tenant = metadataTenantId
+        ? await tx.tenant.findUnique({ where: { id: metadataTenantId } })
+        : null;
+
+      if (!tenant) {
+        tenant = await tx.tenant.create({
+          data: { name, slug, status: TenantStatus.TRIAL, planType: PlanType.STARTER },
+        });
+      }
+
+      const existingUsers = await tx.user.count({ where: { tenantId: tenant.id } });
+      const role = existingUsers === 0 ? "OWNER" : "AGENT";
 
       await tx.user.create({
         data: {
@@ -45,7 +58,7 @@ export class ClerkWebhookService {
           email,
           name,
           avatarUrl: data.image_url,
-          role: "OWNER",
+          role,
           isActive: true,
         },
       });
