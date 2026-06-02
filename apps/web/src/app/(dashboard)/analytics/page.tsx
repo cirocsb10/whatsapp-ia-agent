@@ -9,7 +9,7 @@ import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   Target, Users, ShoppingCart, DollarSign, Clock, Zap,
-  CalendarDays,
+  CalendarDays, Star, Cpu,
 } from "lucide-react";
 
 const KPI_CARDS = [
@@ -19,6 +19,8 @@ const KPI_CARDS = [
   { key: "conversion_rate", title: "Converteram", icon: Zap, iconColor: "text-green-400", accent: "#22c55e", suffix: "%" },
   { key: "revenue_today", title: "Receita", icon: DollarSign, iconColor: "text-yellow-400", accent: "#f59e0b", money: true },
   { key: "avg_response_time_sec", title: "Tempo Medio", icon: Clock, iconColor: "text-cyan-400", accent: "#06b6d4", suffix: "s" },
+  { key: "avg_csat_score", title: "CSAT (7 dias)", icon: Star, iconColor: "text-yellow-400", accent: "#fbbf24", csat: true },
+  { key: "ai_tokens_today", title: "Tokens hoje", icon: Cpu, iconColor: "text-indigo-400", accent: "#6366f1", tokens: true },
 ];
 
 const EMPTY_FUNNEL = {
@@ -44,7 +46,7 @@ const PERIODS = [
 export default function AnalyticsPage() {
   const { apiFetch } = useApi();
   const [period, setPeriod] = useState(30);
-  const [kpis, setKpis] = useState<Record<string, number>>({});
+  const [kpis, setKpis] = useState<Record<string, number | null>>({});
   const [funnel, setFunnel] = useState(EMPTY_FUNNEL);
   const [heatmap, setHeatmap] = useState(EMPTY_HEATMAP);
   const [handoffs, setHandoffs] = useState<Record<string, number>>({});
@@ -72,11 +74,27 @@ export default function AnalyticsPage() {
   }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function formatCard(card: (typeof KPI_CARDS)[number]) {
+    if ("csat" in card && card.csat) {
+      const raw = kpis[card.key];
+      return raw != null ? `${raw}/5` : "—";
+    }
+    if ("tokens" in card && card.tokens) {
+      const raw = kpis[card.key];
+      if (raw == null) return "—";
+      return raw > 1000 ? `${(raw / 1000).toFixed(1)}k` : String(raw);
+    }
     const value = card.key in funnel ? funnel[card.key as keyof typeof funnel] : (kpis[card.key] ?? 0);
-    if (card.money) {
+    if ("money" in card && card.money) {
       return ((kpis[card.key] ?? 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
     }
-    return `${value.toLocaleString("pt-BR")}${card.suffix ?? ""}`;
+    return `${value.toLocaleString("pt-BR")}${"suffix" in card ? card.suffix ?? "" : ""}`;
+  }
+
+  function isCardEmpty(card: (typeof KPI_CARDS)[number]) {
+    if ("csat" in card && card.csat) return kpis[card.key] == null;
+    if ("tokens" in card && card.tokens) return (kpis[card.key] ?? 0) === 0;
+    const value = formatCard(card);
+    return value.replace(/\D/g, "") === "0" || value === "—";
   }
 
   return (
@@ -120,7 +138,7 @@ export default function AnalyticsPage() {
                   {...cardProps}
                   value={value}
                   loading={loading}
-                  empty={!loading && value.replace(/\D/g, "") === "0"}
+                  empty={!loading && isCardEmpty(card)}
                 />
               );
             })}
