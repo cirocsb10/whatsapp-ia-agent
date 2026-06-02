@@ -4,15 +4,16 @@ import { PrismaService } from "../../common/prisma/prisma.service";
 
 type MockPrisma = {
   $transaction: jest.Mock;
-  tenant: { create: jest.Mock };
-  user: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
+  tenant: { create: jest.Mock; findUnique: jest.Mock };
+  user: { findUnique: jest.Mock; count: jest.Mock; create: jest.Mock; update: jest.Mock };
 };
 
 const mockPrisma: MockPrisma = {
   $transaction: jest.fn((fn: (tx: MockPrisma) => Promise<void>) => fn(mockPrisma as MockPrisma)),
-  tenant: { create: jest.fn() },
+  tenant: { create: jest.fn(), findUnique: jest.fn() },
   user: {
     findUnique: jest.fn(),
+    count: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
   },
@@ -47,7 +48,9 @@ describe("ClerkWebhookService", () => {
   describe("handleUserCreated", () => {
     it("deve criar Tenant e User quando usuario nao existe", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.tenant.findUnique.mockResolvedValue(null);
       mockPrisma.tenant.create.mockResolvedValue({ id: "tenant_abc" });
+      mockPrisma.user.count.mockResolvedValue(0);
       mockPrisma.user.create.mockResolvedValue({ id: "user_abc" });
 
       await service.handleUserCreated(clerkUserPayload);
@@ -86,7 +89,9 @@ describe("ClerkWebhookService", () => {
 
     it("usa prefixo do email como nome quando first_name e null", async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.tenant.findUnique.mockResolvedValue(null);
       mockPrisma.tenant.create.mockResolvedValue({ id: "tenant_abc" });
+      mockPrisma.user.count.mockResolvedValue(0);
       mockPrisma.user.create.mockResolvedValue({ id: "user_abc" });
 
       await service.handleUserCreated({ ...clerkUserPayload, first_name: null, last_name: null });
