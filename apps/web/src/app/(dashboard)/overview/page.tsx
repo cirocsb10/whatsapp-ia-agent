@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversationsChart } from "@/components/analytics/ConversationsChart";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   MessageSquare, Zap, DollarSign, PhoneCall,
@@ -34,8 +34,7 @@ const AGENT_STATUS = [
 const SETUP_STEPS = ["Meta Business", "Agente IA", "Webhook"];
 
 export default function OverviewPage() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [kpis, setKpis] = useState<Record<string, number>>({});
   const [chart, setChart] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,11 +42,9 @@ export default function OverviewPage() {
   useEffect(() => {
     async function load() {
       try {
-        const token = await getToken();
-        const headers = { Authorization: `Bearer ${token}` };
         const [kpiRes, chartRes] = await Promise.all([
-          fetch(`${API_URL}/analytics/kpis`, { headers }),
-          fetch(`${API_URL}/analytics/conversations-chart?days=30`, { headers }),
+          apiFetch("/analytics/kpis"),
+          apiFetch("/analytics/conversations-chart?days=30"),
         ]);
         if (kpiRes.ok) setKpis(await kpiRes.json());
         if (chartRes.ok) setChart(await chartRes.json());

@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
 import {
   ShoppingCart, Plus, Search, SlidersHorizontal,
@@ -52,8 +52,7 @@ function money(cents: number) {
 }
 
 export default function OrdersPage() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -65,10 +64,7 @@ export default function OrdersPage() {
     async function load() {
       setLoading(true);
       try {
-        const token = await getToken();
-        const res = await fetch(`${API_URL}/orders?page=${page}&limit=20`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiFetch(`/orders?page=${page}&limit=20`);
         if (res.ok) {
           const data = await res.json();
           setOrders(data.items ?? []);

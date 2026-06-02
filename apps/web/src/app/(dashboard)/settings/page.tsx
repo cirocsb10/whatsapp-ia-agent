@@ -8,7 +8,7 @@ import {
   DollarSign, Package, BarChart3, ArrowUpRight,
   Mail, MessageSquare, ShoppingCart, Bot,
 } from "lucide-react";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
@@ -68,8 +68,7 @@ function FieldRow({ label, hint, children }: { label: string; hint?: string; chi
 /* ── Tab content components ───────────────────────────────── */
 
 function TabConta() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [name, setName] = useState("Minha Loja");
   const [email] = useState("contato@minhaloja.com");
   const [slug, setSlug] = useState("minhaloja");
@@ -79,10 +78,7 @@ function TabConta() {
 
   useEffect(() => {
     async function load() {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/settings/company`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiFetch("/settings/company");
       if (!res.ok) return;
       const data = await res.json();
       setName(data.name ?? "Minha Loja");
@@ -94,10 +90,8 @@ function TabConta() {
 
   const handleSave = async () => {
     setSaving(true);
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/settings/company`, {
+    const res = await apiFetch("/settings/company", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ name, timezone }),
     });
     setSaving(false);

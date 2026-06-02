@@ -1,15 +1,14 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const TONES = ["FORMAL", "INFORMAL", "FRIENDLY", "TECHNICAL", "REGIONAL"];
 const MODELS = ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"];
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
 export default function PersonaPage() {
-  const { getToken } = useAuth();
+  const { apiFetch } = useApi();
   const router = useRouter();
   const [form, setForm] = useState({
     agentName: "Assistente",
@@ -28,10 +27,7 @@ export default function PersonaPage() {
 
   useEffect(() => {
     async function load() {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/agent/config`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await apiFetch("/agent/config");
       if (res.ok) {
         const data = await res.json();
         setForm((current) => ({ ...current, ...data }));
@@ -42,10 +38,8 @@ export default function PersonaPage() {
 
   async function handleSave() {
     setSaving(true);
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/agent/config`, {
+    const res = await apiFetch("/agent/config", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(form),
     });
     setSaving(false);

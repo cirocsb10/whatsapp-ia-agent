@@ -5,7 +5,7 @@ import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversionFunnel } from "@/components/analytics/FunnelChart";
 import { ActivityHeatmap } from "@/components/analytics/HeatmapChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   Target, Users, ShoppingCart, DollarSign, Clock, Zap,
@@ -42,8 +42,7 @@ const PERIODS = [
 ];
 
 export default function AnalyticsPage() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [period, setPeriod] = useState(30);
   const [kpis, setKpis] = useState<Record<string, number>>({});
   const [funnel, setFunnel] = useState(EMPTY_FUNNEL);
@@ -55,13 +54,11 @@ export default function AnalyticsPage() {
     async function load() {
       setLoading(true);
       try {
-        const token = await getToken();
-        const headers = { Authorization: `Bearer ${token}` };
         const [kpiRes, funnelRes, heatmapRes, handoffRes] = await Promise.all([
-          fetch(`${API_URL}/analytics/kpis`, { headers }),
-          fetch(`${API_URL}/analytics/funnel?days=${period}`, { headers }),
-          fetch(`${API_URL}/analytics/heatmap?days=${period}`, { headers }),
-          fetch(`${API_URL}/analytics/handoff-reasons?days=${period}`, { headers }),
+          apiFetch("/analytics/kpis"),
+          apiFetch(`/analytics/funnel?days=${period}`),
+          apiFetch(`/analytics/heatmap?days=${period}`),
+          apiFetch(`/analytics/handoff-reasons?days=${period}`),
         ]);
         if (kpiRes.ok) setKpis(await kpiRes.json());
         if (funnelRes.ok) setFunnel(await funnelRes.json());

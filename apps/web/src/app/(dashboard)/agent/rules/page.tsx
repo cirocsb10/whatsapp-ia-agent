@@ -1,16 +1,14 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 const TYPES = ["TEXT_BLOCK", "SEMANTIC_BLOCK", "NUMERIC_CAP", "PRODUCT_RESTRICT", "HANDOFF_TRIGGER", "REGEX_MATCH"];
 const ACTIONS = ["BLOCK", "REWRITE", "HANDOFF", "LOG_ONLY"];
 interface Rule { id: string; name: string; type: string; action: string; isActive: boolean; priority: number; }
 
 export default function RulesPage() {
-  const { getToken } = useAuth();
+  const { apiFetch } = useApi();
   const router = useRouter();
   const [rules, setRules] = useState<Rule[]>([]);
   const [adding, setAdding] = useState(false);
@@ -19,10 +17,7 @@ export default function RulesPage() {
   const [cfgErr, setCfgErr] = useState<string | null>(null);
 
   async function load() {
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/agent/rules`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch("/agent/rules");
     if (res.ok) setRules(await res.json());
   }
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -37,10 +32,8 @@ export default function RulesPage() {
       return;
     }
     setSaving(true);
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/agent/rules`, {
+    const res = await apiFetch("/agent/rules", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ ...form, config }),
     });
     if (res.ok) {
@@ -52,21 +45,15 @@ export default function RulesPage() {
   }
 
   async function handleToggle(rule: Rule) {
-    const token = await getToken();
-    await fetch(`${API_URL}/agent/rules/${rule.id}`, {
+    await apiFetch(`/agent/rules/${rule.id}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ isActive: !rule.isActive }),
     });
     await load();
   }
 
   async function handleDelete(id: string) {
-    const token = await getToken();
-    await fetch(`${API_URL}/agent/rules/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await apiFetch(`/agent/rules/${id}`, { method: "DELETE" });
     await load();
   }
 

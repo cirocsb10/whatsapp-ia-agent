@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/Header";
 import { TestSimulator } from "@/components/agent/TestSimulator";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   Bot, Shield, Database, Settings, ArrowRight,
@@ -54,20 +54,17 @@ const CONFIG_SECTIONS = [
 ];
 
 export default function AgentPage() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [config, setConfig] = useState<any>(null);
   const [knowledgeCount, setKnowledgeCount] = useState(0);
   const [rulesCount, setRulesCount] = useState(0);
 
   useEffect(() => {
     async function load() {
-      const token = await getToken();
-      const headers = { Authorization: `Bearer ${token}` };
       const [configRes, knowledgeRes, rulesRes] = await Promise.all([
-        fetch(`${API_URL}/agent/config`, { headers }),
-        fetch(`${API_URL}/agent/knowledge`, { headers }),
-        fetch(`${API_URL}/agent/rules`, { headers }),
+        apiFetch("/agent/config"),
+        apiFetch("/agent/knowledge"),
+        apiFetch("/agent/rules"),
       ]);
       if (configRes.ok) setConfig(await configRes.json());
       if (knowledgeRes.ok) setKnowledgeCount((await knowledgeRes.json()).length);

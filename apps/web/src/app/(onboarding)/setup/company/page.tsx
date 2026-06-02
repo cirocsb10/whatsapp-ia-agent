@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -42,10 +42,9 @@ function getInitial(name?: string): string | null {
 
 export default function CompanySetupPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { apiFetch } = useApi();
   const [slugDisplay, setSlugDisplay] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
   const form = useForm<F>({
     resolver: zodResolver(schema),
@@ -57,10 +56,7 @@ export default function CompanySetupPage() {
   useEffect(() => {
     async function load() {
       try {
-        const token = await getToken();
-        const res = await fetch(`${API_URL}/settings/company`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiFetch("/settings/company");
         if (!res.ok) return;
         const data = await res.json();
         form.reset({
@@ -78,13 +74,8 @@ export default function CompanySetupPage() {
   async function onSubmit(data: F) {
     setApiError(null);
     try {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/settings/company`, {
+      const res = await apiFetch("/settings/company", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ name: data.name, timezone: data.timezone }),
       });
 

@@ -3,7 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { useSocket } from "@/hooks/useSocket";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import {
   MessageSquare, Search, Bot, Phone, User,
   ArrowUpRight, Inbox, SlidersHorizontal,
@@ -50,8 +50,7 @@ type FilterTab = "all" | "ai" | "handoff";
 
 export default function InboxPage() {
   useSocket();
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const conversations = useInboxStore((s) => s.conversations);
   const messages = useInboxStore((s) => s.messages);
   const activeId = useInboxStore((s) => s.activeConversationId);
@@ -70,10 +69,7 @@ export default function InboxPage() {
     async function load() {
       setLoading(true);
       try {
-        const token = await getToken();
-        const res = await fetch(`${API_URL}/conversations`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await apiFetch("/conversations");
         if (res.ok) setConversations(await res.json());
       } finally {
         setLoading(false);
@@ -98,10 +94,7 @@ export default function InboxPage() {
     setActive(id);
     markAsRead(id);
     if (messages[id]?.length) return;
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/conversations/${id}/messages`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch(`/conversations/${id}/messages`);
     if (res.ok) setMessages(id, await res.json());
   }
 

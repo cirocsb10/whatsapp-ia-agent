@@ -1,14 +1,12 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 interface KB { id: string; name: string; type: string; isIndexed: boolean; chunkCount?: number; }
 
 export default function KnowledgePage() {
-  const { getToken } = useAuth();
+  const { apiFetch } = useApi();
   const router = useRouter();
   const [items, setItems] = useState<KB[]>([]);
   const [form, setForm] = useState({ name: "", type: "TEXT", content: "" });
@@ -16,20 +14,15 @@ export default function KnowledgePage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/agent/knowledge`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await apiFetch("/agent/knowledge");
     if (res.ok) setItems(await res.json());
   }
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleCreate() {
     setSaving(true);
-    const token = await getToken();
-    const res = await fetch(`${API_URL}/agent/knowledge`, {
+    const res = await apiFetch("/agent/knowledge", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(form),
     });
     if (res.ok) {
@@ -41,11 +34,7 @@ export default function KnowledgePage() {
   }
 
   async function handleDelete(id: string) {
-    const token = await getToken();
-    await fetch(`${API_URL}/agent/knowledge/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await apiFetch(`/agent/knowledge/${id}`, { method: "DELETE" });
     await load();
   }
 
