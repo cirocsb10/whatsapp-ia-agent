@@ -12,6 +12,21 @@ export class OutboundConsumer implements OnModuleInit {
     private readonly messaging: MessagingService,
   ) {}
 
+  async handleOutboundMessage(event: {
+    waPhoneId: string;
+    toPhone: string;
+    messages: Array<{ type: string; text?: string; imageUrl?: string }>;
+  }): Promise<void> {
+    for (const m of event.messages) {
+      await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
+        type: m.type as "text" | "image" | "template",
+        ...(m.text !== undefined && { text: m.text }),
+        ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
+      });
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+
   async onModuleInit(): Promise<void> {
     const url = this.config.get<string>("rabbitmq.url") as string;
 
@@ -33,14 +48,7 @@ export class OutboundConsumer implements OnModuleInit {
             messages: Array<{ type: string; text?: string; imageUrl?: string }>;
           };
 
-          for (const m of event.messages) {
-            await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
-              type: m.type as "text" | "image" | "template",
-              ...(m.text !== undefined && { text: m.text }),
-              ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
-            });
-            await new Promise((r) => setTimeout(r, 400));
-          }
+          await this.handleOutboundMessage(event);
           channel.ack(msg);
         } catch (err) {
           this.logger.error("Outbound error:", err);
