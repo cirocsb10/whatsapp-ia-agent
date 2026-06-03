@@ -29,9 +29,15 @@ export class AudioService {
   ): Promise<{ audioUrl: string; transcript: string }> {
     this.logger.log(`Processing audio: mediaId=${mediaId}`);
     const audioBuffer = await this.downloadFromMeta(mediaId);
-    const audioUrl = await this.uploadToStorage(audioBuffer, mediaId);
+    const audioUrl = await this.uploadToStorage(audioBuffer, mediaId, "audio/ogg", "audio", "ogg");
     const transcript = await this.whisper.transcribe(audioBuffer, "audio/ogg");
     return { audioUrl, transcript };
+  }
+
+  async downloadImageAndStore(mediaId: string): Promise<string> {
+    this.logger.log(`Processing image: mediaId=${mediaId}`);
+    const buffer = await this.downloadFromMeta(mediaId);
+    return this.uploadToStorage(buffer, mediaId, "image/jpeg", "image", "jpg");
   }
 
   private async downloadFromMeta(mediaId: string): Promise<Buffer> {
@@ -51,12 +57,18 @@ export class AudioService {
     return Buffer.from(audioResp.data as ArrayBuffer);
   }
 
-  private async uploadToStorage(buffer: Buffer, mediaId: string): Promise<string> {
+  private async uploadToStorage(
+    buffer: Buffer,
+    mediaId: string,
+    mimeType: string,
+    folder: string,
+    ext: string,
+  ): Promise<string> {
     const bucket = this.config.get<string>("storage.bucket") as string;
-    const objectName = `audio/${randomUUID()}-${mediaId}.ogg`;
+    const objectName = `${folder}/${randomUUID()}-${mediaId}.${ext}`;
 
     await this.minio.putObject(bucket, objectName, buffer, buffer.length, {
-      "Content-Type": "audio/ogg",
+      "Content-Type": mimeType,
     });
 
     return this.minio.presignedGetObject(bucket, objectName, 3600);

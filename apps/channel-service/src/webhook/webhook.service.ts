@@ -144,8 +144,15 @@ export class WebhookService {
         this.logger.error(`Audio failed for ${msg.id}:`, err);
         event["audioId"] = msg.audio.id;
       }
-    } else if (msg.type === "image") {
-      event["imageId"] = msg.image?.id;
+    } else if (msg.type === "image" && msg.image?.id) {
+      try {
+        const imageUrl = await this.audio.downloadImageAndStore(msg.image.id);
+        event["imageId"] = msg.image.id;
+        event["imageUrl"] = imageUrl;
+      } catch (err) {
+        this.logger.error(`Image failed for ${msg.id}:`, err);
+        event["imageId"] = msg.image.id;
+      }
     } else if (msg.type === "document") {
       event["documentId"] = msg.document?.id;
       event["documentName"] = msg.document?.filename;

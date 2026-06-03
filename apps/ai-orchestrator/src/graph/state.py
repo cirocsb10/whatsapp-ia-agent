@@ -39,6 +39,7 @@ class ConversationState(TypedDict):
     current_message: str
     current_message_type: str  # "text" | "audio" | "image"
     audio_transcript: Optional[str]
+    image_url: Optional[str]
 
     # Conversation history (Annotated with operator.add = accumulative)
     messages: Annotated[list[MessageSummary], operator.add]

@@ -6,6 +6,8 @@ from src.services.guard_rail import GuardRailService
 from src.config import settings
 import structlog
 import time
+import base64
+import httpx
 
 log = structlog.get_logger(__name__)
 
@@ -84,8 +86,29 @@ async def route_node(state: ConversationState) -> dict:
     }
 
 
+async def _build_image_message(text: str, image_url: str) -> HumanMessage:
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(image_url)
+            resp.raise_for_status()
+            b64 = base64.b64encode(resp.content).decode()
+        return HumanMessage(content=[
+            {"type": "text", "text": text},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}", "detail": "low"}},
+        ])
+    except Exception as e:
+        log.error("image_fetch_failed", error=str(e), url=image_url[:80])
+        return HumanMessage(content=text)
+
+
 async def reasoning_node(state: ConversationState) -> dict:
-    llm = _get_llm_with_tools()
+    has_image = bool(state.get("image_url"))
+
+    if has_image:
+        from src.services.llm import get_llm
+        llm = get_llm(settings.openai_model_simple)
+    else:
+        llm = _get_llm_with_tools()
 
     chat_messages = [SystemMessage(content=state["system_prompt"])]
 
@@ -101,7 +124,12 @@ async def reasoning_node(state: ConversationState) -> dict:
     if state.get("audio_transcript"):
         current_msg = f"[Áudio transcrito]: {state['audio_transcript']}"
 
-    chat_messages.append(HumanMessage(content=current_msg))
+    if has_image:
+        image_text = current_msg if current_msg != "[O usuário enviou uma imagem]" else "O usuário enviou uma imagem. Descreva o que está vendo e ajude com base no conteúdo."
+        chat_messages.append(SystemMessage(content="IMPORTANTE: Você tem capacidade de visão e PODE analisar imagens. Analise a imagem a seguir e responda ao cliente."))
+        chat_messages.append(await _build_image_message(image_text, state["image_url"]))
+    else:
+        chat_messages.append(HumanMessage(content=current_msg))
 
     response = await llm.ainvoke(chat_messages)
 

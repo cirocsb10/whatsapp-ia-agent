@@ -27,6 +27,8 @@ class InboundMessageEvent(BaseModel):
     audio_id: str | None = Field(default=None, alias="audioId", max_length=200)
     audio_url: str | None = Field(default=None, alias="audioUrl", max_length=2000)
     audio_transcript: str | None = Field(default=None, alias="audioTranscript", max_length=10_000)
+    image_id: str | None = Field(default=None, alias="imageId", max_length=200)
+    image_url: str | None = Field(default=None, alias="imageUrl", max_length=2000)
     contact_id: str | None = Field(default=None, alias="contactId", max_length=120)
     timestamp: int | None = Field(default=None)
 
@@ -80,7 +82,10 @@ async def process_inbound_message(
             pb = PromptBuilderService()
             agent_config = await pb.get_agent_config(tenant_id)
 
-            current_text = event.text or event.audio_transcript or "[mídia sem texto]"
+            if event.message_type == "image":
+                current_text = event.text or "[O usuário enviou uma imagem]"
+            else:
+                current_text = event.text or event.audio_transcript or "[mídia sem texto]"
 
             initial_state = {
                 "tenant_id": tenant_id,
@@ -89,6 +94,7 @@ async def process_inbound_message(
                 "current_message": current_text,
                 "current_message_type": event.message_type,
                 "audio_transcript": event.audio_transcript,
+                "image_url": event.image_url,
                 "messages": session.messages,
                 "current_stage": session.current_stage,
                 "cart": session.cart,
