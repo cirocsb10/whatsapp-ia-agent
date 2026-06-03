@@ -37,7 +37,7 @@ export class AudioService {
   private async downloadFromMeta(mediaId: string): Promise<Buffer> {
     const base = this.config.get<string>("meta.graphApiBaseUrl");
     const version = this.config.get<string>("meta.graphApiVersion");
-    const token = process.env["META_ACCESS_TOKEN"] ?? "";
+    const token = process.env["META_SYSTEM_USER_TOKEN"] ?? "";
 
     const urlResp = await axios.get(`${base}/${version}/${mediaId}`, {
       headers: { Authorization: `Bearer ${token}` },

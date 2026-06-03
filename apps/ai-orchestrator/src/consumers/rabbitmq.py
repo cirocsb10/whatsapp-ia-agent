@@ -24,6 +24,8 @@ class InboundMessageEvent(BaseModel):
     message_id: str | None = Field(default=None, alias="messageId", max_length=200)
     message_type: str = Field(default="text", alias="type", max_length=30)
     text: str | None = Field(default=None, max_length=10_000)
+    audio_id: str | None = Field(default=None, alias="audioId", max_length=200)
+    audio_url: str | None = Field(default=None, alias="audioUrl", max_length=2000)
     audio_transcript: str | None = Field(default=None, alias="audioTranscript", max_length=10_000)
     contact_id: str | None = Field(default=None, alias="contactId", max_length=120)
     timestamp: int | None = Field(default=None)
