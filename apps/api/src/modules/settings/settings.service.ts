@@ -39,8 +39,9 @@ export class SettingsService {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) throw new NotFoundException("Tenant not found");
 
-    const data: Pick<Prisma.TenantUpdateInput, "whatsappPhoneId" | "metaAccessToken"> = {
+    const data: Pick<Prisma.TenantUpdateInput, "whatsappPhoneId" | "metaAccessToken" | "whatsappStatus"> = {
       whatsappPhoneId: dto.whatsappPhoneId,
+      whatsappStatus: dto.whatsappPhoneId ? "CONNECTED" : "DISCONNECTED",
     };
     if (dto.metaAccessToken !== undefined) data.metaAccessToken = dto.metaAccessToken;
 
