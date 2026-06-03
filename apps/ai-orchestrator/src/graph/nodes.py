@@ -24,9 +24,9 @@ async def _fetch_guard_rules(tenant_id: str) -> list[dict]:
     async with get_async_session() as session:
         result = await session.execute(
             text("""
-                SELECT type, action, config, priority, fallback_message
-                FROM guard_rules
-                WHERE tenant_id = :tid AND is_active = true
+                SELECT type, action, config, priority, "fallbackMessage"
+                FROM "GuardRule"
+                WHERE "tenantId" = :tid AND "isActive" = true
                 ORDER BY priority ASC
             """),
             {"tid": tenant_id},
@@ -199,7 +199,7 @@ async def output_node(state: ConversationState) -> dict:
             from sqlalchemy import text
             async with get_async_session() as session:
                 result = await session.execute(
-                    text("SELECT handoff_message FROM agent_configs WHERE tenant_id = :tid"),
+                    text('SELECT "handoffMessage" FROM "AgentConfig" WHERE "tenantId" = :tid'),
                     {"tid": state["tenant_id"]},
                 )
                 row = result.fetchone()

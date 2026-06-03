@@ -18,12 +18,12 @@ class PromptBuilderService:
         async with get_async_session() as session:
             result = await session.execute(
                 text("""
-                    SELECT agent_name, tone, greeting_message, business_hours,
-                           llm_model, llm_temperature, handoff_message,
-                           handoff_order_value_brl, auto_handoff_threshold,
-                           system_prompt_base
-                    FROM agent_configs
-                    WHERE tenant_id = :tid
+                    SELECT "agentName", tone, "greetingMessage", "businessHours",
+                           "llmModel", "llmTemperature", "handoffMessage",
+                           "handoffOrderValueBrl", "autoHandoffThreshold",
+                           "systemPromptBase"
+                    FROM "AgentConfig"
+                    WHERE "tenantId" = :tid
                 """),
                 {"tid": tenant_id},
             )
@@ -62,9 +62,9 @@ class PromptBuilderService:
             result = await session.execute(
                 text("""
                     SELECT name, content
-                    FROM knowledge_bases
-                    WHERE tenant_id = :tid AND type IN ('faq', 'text') AND is_indexed = true
-                    ORDER BY created_at ASC
+                    FROM "KnowledgeBase"
+                    WHERE "tenantId" = :tid AND type IN ('faq', 'text') AND "isIndexed" = true
+                    ORDER BY "createdAt" ASC
                     LIMIT 5
                 """),
                 {"tid": tenant_id},

@@ -37,13 +37,13 @@ class EmbeddingsService:
         async with get_async_session() as session:
             result = await session.execute(
                 text("""
-                    SELECT id, name, description, price_cents,
-                           stock_qty, reserved_qty,
+                    SELECT id, name, description, "priceCents",
+                           "stockQty", "reservedQty",
                            1 - (embedding <=> :embedding::vector) AS similarity
-                    FROM products
-                    WHERE tenant_id = :tenant_id
-                      AND is_active = true
-                      AND stock_qty > reserved_qty
+                    FROM "Product"
+                    WHERE "tenantId" = :tenant_id
+                      AND status = 'ACTIVE'
+                      AND "stockQty" > "reservedQty"
                     ORDER BY embedding <=> :embedding::vector
                     LIMIT :limit
                 """),
@@ -74,7 +74,7 @@ class EmbeddingsService:
         async with get_async_session() as session:
             await session.execute(
                 text("""
-                    UPDATE products
+                    UPDATE "Product"
                     SET embedding = :embedding::vector
                     WHERE id = :product_id
                 """),

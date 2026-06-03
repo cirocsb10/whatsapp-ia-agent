@@ -21,9 +21,9 @@ async def _get_product_stock(product_id: str, tenant_id: str) -> dict:
     async with get_async_session() as session:
         result = await session.execute(
             text("""
-                SELECT stock_qty, reserved_qty
-                FROM products
-                WHERE id = :product_id AND tenant_id = :tenant_id
+                SELECT "stockQty", "reservedQty"
+                FROM "Product"
+                WHERE id = :product_id AND "tenantId" = :tenant_id
             """),
             {"product_id": product_id, "tenant_id": tenant_id},
         )
@@ -41,9 +41,9 @@ async def _get_authoritative_price(product_id: str, tenant_id: str) -> dict | No
     async with get_async_session() as session:
         result = await session.execute(
             text("""
-                SELECT name, price_cents, stock_qty, reserved_qty
-                FROM products
-                WHERE id = :product_id AND tenant_id = :tenant_id AND status = 'ACTIVE'
+                SELECT name, "priceCents", "stockQty", "reservedQty"
+                FROM "Product"
+                WHERE id = :product_id AND "tenantId" = :tenant_id AND status = 'ACTIVE'
             """),
             {"product_id": product_id, "tenant_id": tenant_id},
         )
@@ -357,14 +357,14 @@ async def get_conversation_history_tool(
         async with get_async_session() as session:
             result = await session.execute(
                 text("""
-                    SELECT o.order_number, o.total_cents, o.status, o.created_at,
+                    SELECT o."orderNumber", o."totalCents", o.status, o."createdAt",
                            COUNT(oi.id) as item_count
-                    FROM orders o
-                    JOIN contacts c ON o.contact_id = c.id
-                    JOIN order_items oi ON oi.order_id = o.id
-                    WHERE c.phone = :phone AND o.tenant_id = :tenant_id
+                    FROM "Order" o
+                    JOIN "Contact" c ON o."contactId" = c.id
+                    JOIN "OrderItem" oi ON oi."orderId" = o.id
+                    WHERE c.phone = :phone AND o."tenantId" = :tenant_id
                     GROUP BY o.id
-                    ORDER BY o.created_at DESC
+                    ORDER BY o."createdAt" DESC
                     LIMIT :limit
                 """),
                 {"phone": contact_phone, "tenant_id": tenant_id, "limit": limit},
@@ -415,8 +415,8 @@ async def knowledge_search_tool(query: str, tenant_id: str, limit: int = 4) -> s
                 SELECT kc.content,
                        kb.name AS source,
                        1 - (kc.embedding <=> :embedding::vector) AS similarity
-                FROM knowledge_chunks kc
-                JOIN knowledge_bases kb ON kb.id = kc."knowledgeBaseId"
+                FROM "KnowledgeChunk" kc
+                JOIN "KnowledgeBase" kb ON kb.id = kc."knowledgeBaseId"
                 WHERE kc."tenantId" = :tenant_id
                   AND 1 - (kc.embedding <=> :embedding::vector) > 0.6
                 ORDER BY kc.embedding <=> :embedding::vector

@@ -12,7 +12,7 @@ class KnowledgeIndexingService:
         async with get_async_session() as session:
             result = await session.execute(
                 text("""
-                    SELECT id, content, type FROM knowledge_bases
+                    SELECT id, content, type FROM "KnowledgeBase"
                     WHERE id = :id AND "tenantId" = :tenant_id
                 """),
                 {"id": knowledge_base_id, "tenant_id": tenant_id},
@@ -24,7 +24,7 @@ class KnowledgeIndexingService:
             chunks = self._split_into_chunks(row[1])
 
             await session.execute(
-                text("DELETE FROM knowledge_chunks WHERE \"knowledgeBaseId\" = :id"),
+                text("DELETE FROM \"KnowledgeChunk\" WHERE \"knowledgeBaseId\" = :id"),
                 {"id": knowledge_base_id},
             )
 
@@ -33,7 +33,7 @@ class KnowledgeIndexingService:
                 embedding_str = f"[{','.join(str(v) for v in embedding)}]"
                 await session.execute(
                     text("""
-                        INSERT INTO knowledge_chunks
+                        INSERT INTO "KnowledgeChunk"
                             (id, "knowledgeBaseId", "tenantId", content, embedding, "chunkIndex")
                         VALUES (gen_random_uuid(), :kb_id, :tenant_id, :content, :embedding::vector, :idx)
                     """),
@@ -48,7 +48,7 @@ class KnowledgeIndexingService:
 
             await session.execute(
                 text("""
-                    UPDATE knowledge_bases
+                    UPDATE "KnowledgeBase"
                     SET "isIndexed" = true, "indexedAt" = now(), "chunkCount" = :count
                     WHERE id = :id
                 """),
