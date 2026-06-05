@@ -1,4 +1,5 @@
 "use client";
+import { getEmojiOnlyVariant } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 import { Bot, FileText, Download } from "lucide-react";
 import { useState } from "react";
@@ -166,12 +167,14 @@ export function MessageBubble({
   }
 
   /* ── Text (default) ── */
+  const emojiVariant = text ? getEmojiOnlyVariant(text) : null;
+
   return (
     <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
       <div className={cn("max-w-[72%] min-w-[80px]", isInbound ? "ml-1" : "mr-1")}>
-        <div className={bubbleClass}>
+        <div className={cn(bubbleClass, emojiVariant && `bubble--emoji-only bubble--emoji-${emojiVariant}`)}>
           {text ? (
-            <p className="bubble-text">{text}</p>
+            <p className={cn("bubble-text", emojiVariant && "bubble-text--emoji-only")}>{text}</p>
           ) : (
             <p className="bubble-text" style={{ opacity: 0.6 }}>
               {type === "audio" ? "🎤 Mensagem de voz" : type === "image" ? "🖼 Imagem" : "📎 Mídia"}

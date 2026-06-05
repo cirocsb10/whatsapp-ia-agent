@@ -7,12 +7,14 @@ interface InboxStore {
   conversations: Conversation[];
   messages: Record<string, Message[]>;
   activeConversationId: string | null;
+  socketStatus: "connected" | "disconnected" | "reconnecting";
   setConversations: (c: Conversation[]) => void;
   setMessages: (conversationId: string, messages: Message[]) => void;
   setActiveConversation: (id: string | null) => void;
   addMessage: (msg: any) => void;
   updateConversationStatus: (u: any) => void;
   updateMessageStatus: (payload: { conversationId: string; waMessageId: string; status: "sent" | "delivered" | "read" | "failed" }) => void;
+  setSocketStatus: (s: "connected" | "disconnected" | "reconnecting") => void;
   addHandoffConversation: (e: any) => void;
   markAsRead: (id: string) => void;
 }
@@ -21,6 +23,8 @@ export const useInboxStore = create<InboxStore>((set) => ({
   conversations: [],
   messages: {},
   activeConversationId: null,
+  socketStatus: "disconnected",
+  setSocketStatus: (socketStatus) => set({ socketStatus }),
   setConversations: (conversations) => set({ conversations }),
   setMessages: (conversationId, messages) => set((s) => ({
     messages: { ...s.messages, [conversationId]: messages },
