@@ -40,6 +40,13 @@ export class AudioService {
     return this.uploadToStorage(buffer, mediaId, "image/jpeg", "image", "jpg");
   }
 
+  async downloadDocumentAndStore(mediaId: string, filename: string): Promise<string> {
+    this.logger.log(`Processing document: mediaId=${mediaId}`);
+    const buffer = await this.downloadFromMeta(mediaId);
+    const ext = filename.split(".").pop() ?? "bin";
+    return this.uploadToStorage(buffer, mediaId, "application/octet-stream", "document", ext);
+  }
+
   private async downloadFromMeta(mediaId: string): Promise<Buffer> {
     const base = this.config.get<string>("meta.graphApiBaseUrl");
     const version = this.config.get<string>("meta.graphApiVersion");

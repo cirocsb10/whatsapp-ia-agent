@@ -2,9 +2,11 @@ import { Test } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { OutboundConsumer } from "./outbound.consumer";
 import { MessagingService } from "../messaging/messaging.service";
+import { PrismaService } from "../prisma/prisma.service";
 
 const mockMessaging = { sendMessage: jest.fn().mockResolvedValue(undefined) };
 const mockConfig = { get: jest.fn().mockReturnValue("amqp://localhost") };
+const mockPrisma = { message: { create: jest.fn().mockResolvedValue({}) } };
 
 describe("OutboundConsumer.handleOutboundMessage", () => {
   let consumer: OutboundConsumer;
@@ -15,10 +17,12 @@ describe("OutboundConsumer.handleOutboundMessage", () => {
         OutboundConsumer,
         { provide: MessagingService, useValue: mockMessaging },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: PrismaService, useValue: mockPrisma },
       ],
     }).compile();
     consumer = module.get(OutboundConsumer);
     jest.clearAllMocks();
+    mockPrisma.message.create.mockResolvedValue({});
     jest.useFakeTimers();
   });
 

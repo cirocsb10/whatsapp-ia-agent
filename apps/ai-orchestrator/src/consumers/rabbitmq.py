@@ -77,7 +77,7 @@ async def process_inbound_message(
 
             log.info("Processing inbound", tenant=tenant_id, phone=contact_phone)
 
-            session = await session_svc.get_or_create(tenant_id, contact_phone)
+            session = await session_svc.get_or_create(tenant_id, contact_phone, event.conversation_id)
 
             pb = PromptBuilderService()
             agent_config = await pb.get_agent_config(tenant_id)

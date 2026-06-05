@@ -39,18 +39,28 @@ class SessionService:
     def _key(self, tenant_id: str, contact_phone: str) -> str:
         return f"session:{tenant_id}:{contact_phone}"
 
-    async def get_or_create(self, tenant_id: str, contact_phone: str) -> Session:
+    async def get_or_create(
+        self,
+        tenant_id: str,
+        contact_phone: str,
+        conversation_id: str | None = None,
+    ) -> Session:
         key = self._key(tenant_id, contact_phone)
         data = await self._client.get(key)
 
         if data:
             parsed = json.loads(data)
-            return Session(**parsed)
+            session = Session(**parsed)
+            # Sync conversation_id with DB whenever it changes (new conversation)
+            if conversation_id and session.conversation_id != conversation_id:
+                session.conversation_id = conversation_id
+                await self._save(session)
+            return session
 
         session = Session(
             tenant_id=tenant_id,
             contact_phone=contact_phone,
-            conversation_id=str(uuid.uuid4()),
+            conversation_id=conversation_id or str(uuid.uuid4()),
         )
         await self._save(session)
         return session

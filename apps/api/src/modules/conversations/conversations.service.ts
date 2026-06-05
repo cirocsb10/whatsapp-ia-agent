@@ -40,7 +40,7 @@ export class ConversationsService {
     });
     if (!conversation) throw new NotFoundException("Conversation not found");
 
-    return this.prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where: { conversationId, tenantId },
       orderBy: { sentAt: "asc" },
       select: {
@@ -49,9 +49,23 @@ export class ConversationsService {
         direction: true,
         type: true,
         text: true,
+        imageUrl: true,
+        audioUrl: true,
+        documentUrl: true,
+        documentName: true,
         sentAt: true,
         isFromAi: true,
       },
     });
+
+    return messages.map((m) => ({
+      ...m,
+      direction: m.direction.toLowerCase() as "inbound" | "outbound",
+      type: m.type.toLowerCase(),
+      imageUrl: m.imageUrl ?? undefined,
+      audioUrl: m.audioUrl ?? undefined,
+      documentUrl: m.documentUrl ?? undefined,
+      documentName: m.documentName ?? undefined,
+    }));
   }
 }

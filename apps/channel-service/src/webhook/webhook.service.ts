@@ -137,25 +137,40 @@ export class WebhookService {
           msg.audio.id,
           phoneNumberId,
         );
-        event["audioId"] = msg.audio.id;
         event["audioUrl"] = audioUrl;
         event["audioTranscript"] = transcript;
+        await this.prisma.message.updateMany({
+          where: { waMessageId: msg.id },
+          data: { audioUrl, audioTranscript: transcript },
+        });
       } catch (err) {
         this.logger.error(`Audio failed for ${msg.id}:`, err);
-        event["audioId"] = msg.audio.id;
       }
     } else if (msg.type === "image" && msg.image?.id) {
       try {
         const imageUrl = await this.audio.downloadImageAndStore(msg.image.id);
-        event["imageId"] = msg.image.id;
         event["imageUrl"] = imageUrl;
+        await this.prisma.message.updateMany({
+          where: { waMessageId: msg.id },
+          data: { imageUrl },
+        });
       } catch (err) {
         this.logger.error(`Image failed for ${msg.id}:`, err);
-        event["imageId"] = msg.image.id;
       }
-    } else if (msg.type === "document") {
-      event["documentId"] = msg.document?.id;
-      event["documentName"] = msg.document?.filename;
+    } else if (msg.type === "document" && msg.document?.id) {
+      const docName = msg.document.filename ?? "documento";
+      try {
+        const docUrl = await this.audio.downloadDocumentAndStore(msg.document.id, docName);
+        event["documentUrl"] = docUrl;
+        event["documentName"] = docName;
+        await this.prisma.message.updateMany({
+          where: { waMessageId: msg.id },
+          data: { documentUrl: docUrl, documentName: docName },
+        });
+      } catch (err) {
+        this.logger.error(`Document failed for ${msg.id}:`, err);
+        event["documentName"] = docName;
+      }
     }
 
     await this.inbound.publishInbound(event);

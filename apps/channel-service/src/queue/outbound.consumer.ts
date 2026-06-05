@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as amqplib from "amqplib";
 import { MessagingService } from "../messaging/messaging.service";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class OutboundConsumer implements OnModuleInit {
@@ -10,9 +11,12 @@ export class OutboundConsumer implements OnModuleInit {
   constructor(
     private readonly config: ConfigService,
     private readonly messaging: MessagingService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async handleOutboundMessage(event: {
+    tenantId?: string;
+    conversationId?: string;
     waPhoneId: string;
     toPhone: string;
     messages: Array<{ type: string; text?: string; imageUrl?: string }>;
@@ -23,6 +27,26 @@ export class OutboundConsumer implements OnModuleInit {
         ...(m.text !== undefined && { text: m.text }),
         ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
       });
+
+      if (event.tenantId && event.conversationId) {
+        try {
+          await this.prisma.message.create({
+            data: {
+              tenantId: event.tenantId,
+              conversationId: event.conversationId,
+              direction: "OUTBOUND",
+              type: m.type.toUpperCase() as any,
+              ...(m.text !== undefined && { text: m.text }),
+              ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
+              isFromAi: true,
+              sentAt: new Date(),
+            },
+          });
+        } catch (err) {
+          this.logger.warn("Failed to persist outbound message:", err);
+        }
+      }
+
       await new Promise((r) => setTimeout(r, 400));
     }
   }
@@ -43,6 +67,8 @@ export class OutboundConsumer implements OnModuleInit {
         if (!msg) return;
         try {
           const event = JSON.parse(msg.content.toString()) as {
+            tenantId?: string;
+            conversationId?: string;
             waPhoneId: string;
             toPhone: string;
             messages: Array<{ type: string; text?: string; imageUrl?: string }>;
