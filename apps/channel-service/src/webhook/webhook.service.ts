@@ -132,6 +132,7 @@ export class WebhookService {
     if (msg.type === "text") {
       event["text"] = msg.text?.body;
     } else if (msg.type === "audio" && msg.audio?.id) {
+      event["audioId"] = msg.audio.id;
       try {
         const { audioUrl, transcript } = await this.audio.downloadAndTranscribe(
           msg.audio.id,
@@ -147,6 +148,7 @@ export class WebhookService {
         this.logger.error(`Audio failed for ${msg.id}:`, err);
       }
     } else if (msg.type === "image" && msg.image?.id) {
+      event["imageId"] = msg.image.id;
       try {
         const imageUrl = await this.audio.downloadImageAndStore(msg.image.id);
         event["imageUrl"] = imageUrl;
@@ -159,6 +161,7 @@ export class WebhookService {
       }
     } else if (msg.type === "document" && msg.document?.id) {
       const docName = msg.document.filename ?? "documento";
+      event["documentId"] = msg.document.id;
       try {
         const docUrl = await this.audio.downloadDocumentAndStore(msg.document.id, docName);
         event["documentUrl"] = docUrl;

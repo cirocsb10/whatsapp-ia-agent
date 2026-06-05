@@ -33,6 +33,7 @@ const mockPrisma: Record<string, any> = {
   },
   message: {
     create: jest.fn(),
+    updateMany: jest.fn(),
   },
 };
 
@@ -79,6 +80,7 @@ describe("WebhookService", () => {
     mockPrisma.contact.upsert.mockResolvedValue(mockContact);
     mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
     mockPrisma.conversation.create.mockResolvedValue(mockConversation);
+    mockPrisma.message.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it("publishes inbound event for text message", async () => {
@@ -193,8 +195,12 @@ describe("WebhookService", () => {
     };
     await service.processWebhook(payload);
     expect(mockAudio.downloadAndTranscribe).toHaveBeenCalledWith("media_id", "pid");
+    expect(mockPrisma.message.updateMany).toHaveBeenCalledWith({
+      where: { waMessageId: "wamid.2" },
+      data: { audioUrl: "http://s3/a.ogg", audioTranscript: "camiseta" },
+    });
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
-      expect.objectContaining({ audioTranscript: "camiseta" }),
+      expect.objectContaining({ audioId: "media_id", audioTranscript: "camiseta" }),
     );
   });
 });

@@ -29,6 +29,7 @@ export interface InboundMessageEvent {
   imageId?: string;
   imageUrl?: string;
   documentId?: string;
+  documentUrl?: string;
   documentName?: string;
   locationLat?: number;
   locationLng?: number;
