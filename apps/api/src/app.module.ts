@@ -13,6 +13,7 @@ import { ClerkWebhookModule } from "./modules/clerk/clerk-webhook.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { AgentModule } from "./modules/agent/agent.module";
+import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
 
 @Module({
   imports: [
@@ -40,5 +41,6 @@ import { AgentModule } from "./modules/agent/agent.module";
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
   ],
+  providers: [InboxEventsConsumer],
 })
 export class AppModule {}

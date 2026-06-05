@@ -27,10 +27,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     const token = client.handshake.auth["token"] as string | undefined;
-    const claimedTenantId = client.handshake.auth["tenantId"] as string | undefined;
 
-    if (!token || !claimedTenantId) {
-      this.logger.warn(`Socket ${client.id} rejected: missing token or tenantId`);
+    if (!token) {
+      this.logger.warn(`Socket ${client.id} rejected: missing token`);
       client.disconnect();
       return;
     }
@@ -43,26 +42,28 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         select: { tenantId: true },
       });
 
-      if (!user || user.tenantId !== claimedTenantId) {
-        this.logger.warn(`Socket ${client.id} rejected: tenant mismatch`);
+      if (!user) {
+        this.logger.warn(`Socket ${client.id} rejected: user not found`);
         client.disconnect();
         return;
       }
+
+      const tenantId = user.tenantId;
+      if (!tenantSockets.has(tenantId)) tenantSockets.set(tenantId, new Set());
+      tenantSockets.get(tenantId)!.add(client.id);
+      void client.join(`tenant:${tenantId}`);
+      // Store tenantId on socket data for disconnect cleanup
+      (client as any).tenantId = tenantId;
+      this.logger.log(`Socket ${client.id} authenticated for tenant ${tenantId}`);
     } catch {
       this.logger.warn(`Socket ${client.id} rejected: invalid token`);
       client.disconnect();
-      return;
     }
-
-    if (!tenantSockets.has(claimedTenantId)) tenantSockets.set(claimedTenantId, new Set());
-    tenantSockets.get(claimedTenantId)!.add(client.id);
-    void client.join(`tenant:${claimedTenantId}`);
-    this.logger.log(`Socket ${client.id} authenticated for tenant ${claimedTenantId}`);
   }
 
   handleDisconnect(client: Socket) {
-    const tenantId = client.handshake.auth["tenantId"] as string;
-    tenantSockets.get(tenantId)?.delete(client.id);
+    const tenantId = (client as any).tenantId as string | undefined;
+    if (tenantId) tenantSockets.get(tenantId)?.delete(client.id);
   }
 
   emitToTenant(tenantId: string, event: object): void {
