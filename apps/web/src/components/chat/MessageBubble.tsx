@@ -1,40 +1,160 @@
+"use client";
 import { cn } from "@/lib/utils";
-import { Bot } from "lucide-react";
+import { Bot, FileText, Download } from "lucide-react";
+import { useState } from "react";
 
-export function MessageBubble({ direction, type, text, isFromAi, sentAt }: {
+function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <button
+        className="absolute top-4 right-5 text-white/70 hover:text-white text-3xl leading-none"
+        onClick={onClose}
+      >
+        ×
+      </button>
+      <img
+        src={src}
+        alt="imagem"
+        className="max-w-[90vw] max-h-[88vh] rounded-lg object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+}
+
+function AudioPlayer({ src }: { src: string }) {
+  return (
+    <audio
+      controls
+      src={src}
+      className="wa-audio-player"
+      preload="metadata"
+    />
+  );
+}
+
+export function MessageBubble({
+  direction, type, text, imageUrl, audioUrl, documentUrl, documentName, isFromAi, sentAt,
+}: {
   direction: "inbound" | "outbound";
   type: string;
   text?: string;
+  imageUrl?: string;
   audioUrl?: string;
+  documentUrl?: string;
+  documentName?: string;
   isFromAi?: boolean;
   sentAt: string;
 }) {
   const isInbound = direction === "inbound";
   const time = new Date(sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
-  return (
-    <div className={cn("flex mb-1", isInbound ? "justify-start" : "justify-end")}>
-      <div className={cn("max-w-[65%] min-w-[80px]", isInbound ? "ml-2" : "mr-2")}>
-        <div className={cn(
-          "px-3 py-2 text-[14px] leading-[1.4]",
-          isInbound ? "bubble-inbound" : isFromAi ? "bubble-ai" : "bubble-outbound"
-        )}>
-          <p className="whitespace-pre-wrap break-words">{text || (type === "audio" ? "🎤 Áudio" : "📎 Mídia")}</p>
-          {/* Timestamp row inside bubble */}
-          <div className={cn("flex items-center gap-1 mt-1 float-right ml-3 -mb-0.5 clear-right")}>
-            {!isInbound && isFromAi && (
-              <Bot className="w-3 h-3" style={{ color: "rgba(134,150,160,0.7)" }} />
-            )}
-            <span className="text-[11px] leading-none whitespace-nowrap" style={{ color: "rgba(134,150,160,0.8)" }}>
-              {time}
-            </span>
-            {!isInbound && (
-              /* WhatsApp double-check delivered indicator */
-              <svg viewBox="0 0 16 11" width="14" height="14" style={{ color: "rgba(134,150,160,0.7)" }}>
-                <path fill="currentColor" d="M11.071.653a.45.45 0 0 0-.63 0L4.5 6.595 1.559 3.653a.45.45 0 1 0-.636.636l3.25 3.25a.45.45 0 0 0 .636 0L11.07 1.29a.45.45 0 0 0 0-.636zm2 0a.45.45 0 0 0-.63 0L6.5 6.595l-.345-.345a.45.45 0 0 0-.636.636l.663.663a.45.45 0 0 0 .636 0L13.07 1.29a.45.45 0 0 0 0-.636z" />
-              </svg>
-            )}
+  const bubbleClass = isInbound ? "bubble-inbound" : isFromAi ? "bubble-ai" : "bubble-outbound";
+
+  const Meta = () => (
+    <div className="bubble-meta">
+      {!isInbound && isFromAi && (
+        <Bot width={11} height={11} style={{ color: "rgba(134,150,160,0.6)", flexShrink: 0 }} />
+      )}
+      <span className="bubble-time">{time}</span>
+      {!isInbound && (
+        <svg viewBox="0 0 18 11" width="16" height="11" fill="none">
+          <path d="M1 5.5L5 9.5L12.5 1" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5.5 9.5L13 1" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </div>
+  );
+
+  /* ── Image ── */
+  if (type === "image" && imageUrl) {
+    return (
+      <>
+        {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
+        <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
+          <div className={cn("max-w-[60%] min-w-[120px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+            <div className={cn(bubbleClass, "!p-[3px]")}>
+              <img
+                src={imageUrl}
+                alt="imagem"
+                className="w-full rounded-[5px] cursor-pointer object-cover max-h-[280px]"
+                onClick={() => setLightbox(imageUrl)}
+              />
+              {text && (
+                <p className="bubble-text px-[6px] pt-[4px]">{text}</p>
+              )}
+              <Meta />
+              <div className="clear-both" />
+            </div>
           </div>
+        </div>
+      </>
+    );
+  }
+
+  /* ── Audio ── */
+  if (type === "audio" && audioUrl) {
+    return (
+      <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
+        <div className={cn("max-w-[65%] min-w-[220px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+          <div className={bubbleClass}>
+            <AudioPlayer src={audioUrl} />
+            <Meta />
+            <div className="clear-both" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Document ── */
+  if (type === "document" && documentUrl) {
+    const name = documentName ?? "Documento";
+    const ext = name.split(".").pop()?.toUpperCase() ?? "FILE";
+    return (
+      <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
+        <div className={cn("max-w-[65%] min-w-[200px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+          <div className={bubbleClass}>
+            <a
+              href={documentUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 no-underline mb-[6px]"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(134,150,160,0.15)" }}>
+                <FileText width={20} height={20} style={{ color: "var(--wa-icon)" }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="bubble-text truncate font-medium">{name}</p>
+                <p className="text-[11px]" style={{ color: "rgba(134,150,160,0.7)", margin: 0 }}>{ext}</p>
+              </div>
+              <Download width={16} height={16} style={{ color: "var(--wa-icon)", flexShrink: 0 }} />
+            </a>
+            <Meta />
+            <div className="clear-both" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Text (default) ── */
+  return (
+    <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
+      <div className={cn("max-w-[65%] min-w-[80px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+        <div className={bubbleClass}>
+          {text ? (
+            <p className="bubble-text">{text}</p>
+          ) : (
+            <p className="bubble-text" style={{ opacity: 0.6 }}>
+              {type === "audio" ? "🎤 Mensagem de voz" : type === "image" ? "🖼 Imagem" : "📎 Mídia"}
+            </p>
+          )}
+          <Meta />
           <div className="clear-both" />
         </div>
       </div>

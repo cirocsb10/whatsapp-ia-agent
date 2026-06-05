@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface Message { id: string; conversationId: string; direction: "inbound" | "outbound"; type: string; text?: string; sentAt: string; isFromAi: boolean; }
+interface Message { id: string; conversationId: string; direction: "inbound" | "outbound"; type: string; text?: string; imageUrl?: string; audioUrl?: string; documentUrl?: string; documentName?: string; sentAt: string; isFromAi: boolean; }
 interface Conversation { id: string; contact: { name?: string; phone: string }; status: string; lastMessage?: string; lastMessageAt?: string; unreadCount: number; isHandoff: boolean; }
 
 interface InboxStore {
