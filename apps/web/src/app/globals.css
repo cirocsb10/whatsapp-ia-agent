@@ -1457,7 +1457,7 @@
   .inbox-chat-bg {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 8% 16px;
+    padding: 16px 16px 12px;
     position: relative;
     background-color: var(--wa-chat);
     background-image: url("/wa-wallpaper.webp");
