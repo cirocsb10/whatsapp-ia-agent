@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import * as amqplib from "amqplib";
 import { MessagingService } from "../messaging/messaging.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { InboundProducer } from "./inbound.producer";
 
 @Injectable()
 export class OutboundConsumer implements OnModuleInit {
@@ -12,6 +13,7 @@ export class OutboundConsumer implements OnModuleInit {
     private readonly config: ConfigService,
     private readonly messaging: MessagingService,
     private readonly prisma: PrismaService,
+    private readonly inbound: InboundProducer,
   ) {}
 
   async handleOutboundMessage(event: {
@@ -22,7 +24,7 @@ export class OutboundConsumer implements OnModuleInit {
     messages: Array<{ type: string; text?: string; imageUrl?: string }>;
   }): Promise<void> {
     for (const m of event.messages) {
-      await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
+      const waMessageId = await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
         type: m.type as "text" | "image" | "template",
         ...(m.text !== undefined && { text: m.text }),
         ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
@@ -30,7 +32,8 @@ export class OutboundConsumer implements OnModuleInit {
 
       if (event.tenantId && event.conversationId) {
         try {
-          await this.prisma.message.create({
+          const sentAt = new Date();
+          const saved = await this.prisma.message.create({
             data: {
               tenantId: event.tenantId,
               conversationId: event.conversationId,
@@ -38,9 +41,22 @@ export class OutboundConsumer implements OnModuleInit {
               type: m.type.toUpperCase() as any,
               ...(m.text !== undefined && { text: m.text }),
               ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
+              ...(waMessageId !== null && { waMessageId }),
               isFromAi: true,
-              sentAt: new Date(),
+              sentAt,
             },
+          });
+
+          await this.inbound.publishOutbound({
+            tenantId: event.tenantId,
+            conversationId: event.conversationId,
+            messageId: saved.id,
+            waMessageId: waMessageId ?? undefined,
+            type: m.type,
+            text: m.text,
+            imageUrl: m.imageUrl,
+            sentAt: sentAt.toISOString(),
+            isFromAi: true,
           });
         } catch (err) {
           this.logger.warn("Failed to persist outbound message:", err);

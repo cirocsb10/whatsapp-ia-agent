@@ -53,6 +53,7 @@ export class ConversationsService {
       select: {
         id: true,
         conversationId: true,
+        waMessageId: true,
         direction: true,
         type: true,
         text: true,
@@ -62,6 +63,9 @@ export class ConversationsService {
         documentName: true,
         sentAt: true,
         isFromAi: true,
+        deliveredAt: true,
+        readAt: true,
+        failedAt: true,
       },
     });
 
@@ -73,6 +77,12 @@ export class ConversationsService {
       audioUrl: m.audioUrl ?? undefined,
       documentUrl: m.documentUrl ?? undefined,
       documentName: m.documentName ?? undefined,
+      deliveredAt: undefined,
+      readAt: undefined,
+      failedAt: undefined,
+      messageStatus: m.direction === "OUTBOUND"
+        ? (m.failedAt ? "failed" : m.readAt ? "read" : m.deliveredAt ? "delivered" : "sent")
+        : undefined,
     }));
   }
 
@@ -191,7 +201,7 @@ export class ConversationsService {
       data: { lastMessageAt: new Date() },
     });
 
-    await fetch(`${META_GRAPH_API}/${whatsappPhoneId}/messages`, {
+    const metaRes = await fetch(`${META_GRAPH_API}/${whatsappPhoneId}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -206,6 +216,12 @@ export class ConversationsService {
       }),
     });
 
+    const metaJson = metaRes.ok ? (await metaRes.json() as any) : null;
+    const waMessageId: string | null = metaJson?.messages?.[0]?.id ?? null;
+    if (waMessageId) {
+      await this.prisma.message.update({ where: { id: message.id }, data: { waMessageId } });
+    }
+
     this.gateway.emitToTenant(tenantId, {
       type: "new_message",
       payload: {
@@ -216,6 +232,8 @@ export class ConversationsService {
         text,
         sentAt: message.sentAt.toISOString(),
         isFromAi: false,
+        waMessageId: waMessageId ?? undefined,
+        messageStatus: "sent",
       },
     });
 

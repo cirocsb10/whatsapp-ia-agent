@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import * as amqplib from "amqplib";
 
 const EXCHANGES = { MESSAGES: "messages", AI: "ai" } as const;
-const ROUTING_KEYS = { MSG_INBOUND: "msg.inbound" } as const;
+const ROUTING_KEYS = { MSG_INBOUND: "msg.inbound", MSG_STATUS: "msg.status", MSG_OUTBOUND: "msg.outbound" } as const;
 
 @Injectable()
 export class InboundProducer implements OnModuleInit, OnModuleDestroy {
@@ -43,6 +43,22 @@ export class InboundProducer implements OnModuleInit, OnModuleDestroy {
     if (!published) {
       await new Promise<void>((resolve) => this.channel.once("drain", resolve));
     }
+  }
+
+  async publishStatusUpdate(event: Record<string, unknown>): Promise<void> {
+    const payload = Buffer.from(JSON.stringify(event));
+    this.channel.publish(EXCHANGES.MESSAGES, ROUTING_KEYS.MSG_STATUS, payload, {
+      persistent: true,
+      contentType: "application/json",
+    });
+  }
+
+  async publishOutbound(event: Record<string, unknown>): Promise<void> {
+    const payload = Buffer.from(JSON.stringify(event));
+    this.channel.publish(EXCHANGES.MESSAGES, ROUTING_KEYS.MSG_OUTBOUND, payload, {
+      persistent: true,
+      contentType: "application/json",
+    });
   }
 
   async onModuleDestroy(): Promise<void> {

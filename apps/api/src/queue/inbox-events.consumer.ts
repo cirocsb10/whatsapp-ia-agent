@@ -31,12 +31,17 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         const inboundQ = await this.channel.assertQueue("api.inbox.inbound", { durable: true });
         await this.channel.bindQueue(inboundQ.queue, "messages", "msg.inbound");
 
-        // Queue for AI responses → emit to frontend
-        const outboundQ = await this.channel.assertQueue("api.inbox.outbound", { durable: true });
-        await this.channel.bindQueue(outboundQ.queue, "ai", "ai.response");
+        // Queue for outbound messages saved by channel-service (includes waMessageId)
+        const outboundQ = await this.channel.assertQueue("api.inbox.outbound.saved", { durable: true });
+        await this.channel.bindQueue(outboundQ.queue, "messages", "msg.outbound");
+
+        // Queue for message status updates (sent/delivered/read/failed)
+        const statusQ = await this.channel.assertQueue("api.inbox.status", { durable: true });
+        await this.channel.bindQueue(statusQ.queue, "messages", "msg.status");
 
         this.channel.consume(inboundQ.queue, (msg: amqplib.Message | null) => this.handleInbound(msg));
         this.channel.consume(outboundQ.queue, (msg: amqplib.Message | null) => this.handleOutbound(msg));
+        this.channel.consume(statusQ.queue, (msg: amqplib.Message | null) => this.handleStatus(msg));
 
         this.logger.log("✅ InboxEventsConsumer listening (inbound + outbound)");
         return;
@@ -95,35 +100,56 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private handleStatus(msg: amqplib.Message | null): void {
+    if (!msg || !this.channel) return;
+    try {
+      const event = JSON.parse(msg.content.toString()) as Record<string, unknown>;
+      const tenantId = event["tenantId"] as string;
+      const conversationId = event["conversationId"] as string;
+      const waMessageId = event["waMessageId"] as string;
+      const status = event["status"] as string;
+
+      if (tenantId && conversationId && waMessageId && status) {
+        this.gateway.emitToTenant(tenantId, {
+          type: "message_status_changed",
+          payload: { conversationId, waMessageId, status },
+        });
+      }
+
+      this.channel.ack(msg);
+    } catch (err) {
+      this.logger.error("handleStatus error:", err);
+      this.channel?.nack(msg, false, false);
+    }
+  }
+
   private handleOutbound(msg: amqplib.Message | null): void {
     if (!msg || !this.channel) return;
     try {
       const event = JSON.parse(msg.content.toString()) as Record<string, unknown>;
       const tenantId = event["tenantId"] as string;
       const conversationId = event["conversationId"] as string;
-      const messages = (event["messages"] as Array<Record<string, unknown>>) ?? [];
 
       if (!tenantId || !conversationId) {
         this.channel.ack(msg);
         return;
       }
 
-      const now = new Date().toISOString();
-      for (const m of messages) {
-        this.gateway.emitToTenant(tenantId, {
-          type: "new_message",
-          payload: {
-            messageId: `ai-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            conversationId,
-            direction: "outbound",
-            type: (m["type"] as string ?? "text").toLowerCase(),
-            text: m["text"] ?? null,
-            imageUrl: m["imageUrl"] ?? null,
-            sentAt: now,
-            isFromAi: true,
-          },
-        });
-      }
+      this.gateway.emitToTenant(tenantId, {
+        type: "new_message",
+        payload: {
+          messageId: event["messageId"],
+          conversationId,
+          direction: "outbound",
+          type: ((event["type"] as string) ?? "text").toLowerCase(),
+          text: event["text"] ?? null,
+          imageUrl: event["imageUrl"] ?? null,
+          sentAt: event["sentAt"] ?? new Date().toISOString(),
+          isFromAi: event["isFromAi"] ?? true,
+          waMessageId: event["waMessageId"] ?? undefined,
+          messageStatus: "sent",
+        },
+      });
 
       this.channel.ack(msg);
     } catch (err) {

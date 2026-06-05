@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-interface Message { id: string; conversationId: string; direction: "inbound" | "outbound"; type: string; text?: string; imageUrl?: string; audioUrl?: string; documentUrl?: string; documentName?: string; sentAt: string; isFromAi: boolean; }
+interface Message { id: string; conversationId: string; waMessageId?: string; direction: "inbound" | "outbound"; type: string; text?: string; imageUrl?: string; audioUrl?: string; documentUrl?: string; documentName?: string; sentAt: string; isFromAi: boolean; messageStatus?: "sent" | "delivered" | "read" | "failed"; }
 interface Conversation { id: string; contact: { name?: string; phone: string }; status: string; lastMessage?: string; lastMessageAt?: string; unreadCount: number; isHandoff: boolean; isAssumed: boolean; }
 
 interface InboxStore {
@@ -12,6 +12,7 @@ interface InboxStore {
   setActiveConversation: (id: string | null) => void;
   addMessage: (msg: any) => void;
   updateConversationStatus: (u: any) => void;
+  updateMessageStatus: (payload: { conversationId: string; waMessageId: string; status: "sent" | "delivered" | "read" | "failed" }) => void;
   addHandoffConversation: (e: any) => void;
   markAsRead: (id: string) => void;
 }
@@ -26,8 +27,16 @@ export const useInboxStore = create<InboxStore>((set) => ({
   })),
   setActiveConversation: (id) => set({ activeConversationId: id }),
   addMessage: (msg) => set((s) => ({
-    messages: { ...s.messages, [msg.conversationId]: [...(s.messages[msg.conversationId] ?? []), { id: msg.messageId ?? String(Date.now()), conversationId: msg.conversationId, direction: msg.direction, type: msg.type ?? "text", text: msg.text, imageUrl: msg.imageUrl ?? undefined, audioUrl: msg.audioUrl ?? undefined, documentUrl: msg.documentUrl ?? undefined, documentName: msg.documentName ?? undefined, sentAt: msg.sentAt ?? new Date().toISOString(), isFromAi: msg.isFromAi ?? false }] },
+    messages: { ...s.messages, [msg.conversationId]: [...(s.messages[msg.conversationId] ?? []), { id: msg.messageId ?? String(Date.now()), conversationId: msg.conversationId, waMessageId: msg.waMessageId ?? undefined, direction: msg.direction, type: msg.type ?? "text", text: msg.text, imageUrl: msg.imageUrl ?? undefined, audioUrl: msg.audioUrl ?? undefined, documentUrl: msg.documentUrl ?? undefined, documentName: msg.documentName ?? undefined, sentAt: msg.sentAt ?? new Date().toISOString(), isFromAi: msg.isFromAi ?? false, messageStatus: msg.direction === "outbound" ? (msg.messageStatus ?? "sent") : undefined }] },
     conversations: s.conversations.map((c) => c.id === msg.conversationId ? { ...c, lastMessage: msg.text ?? "[mídia]", lastMessageAt: msg.sentAt, unreadCount: c.unreadCount + 1 } : c),
+  })),
+  updateMessageStatus: ({ conversationId, waMessageId, status }) => set((s) => ({
+    messages: {
+      ...s.messages,
+      [conversationId]: (s.messages[conversationId] ?? []).map((m) =>
+        m.waMessageId === waMessageId ? { ...m, messageStatus: status } : m
+      ),
+    },
   })),
   updateConversationStatus: ({ conversationId, status, isAssumed }) => set((s) => ({
     conversations: s.conversations.map((c) =>

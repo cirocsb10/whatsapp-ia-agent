@@ -29,8 +29,40 @@ export class WebhookService {
             await this.processMessage(msg, value.metadata.phone_number_id);
           }
         }
+        if (value.statuses) {
+          for (const status of value.statuses) {
+            await this.processStatus(status, value.metadata.phone_number_id);
+          }
+        }
       }
     }
+  }
+
+  private async processStatus(status: import("./dto/meta-webhook.dto").MetaStatus, phoneNumberId: string): Promise<void> {
+    const tenantId = await this.resolveTenantId(phoneNumberId);
+    if (!tenantId) return;
+
+    const ts = new Date(parseInt(status.timestamp, 10) * 1000);
+    const data: Record<string, Date> = {};
+    if (status.status === "delivered") data["deliveredAt"] = ts;
+    else if (status.status === "read") data["readAt"] = ts;
+    else if (status.status === "failed") data["failedAt"] = ts;
+    else return;
+
+    const message = await this.prisma.message.findFirst({
+      where: { waMessageId: status.id, tenantId },
+      select: { id: true, conversationId: true },
+    });
+    if (!message) return;
+
+    await this.prisma.message.update({ where: { id: message.id }, data });
+
+    await this.inbound.publishStatusUpdate({
+      tenantId,
+      conversationId: message.conversationId,
+      waMessageId: status.id,
+      status: status.status,
+    });
   }
 
   private async processMessage(msg: MetaMessage, phoneNumberId: string): Promise<void> {

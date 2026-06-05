@@ -10,6 +10,7 @@ export function useSocket() {
   const { getToken } = useAuth();
   const addMessage = useInboxStore((s) => s.addMessage);
   const updateStatus = useInboxStore((s) => s.updateConversationStatus);
+  const updateMessageStatus = useInboxStore((s) => s.updateMessageStatus);
   const addHandoff = useInboxStore((s) => s.addHandoffConversation);
   const incrementHandoffs = useNotificationsStore((s) => s.incrementHandoffs);
   const socketRef = useRef<any>(null);
@@ -45,10 +46,11 @@ export function useSocket() {
 
       sock.on("event", (event: any) => {
         switch (event.type) {
-          case "new_message":              addMessage(event.payload);    break;
-          case "conversation_status":      updateStatus(event.payload);  break;
-          case "conversation_status_changed": updateStatus(event.payload); break;
-          case "handoff_created":          addHandoff(event.payload); incrementHandoffs(); break;
+          case "new_message":                 addMessage(event.payload);              break;
+          case "conversation_status":         updateStatus(event.payload);            break;
+          case "conversation_status_changed": updateStatus(event.payload);            break;
+          case "message_status_changed":      updateMessageStatus(event.payload);     break;
+          case "handoff_created":             addHandoff(event.payload); incrementHandoffs(); break;
         }
       });
 
@@ -62,7 +64,7 @@ export function useSocket() {
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [getToken, addMessage, updateStatus, addHandoff, incrementHandoffs]);
+  }, [getToken, addMessage, updateStatus, updateMessageStatus, addHandoff, incrementHandoffs]);
 
   const emit = useCallback((name: string, data: unknown) => {
     socketRef.current?.emit(name, data);

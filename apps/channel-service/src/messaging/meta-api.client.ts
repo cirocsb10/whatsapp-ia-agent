@@ -21,7 +21,7 @@ export class MetaApiClient {
     });
   }
 
-  async sendTextMessage(phoneNumberId: string, to: string, text: string): Promise<unknown> {
+  async sendTextMessage(phoneNumberId: string, to: string, text: string): Promise<string | null> {
     const res = await this.http.post(`/${phoneNumberId}/messages`, {
       messaging_product: "whatsapp",
       recipient_type: "individual",
@@ -29,18 +29,19 @@ export class MetaApiClient {
       type: "text",
       text: { preview_url: false, body: text },
     });
-    this.logger.debug(`Sent text to ${to}`);
-    return res.data;
+    const waMessageId = (res.data as any)?.messages?.[0]?.id ?? null;
+    this.logger.debug(`Sent text to ${to}, wamid: ${waMessageId}`);
+    return waMessageId;
   }
 
-  async sendImageMessage(phoneNumberId: string, to: string, imageUrl: string, caption?: string): Promise<unknown> {
+  async sendImageMessage(phoneNumberId: string, to: string, imageUrl: string, caption?: string): Promise<string | null> {
     const res = await this.http.post(`/${phoneNumberId}/messages`, {
       messaging_product: "whatsapp",
       to,
       type: "image",
       image: { link: imageUrl, caption },
     });
-    return res.data;
+    return (res.data as any)?.messages?.[0]?.id ?? null;
   }
 
   async markAsRead(phoneNumberId: string, messageId: string): Promise<void> {

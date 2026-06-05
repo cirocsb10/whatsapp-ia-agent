@@ -45,8 +45,8 @@ export class ConversationsController {
     @CurrentTenantId() tenantId: string,
     @CurrentUser() user: { id: string },
     @Param("id") id: string,
-    @Body() body: { text: string },
+    @Body("text") text: string,
   ) {
-    return this.service.sendOperatorMessage(tenantId, id, user.id, body.text);
+    return this.service.sendOperatorMessage(tenantId, id, user.id, text);
   }
 }

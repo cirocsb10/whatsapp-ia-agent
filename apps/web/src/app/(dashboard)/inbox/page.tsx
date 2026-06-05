@@ -384,6 +384,7 @@ export default function InboxPage() {
                         {...(msg.documentName !== undefined ? { documentName: msg.documentName } : {})}
                         isFromAi={msg.isFromAi}
                         sentAt={msg.sentAt}
+                        {...(msg.messageStatus !== undefined ? { messageStatus: msg.messageStatus } : {})}
                       />
                     ))}
                     <div ref={bottomRef} />

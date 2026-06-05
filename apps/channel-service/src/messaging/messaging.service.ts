@@ -13,16 +13,17 @@ export class MessagingService {
 
   constructor(private readonly metaClient: MetaApiClient) {}
 
-  async sendMessage(phoneNumberId: string, to: string, message: OutboundMessage): Promise<void> {
+  async sendMessage(phoneNumberId: string, to: string, message: OutboundMessage): Promise<string | null> {
     switch (message.type) {
       case "text":
-        if (message.text) await this.metaClient.sendTextMessage(phoneNumberId, to, message.text);
+        if (message.text) return this.metaClient.sendTextMessage(phoneNumberId, to, message.text);
         break;
       case "image":
-        if (message.imageUrl) await this.metaClient.sendImageMessage(phoneNumberId, to, message.imageUrl);
+        if (message.imageUrl) return this.metaClient.sendImageMessage(phoneNumberId, to, message.imageUrl);
         break;
       default:
         this.logger.warn(`Unsupported outbound type: ${message.type}`);
     }
+    return null;
   }
 }

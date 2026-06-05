@@ -37,7 +37,7 @@ function AudioPlayer({ src }: { src: string }) {
 }
 
 export function MessageBubble({
-  direction, type, text, imageUrl, audioUrl, documentUrl, documentName, isFromAi, sentAt,
+  direction, type, text, imageUrl, audioUrl, documentUrl, documentName, isFromAi, sentAt, messageStatus,
 }: {
   direction: "inbound" | "outbound";
   type: string;
@@ -48,6 +48,7 @@ export function MessageBubble({
   documentName?: string;
   isFromAi?: boolean;
   sentAt: string;
+  messageStatus?: "sent" | "delivered" | "read" | "failed";
 }) {
   const isInbound = direction === "inbound";
   const time = new Date(sentAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -55,18 +56,40 @@ export function MessageBubble({
 
   const bubbleClass = isInbound ? "bubble-inbound" : isFromAi ? "bubble-ai" : "bubble-outbound";
 
+  const StatusIcon = () => {
+    if (isInbound) return null;
+    const status = messageStatus ?? "sent";
+    if (status === "failed") {
+      return (
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none">
+          <circle cx="8" cy="8" r="7" stroke="#e53935" strokeWidth="1.5" />
+          <path d="M8 4v5M8 10.5v1" stroke="#e53935" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      );
+    }
+    if (status === "sent") {
+      return (
+        <svg viewBox="0 0 12 11" width="14" height="11" fill="none">
+          <path d="M1 5.5L5 9.5L11 1" stroke="rgba(134,150,160,0.7)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    }
+    const tickColor = status === "read" ? "#53bdeb" : "rgba(134,150,160,0.7)";
+    return (
+      <svg viewBox="0 0 21 11" width="19" height="11" fill="none">
+        <path d="M1 5.5L4.5 9.5L10.5 1" stroke={tickColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M7.5 5.5L11 9.5L17 1" stroke={tickColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  };
+
   const Meta = () => (
     <div className="bubble-meta">
       {!isInbound && isFromAi && (
         <Bot width={11} height={11} style={{ color: "rgba(134,150,160,0.6)", flexShrink: 0 }} />
       )}
       <span className="bubble-time">{time}</span>
-      {!isInbound && (
-        <svg viewBox="0 0 18 11" width="16" height="11" fill="none">
-          <path d="M1 5.5L5 9.5L12.5 1" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M5.5 9.5L13 1" stroke="#53bdeb" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
+      <StatusIcon />
     </div>
   );
 
