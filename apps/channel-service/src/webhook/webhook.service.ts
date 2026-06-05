@@ -127,6 +127,7 @@ export class WebhookService {
       type: msg.type,
       conversationId: conversation.id,
       contactId: contact.id,
+      conversationStatus: conversation.status,
     };
 
     if (msg.type === "text") {

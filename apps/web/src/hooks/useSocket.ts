@@ -45,9 +45,10 @@ export function useSocket() {
 
       sock.on("event", (event: any) => {
         switch (event.type) {
-          case "new_message":     addMessage(event.payload);    break;
-          case "conversation_status": updateStatus(event.payload); break;
-          case "handoff_created": addHandoff(event.payload); incrementHandoffs(); break;
+          case "new_message":              addMessage(event.payload);    break;
+          case "conversation_status":      updateStatus(event.payload);  break;
+          case "conversation_status_changed": updateStatus(event.payload); break;
+          case "handoff_created":          addHandoff(event.payload); incrementHandoffs(); break;
         }
       });
 

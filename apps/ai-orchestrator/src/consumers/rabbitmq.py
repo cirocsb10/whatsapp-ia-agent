@@ -14,12 +14,13 @@ log = structlog.get_logger(__name__)
 
 
 class InboundMessageEvent(BaseModel):
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     tenant_id: str = Field(alias="tenantId", min_length=1, max_length=120)
     from_phone: str = Field(alias="from", min_length=1, max_length=40)
     whatsapp_phone_id: str = Field(alias="whatsappPhoneId", min_length=1, max_length=120)
     conversation_id: str | None = Field(default=None, alias="conversationId", max_length=120)
+    conversation_status: str | None = Field(default=None, alias="conversationStatus")
     wa_message_id: str | None = Field(default=None, alias="waMessageId", max_length=200)
     message_id: str | None = Field(default=None, alias="messageId", max_length=200)
     message_type: str = Field(default="text", alias="type", max_length=30)
@@ -72,6 +73,10 @@ async def process_inbound_message(
                 errors=validation_error.errors(),
             )
             raise
+
+        if event.conversation_status in ("HUMAN_HANDOFF", "PAUSED"):
+            log.info("Skipping AI — conversation assigned to human", conv=event.conversation_id)
+            return
 
         try:
             tenant_id = event.tenant_id
