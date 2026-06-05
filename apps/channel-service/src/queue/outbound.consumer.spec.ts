@@ -3,10 +3,12 @@ import { ConfigService } from "@nestjs/config";
 import { OutboundConsumer } from "./outbound.consumer";
 import { MessagingService } from "../messaging/messaging.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { InboundProducer } from "./inbound.producer";
 
-const mockMessaging = { sendMessage: jest.fn().mockResolvedValue(undefined) };
+const mockMessaging = { sendMessage: jest.fn().mockResolvedValue("wa-msg-id") };
 const mockConfig = { get: jest.fn().mockReturnValue("amqp://localhost") };
-const mockPrisma = { message: { create: jest.fn().mockResolvedValue({}) } };
+const mockPrisma = { message: { create: jest.fn().mockResolvedValue({ id: "msg-1" }) } };
+const mockInbound = { publishOutbound: jest.fn().mockResolvedValue(undefined) };
 
 describe("OutboundConsumer.handleOutboundMessage", () => {
   let consumer: OutboundConsumer;
@@ -18,11 +20,14 @@ describe("OutboundConsumer.handleOutboundMessage", () => {
         { provide: MessagingService, useValue: mockMessaging },
         { provide: ConfigService, useValue: mockConfig },
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: InboundProducer, useValue: mockInbound },
       ],
     }).compile();
     consumer = module.get(OutboundConsumer);
     jest.clearAllMocks();
-    mockPrisma.message.create.mockResolvedValue({});
+    mockMessaging.sendMessage.mockResolvedValue("wa-msg-id");
+    mockPrisma.message.create.mockResolvedValue({ id: "msg-1" });
+    mockInbound.publishOutbound.mockResolvedValue(undefined);
     jest.useFakeTimers();
   });
 

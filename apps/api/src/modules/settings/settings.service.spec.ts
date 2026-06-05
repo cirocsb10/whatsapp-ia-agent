@@ -107,7 +107,7 @@ describe("SettingsService", () => {
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({ where: { id: "t-1" } });
       expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
         where: { id: "t-1" },
-        data: { whatsappPhoneId: "1168626729666802", metaAccessToken: "tok123" },
+        data: { whatsappPhoneId: "1168626729666802", metaAccessToken: "tok123", whatsappStatus: "CONNECTED" },
         select: { id: true, whatsappPhoneId: true, whatsappStatus: true },
       });
       expect(result.whatsappPhoneId).toBe("1168626729666802");
@@ -129,7 +129,7 @@ describe("SettingsService", () => {
 
       expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
         where: { id: "t-1" },
-        data: { whatsappPhoneId: "999" },
+        data: { whatsappPhoneId: "999", whatsappStatus: "CONNECTED" },
         select: { id: true, whatsappPhoneId: true, whatsappStatus: true },
       });
     });
