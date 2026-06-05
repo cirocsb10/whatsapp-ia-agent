@@ -98,8 +98,8 @@ export function MessageBubble({
     return (
       <>
         {lightbox && <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />}
-        <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
-          <div className={cn("max-w-[60%] min-w-[120px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+        <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
+          <div className={cn("max-w-[60%] min-w-[120px]", isInbound ? "ml-3" : "mr-3")}>
             <div className={cn(bubbleClass, "!p-[3px]")}>
               <img
                 src={imageUrl}
@@ -122,8 +122,8 @@ export function MessageBubble({
   /* ── Audio ── */
   if (type === "audio" && audioUrl) {
     return (
-      <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
-        <div className={cn("max-w-[65%] min-w-[220px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+      <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
+        <div className={cn("max-w-[65%] min-w-[220px]", isInbound ? "ml-3" : "mr-3")}>
           <div className={bubbleClass}>
             <AudioPlayer src={audioUrl} />
             <Meta />
@@ -139,8 +139,8 @@ export function MessageBubble({
     const name = documentName ?? "Documento";
     const ext = name.split(".").pop()?.toUpperCase() ?? "FILE";
     return (
-      <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
-        <div className={cn("max-w-[65%] min-w-[200px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+      <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
+        <div className={cn("max-w-[65%] min-w-[200px]", isInbound ? "ml-3" : "mr-3")}>
           <div className={bubbleClass}>
             <a
               href={documentUrl}
@@ -167,8 +167,8 @@ export function MessageBubble({
 
   /* ── Text (default) ── */
   return (
-    <div className={cn("flex mb-[2px]", isInbound ? "justify-start" : "justify-end")}>
-      <div className={cn("max-w-[65%] min-w-[80px]", isInbound ? "ml-[8px]" : "mr-[8px]")}>
+    <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
+      <div className={cn("max-w-[65%] min-w-[80px]", isInbound ? "ml-3" : "mr-3")}>
         <div className={bubbleClass}>
           {text ? (
             <p className="bubble-text">{text}</p>
