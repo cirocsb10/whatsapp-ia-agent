@@ -4,7 +4,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useApi } from "@/lib/hooks/useApi";
-import { MessageSquare, Search, Bot, Phone, Inbox, SendHorizonal, UserCheck, RotateCcw } from "lucide-react";
+import { MessageSquare, Search, Bot, Phone, Inbox, SendHorizonal, UserCheck, RotateCcw, PauseCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 function getInitials(name?: string, phone?: string): string {
@@ -116,12 +116,18 @@ export default function InboxPage() {
   async function handleSend() {
     if (!activeId || !draft.trim()) return;
     const text = draft.trim();
-    setDraft("");
-    await apiFetch(`/conversations/${activeId}/messages`, {
+    const res = await apiFetch(`/conversations/${activeId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
+    if (res.ok) {
+      setDraft("");
+    } else {
+      const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+      console.error("[handleSend] erro:", res.status, body);
+      alert(`Erro ao enviar: ${res.status} — ${(body["message"] as string) ?? "erro desconhecido"}`);
+    }
   }
 
   const tabs: { key: FilterTab; label: string; count: number }[] = [
@@ -338,7 +344,30 @@ export default function InboxPage() {
                       <UserCheck className="w-3.5 h-3.5" />
                       Assumir conversa
                     </button>
-                  ) : null}
+                  ) : (
+                    <button
+                      className="group flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-150"
+                      style={{
+                        background: "rgba(251,191,36,0.1)",
+                        color: "#fbbf24",
+                        border: "1px solid rgba(251,191,36,0.25)",
+                        boxShadow: "0 0 0 0 rgba(251,191,36,0)",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(251,191,36,0.18)";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(251,191,36,0.5)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgba(251,191,36,0.1)";
+                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(251,191,36,0.25)";
+                      }}
+                      onClick={() => void handleAssume()}
+                      title="Pausar bot e assumir conversa"
+                    >
+                      <PauseCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      Pausar bot
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1" style={{ color: "var(--wa-icon)" }}>

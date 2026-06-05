@@ -177,7 +177,12 @@ export class ConversationsService {
       throw new BadRequestException("Conversation is not in human handoff mode");
     }
 
-    const { whatsappPhoneId, metaAccessToken } = conversation.tenant;
+    const whatsappPhoneId = conversation.tenant.whatsappPhoneId
+      ?? process.env["META_TEST_PHONE_NUMBER_ID"]
+      ?? null;
+    const metaAccessToken = conversation.tenant.metaAccessToken
+      ?? process.env["META_SYSTEM_USER_TOKEN"]
+      ?? null;
     const toPhone = conversation.contact.phone;
 
     if (!whatsappPhoneId || !metaAccessToken) {
