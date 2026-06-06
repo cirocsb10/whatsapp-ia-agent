@@ -152,5 +152,70 @@ describe("OrdersService", () => {
       jest.spyOn(mockPrisma.order, "findFirst").mockResolvedValue(null);
       await expect(service.updateStatus("t1", "missing", "PROCESSING")).rejects.toThrow(NotFoundException);
     });
+
+    it("preenche deliveredAt quando status é DELIVERED", async () => {
+      jest.spyOn(mockPrisma.order, "findFirst").mockResolvedValue({ id: "o1", tenantId: "t1" } as any);
+      jest.spyOn(mockPrisma.order, "update").mockResolvedValue({ id: "o1", status: "DELIVERED" } as any);
+      await service.updateStatus("t1", "o1", "DELIVERED");
+      const call = mockPrisma.order.update.mock.calls[0][0];
+      expect(call.data.deliveredAt).toBeInstanceOf(Date);
+    });
+
+    it("preenche cancelledAt quando status é CANCELLED", async () => {
+      jest.spyOn(mockPrisma.order, "findFirst").mockResolvedValue({ id: "o1", tenantId: "t1" } as any);
+      jest.spyOn(mockPrisma.order, "update").mockResolvedValue({ id: "o1", status: "CANCELLED" } as any);
+      await service.updateStatus("t1", "o1", "CANCELLED");
+      const call = mockPrisma.order.update.mock.calls[0][0];
+      expect(call.data.cancelledAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("cancelOrder", () => {
+    it("delega para updateStatus com CANCELLED", async () => {
+      jest.spyOn(service, "updateStatus").mockResolvedValue({ id: "o1", status: "CANCELLED" } as any);
+      await service.cancelOrder("t1", "o1");
+      expect(service.updateStatus).toHaveBeenCalledWith("t1", "o1", "CANCELLED");
+    });
+  });
+
+  describe("createFromUi", () => {
+    it("calcula subtotal e cria pedido com dados do DB", async () => {
+      mockPrisma.product.findMany.mockResolvedValueOnce([
+        { id: "p-1", priceCents: 2000, name: "Produto DB" },
+      ]);
+      await service.createFromUi("t-1", {
+        contactPhone: "5511",
+        items: [{ productId: "p-1", quantity: 3 }],
+      });
+      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ subtotalCents: 6000, totalCents: 6000, status: "DRAFT" }),
+        }),
+      );
+      const item = mockPrisma.order.create.mock.calls[0][0].data.items.create[0];
+      expect(item.productName).toBe("Produto DB");
+      expect(item.subtotalCents).toBe(6000);
+    });
+
+    it("lança NotFoundException para produto inexistente", async () => {
+      mockPrisma.product.findMany.mockResolvedValueOnce([]);
+      await expect(
+        service.createFromUi("t-1", { contactPhone: "5511", items: [{ productId: "p-missing", quantity: 1 }] }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("persiste notes quando fornecido", async () => {
+      mockPrisma.product.findMany.mockResolvedValueOnce([{ id: "p-1", priceCents: 100, name: "X" }]);
+      await service.createFromUi("t-1", {
+        contactPhone: "5511",
+        items: [{ productId: "p-1", quantity: 1 }],
+        notes: "entrega expressa",
+      });
+      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ notes: "entrega expressa" }),
+        }),
+      );
+    });
   });
 });
