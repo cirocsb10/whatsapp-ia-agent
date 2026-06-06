@@ -1,12 +1,12 @@
 "use client";
 import { Header } from "@/components/layout/Header";
 import {
-  User, Bell, Shield, Smartphone, Plug, CreditCard,
-  Camera, ChevronRight, Check, X, AlertTriangle,
-  Globe, Clock, Zap, CheckCircle2, XCircle,
+  User, Bell, Shield, Plug, CreditCard,
+  ChevronRight, Check, X, AlertTriangle,
+  CheckCircle2,
   ExternalLink, Key, Trash2, LogOut, Sparkles,
-  DollarSign, Package, BarChart3, ArrowUpRight,
-  Mail, MessageSquare, ShoppingCart, Bot,
+  DollarSign, BarChart3, ArrowUpRight,
+  MessageSquare, ShoppingCart,
 } from "lucide-react";
 import { useApi } from "@/lib/hooks/useApi";
 import { useClerk, UserProfile } from "@clerk/nextjs";
@@ -217,17 +217,51 @@ function TabConta() {
   );
 }
 
-function TabNotificacoes() {
-  const [prefs, setPrefs] = useState({
-    new_message:    true,
-    handoff:        true,
-    order_created:  true,
-    order_paid:     true,
-    weekly_report:  false,
-    marketing:      false,
-  });
+type NotifPrefs = {
+  newMessage: boolean;
+  handoffPending: boolean;
+  orderCreated: boolean;
+  paymentConfirmed: boolean;
+  weeklyReport: boolean;
+  productUpdates: boolean;
+};
 
-  const toggle = (k: keyof typeof prefs) => setPrefs((p) => ({ ...p, [k]: !p[k] }));
+const DEFAULT_PREFS: NotifPrefs = {
+  newMessage: true,
+  handoffPending: true,
+  orderCreated: true,
+  paymentConfirmed: true,
+  weeklyReport: false,
+  productUpdates: false,
+};
+
+function TabNotificacoes() {
+  const { apiFetch } = useApi();
+  const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    apiFetch("/settings/notifications").then(async (r) => {
+      if (r.ok) setPrefs({ ...DEFAULT_PREFS, ...(await r.json()) });
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggle = (key: keyof NotifPrefs) =>
+    setPrefs((p) => ({ ...p, [key]: !p[key] }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await apiFetch("/settings/notifications", {
+      method: "PATCH",
+      body: JSON.stringify(prefs),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    }
+  };
 
   const GROUPS = [
     {
@@ -237,8 +271,8 @@ function TabNotificacoes() {
       bg: "rgba(99,102,241,0.1)",
       border: "rgba(99,102,241,0.2)",
       items: [
-        { key: "new_message" as const, label: "Nova mensagem recebida", desc: "Quando um contato enviar uma mensagem." },
-        { key: "handoff" as const,     label: "Handoff pendente",       desc: "Quando o agente solicitar atendimento humano." },
+        { key: "newMessage" as const, label: "Nova mensagem recebida", desc: "Quando um contato enviar uma mensagem." },
+        { key: "handoffPending" as const, label: "Handoff pendente", desc: "Quando o agente solicitar atendimento humano." },
       ],
     },
     {
@@ -248,8 +282,8 @@ function TabNotificacoes() {
       bg: "rgba(34,197,94,0.1)",
       border: "rgba(34,197,94,0.2)",
       items: [
-        { key: "order_created" as const, label: "Pedido criado",  desc: "Quando o agente criar um novo pedido." },
-        { key: "order_paid" as const,    label: "Pagamento confirmado", desc: "Quando o pagamento de um pedido for aprovado." },
+        { key: "orderCreated" as const, label: "Pedido criado", desc: "Quando o agente criar um novo pedido." },
+        { key: "paymentConfirmed" as const, label: "Pagamento confirmado", desc: "Quando o pagamento de um pedido for aprovado." },
       ],
     },
     {
@@ -259,8 +293,8 @@ function TabNotificacoes() {
       bg: "rgba(245,158,11,0.1)",
       border: "rgba(245,158,11,0.2)",
       items: [
-        { key: "weekly_report" as const, label: "Relatório semanal", desc: "Resumo de desempenho toda segunda-feira." },
-        { key: "marketing" as const,     label: "Novidades e dicas",  desc: "Atualizações de produto e boas práticas." },
+        { key: "weeklyReport" as const, label: "Relatório semanal", desc: "Resumo de desempenho toda segunda-feira." },
+        { key: "productUpdates" as const, label: "Novidades e dicas", desc: "Atualizações de produto e boas práticas." },
       ],
     },
   ];
@@ -287,6 +321,22 @@ function TabNotificacoes() {
           ))}
         </SectionPanel>
       ))}
+
+      <div className="settings-save-bar">
+        <button className="settings-save-btn" onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <>
+              <span className="settings-save-spinner" />
+              Salvando…
+            </>
+          ) : (
+            <>
+              <Check className="w-3.5 h-3.5" />
+              {saved ? "Salvo!" : "Salvar preferências"}
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
