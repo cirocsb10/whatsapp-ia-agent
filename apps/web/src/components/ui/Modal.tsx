@@ -12,9 +12,21 @@ interface ModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg";
+  panelClassName?: string;
+  headerLeading?: React.ReactNode;
 }
 
-export function Modal({ open, onClose, title, subtitle, children, footer, size = "md" }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  size = "md",
+  panelClassName,
+  headerLeading,
+}: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,11 +53,14 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className={cn("modal-panel", sizeClass)}>
+      <div className={cn("modal-panel", sizeClass, panelClassName)}>
         <div className="modal-header">
-          <div>
-            <h2 id="modal-title" className="modal-title">{title}</h2>
-            {subtitle && <p className="modal-subtitle">{subtitle}</p>}
+          <div className={cn(headerLeading && "modal-header-with-icon")}>
+            {headerLeading}
+            <div>
+              <h2 id="modal-title" className="modal-title">{title}</h2>
+              {subtitle && <p className="modal-subtitle">{subtitle}</p>}
+            </div>
           </div>
           <button type="button" onClick={onClose} className="modal-close" aria-label="Fechar">
             <X className="w-4 h-4" />
