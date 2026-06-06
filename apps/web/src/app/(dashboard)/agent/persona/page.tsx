@@ -2,6 +2,14 @@
 
 import { Header } from "@/components/layout/Header";
 import { useApi } from "@/lib/hooks/useApi";
+import {
+  DAYS,
+  DEFAULT_BUSINESS_HOURS,
+  normalizeBusinessHours,
+  tempLabel,
+  type BusinessHoursDay,
+  type BusinessHoursMap,
+} from "@/lib/persona";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -33,45 +41,6 @@ const FIXED_LLM_MODEL = {
   desc: "Rápido e econômico",
 } as const;
 
-type BusinessHoursDay = { enabled: boolean; start: string; end: string };
-type BusinessHoursMap = Record<string, BusinessHoursDay>;
-
-const DAYS: { key: string; label: string }[] = [
-  { key: "monday",    label: "Segunda" },
-  { key: "tuesday",   label: "Terça" },
-  { key: "wednesday", label: "Quarta" },
-  { key: "thursday",  label: "Quinta" },
-  { key: "friday",    label: "Sexta" },
-  { key: "saturday",  label: "Sábado" },
-  { key: "sunday",    label: "Domingo" },
-];
-
-const DEFAULT_BUSINESS_HOURS: BusinessHoursMap = Object.fromEntries(
-  DAYS.map(({ key }) => [
-    key,
-    { enabled: key !== "saturday" && key !== "sunday", start: "09:00", end: "18:00" },
-  ])
-);
-
-function normalizeBusinessHours(raw: unknown): BusinessHoursMap {
-  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-    return DEFAULT_BUSINESS_HOURS;
-  }
-  return Object.fromEntries(
-    DAYS.map(({ key }) => {
-      const entry = (raw as Record<string, unknown>)[key];
-      if (typeof entry === "object" && entry !== null) {
-        const e = entry as Partial<BusinessHoursDay>;
-        return [key, {
-          enabled: e.enabled ?? (key !== "saturday" && key !== "sunday"),
-          start: e.start ?? "09:00",
-          end: e.end ?? "18:00",
-        }];
-      }
-      return [key, { enabled: key !== "saturday" && key !== "sunday", start: "09:00", end: "18:00" }];
-    })
-  );
-}
 
 type FormState = {
   agentName: string;
@@ -115,11 +84,6 @@ const DEFAULT_FORM: FormState = {
   isPublished: false,
 };
 
-function tempLabel(value: number) {
-  if (value <= 0.3) return "Preciso";
-  if (value <= 0.7) return "Equilibrado";
-  return "Criativo";
-}
 
 export default function PersonaPage() {
   const { apiFetch } = useApi();
