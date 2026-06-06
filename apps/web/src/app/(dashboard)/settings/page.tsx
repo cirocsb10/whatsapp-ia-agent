@@ -443,24 +443,77 @@ function TabIntegracoes() {
 }
 
 function TabPlano() {
-  const FEATURES = [
-    "Conversas ilimitadas",
-    "Agente IA com LangGraph",
-    "Catálogo de produtos",
-    "Links de pagamento (MercadoPago)",
-    "Analytics avançado",
-    "Suporte prioritário",
-  ];
+  const { apiFetch } = useApi();
+  const [sub, setSub] = useState<{
+    plan: string;
+    status: string;
+    renewalDate: string | null;
+    usage: {
+      conversations: { used: number; limit: number };
+      orders: { used: number; limit: number };
+      products: { used: number; limit: number };
+    };
+  } | null>(null);
+  const [invoices, setInvoices] = useState<{
+    id: string;
+    date: string;
+    amount: string;
+    currency: string;
+    status: string | null;
+    pdfUrl: string | null;
+  }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const PLAN_PRICE: Record<string, string> = {
+    STARTER: "R$ 97", GROWTH: "R$ 297", SCALE: "R$ 497", ENTERPRISE: "Sob consulta",
+  };
+  const PLAN_FEATURES: Record<string, string[]> = {
+    STARTER: ["100 conversas/mês", "Agente IA com LangGraph", "Suporte por email"],
+    GROWTH: ["Conversas ilimitadas", "Agente IA com LangGraph", "Catálogo de produtos", "Links de pagamento", "Analytics avançado", "Suporte prioritário"],
+    SCALE: ["Tudo do Growth", "Multi-atendentes", "API access", "SLA garantido"],
+    ENTERPRISE: ["Customizado", "Infraestrutura dedicada"],
+  };
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const [subRes, histRes] = await Promise.all([
+        apiFetch("/billing/subscription"),
+        apiFetch("/billing/history"),
+      ]);
+      if (subRes.ok) setSub(await subRes.json());
+      if (histRes.ok) {
+        const data = await histRes.json();
+        setInvoices(data.invoices ?? []);
+      }
+      setLoading(false);
+    }
+    void load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const planName = sub?.plan ?? "STARTER";
+  const planDisplay = planName.charAt(0) + planName.slice(1).toLowerCase();
+  const statusLabel = sub?.status === "ACTIVE" ? "Ativo" : sub?.status === "TRIAL" ? "Trial" : sub?.status ?? "—";
+  const renewalDisplay = sub?.renewalDate
+    ? new Date(sub.renewalDate).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
 
   const USAGE = [
-    { label: "Conversas",  used: 0, limit: 1000, color: "#6366f1" },
-    { label: "Pedidos",    used: 0, limit: 500,  color: "#22c55e" },
-    { label: "Produtos",   used: 0, limit: 200,  color: "#f59e0b" },
+    { label: "Conversas", key: "conversations" as const, color: "#6366f1" },
+    { label: "Pedidos", key: "orders" as const, color: "#22c55e" },
+    { label: "Produtos", key: "products" as const, color: "#f59e0b" },
   ];
+
+  if (loading) {
+    return (
+      <div className="settings-tab-content flex items-center justify-center h-64 text-slate-400">
+        Carregando...
+      </div>
+    );
+  }
 
   return (
     <div className="settings-tab-content">
-      {/* Plan card */}
       <div className="settings-plan-card">
         <div className="settings-plan-glow" />
         <div className="settings-plan-header">
@@ -469,18 +522,20 @@ function TabPlano() {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-[#4ade80] uppercase tracking-widest">Plano atual</p>
-            <p className="text-[22px] font-bold text-[#f1f5f9] leading-tight mt-0.5 tracking-tight">Growth</p>
+            <p className="text-[22px] font-bold text-[#f1f5f9] leading-tight mt-0.5 tracking-tight">{planDisplay}</p>
           </div>
-          <span className="tag tag-green ml-auto shrink-0">Ativo</span>
+          <span className={`tag ml-auto shrink-0 ${sub?.status === "ACTIVE" ? "tag-green" : "tag-slate"}`}>
+            {statusLabel}
+          </span>
         </div>
 
         <div className="settings-plan-price">
-          <span className="text-[32px] font-bold text-[#f1f5f9] tracking-tight">R$ 297</span>
-          <span className="text-[13px] text-[#64748b]">/mês</span>
+          <span className="text-[32px] font-bold text-[#f1f5f9] tracking-tight">{PLAN_PRICE[planName] ?? "—"}</span>
+          {planName !== "ENTERPRISE" && <span className="text-[13px] text-[#64748b]">/mês</span>}
         </div>
 
         <ul className="settings-plan-features">
-          {FEATURES.map((f) => (
+          {(PLAN_FEATURES[planName] ?? []).map((f) => (
             <li key={f} className="flex items-center gap-2 text-[12px] text-[#94a3b8]">
               <Check className="w-3 h-3 text-green-400 shrink-0" strokeWidth={2.5} />
               {f}
@@ -489,7 +544,9 @@ function TabPlano() {
         </ul>
 
         <div className="settings-plan-footer">
-          <p className="text-[11px] text-[#475569]">Próxima renovação: <span className="text-[#94a3b8]">15 Jun 2026</span></p>
+          <p className="text-[11px] text-[#475569]">
+            Próxima renovação: <span className="text-[#94a3b8]">{renewalDisplay}</span>
+          </p>
           <button className="settings-plan-upgrade-btn">
             <ArrowUpRight className="w-3.5 h-3.5" />
             Ver planos
@@ -497,17 +554,17 @@ function TabPlano() {
         </div>
       </div>
 
-      {/* Usage */}
       <SectionPanel title="Uso do mês" description="Consumo atual do seu plano." accent="#22c55e">
         <div className="settings-usage-list">
-          {USAGE.map(({ label, used, limit, color }) => {
-            const pct = limit > 0 ? Math.round((used / limit) * 100) : 0;
+          {USAGE.map(({ label, key, color }) => {
+            const u = sub?.usage[key] ?? { used: 0, limit: 1 };
+            const pct = Math.min(Math.round((u.used / u.limit) * 100), 100);
             return (
-              <div key={label} className="settings-usage-row">
+              <div key={key} className="settings-usage-row">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[12px] font-medium text-[#94a3b8]">{label}</span>
                   <span className="text-[11px] text-[#475569] font-variant-numeric tabular-nums">
-                    {used} / {limit}
+                    {u.used} / {u.limit}
                   </span>
                 </div>
                 <div className="prog-track">
@@ -517,15 +574,34 @@ function TabPlano() {
             );
           })}
         </div>
-        <p className="text-[11px] text-[#334155] px-1 mt-2">Reinicia em 1 de junho.</p>
       </SectionPanel>
 
-      {/* Billing history */}
       <SectionPanel title="Histórico de pagamentos" accent="#6366f1">
-        <div className="settings-billing-empty">
-          <CreditCard className="w-5 h-5 text-[#334155]" strokeWidth={1.5} />
-          <p className="text-[12px] text-[#475569]">Nenhum pagamento registrado ainda.</p>
-        </div>
+        {invoices.length === 0 ? (
+          <div className="settings-billing-empty">
+            <CreditCard className="w-5 h-5 text-[#334155]" strokeWidth={1.5} />
+            <p className="text-[12px] text-[#475569]">Nenhum pagamento registrado ainda.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {invoices.map((inv) => (
+              <div key={inv.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
+                <div>
+                  <p className="text-sm text-white">{new Date(inv.date).toLocaleDateString("pt-BR")}</p>
+                  <p className="text-xs text-slate-500">{inv.status}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-white">{inv.currency} {inv.amount}</span>
+                  {inv.pdfUrl && (
+                    <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300">
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </SectionPanel>
     </div>
   );
