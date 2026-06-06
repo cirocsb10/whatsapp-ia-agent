@@ -148,6 +148,8 @@ model Tenant {
   stripeCustomerId  String?
   stripeSubId       String?
   timezone          String         @default("America/Sao_Paulo")
+  segment           String?
+  notificationPrefs Json?
   locale            String         @default("pt-BR")
   logoUrl           String?
   createdAt         DateTime       @default(now())
