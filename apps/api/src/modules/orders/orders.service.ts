@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma/prisma.service";
 
 @Injectable()
@@ -16,7 +16,24 @@ export class OrdersService {
       variationSelected?: Record<string, string>;
     }>;
   }) {
-    const subtotal = body.items.reduce((sum, i) => sum + i.priceCents * i.quantity, 0);
+    const productIds = body.items.map((i) => i.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, tenantId: body.tenantId },
+      select: { id: true, priceCents: true, name: true },
+    });
+
+    if (products.length !== productIds.length) {
+      const missing = productIds.filter((id) => !products.find((p) => p.id === id));
+      throw new NotFoundException(`Produtos não encontrados: ${missing.join(", ")}`);
+    }
+
+    const priceMap = new Map(products.map((p) => [p.id, p.priceCents]));
+    const resolvedItems = body.items.map((i) => ({
+      ...i,
+      priceCents: priceMap.get(i.productId)!,
+    }));
+
+    const subtotal = resolvedItems.reduce((sum, i) => sum + i.priceCents * i.quantity, 0);
 
     const contact = await this.prisma.contact.upsert({
       where: { tenantId_phone: { tenantId: body.tenantId, phone: body.contactPhone } },
@@ -35,7 +52,7 @@ export class OrdersService {
         totalCents: subtotal,
         status: "DRAFT",
         items: {
-          create: body.items.map((i) => ({
+          create: resolvedItems.map((i) => ({
             productId: i.productId,
             productName: i.productName,
             priceCents: i.priceCents,

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   Logger,
@@ -56,6 +57,13 @@ export class PaymentsService {
     });
     if (!order) throw new NotFoundException("Order not found");
 
+    const existing = await this.prisma.payment.findFirst({
+      where: { orderId, status: { in: ["PENDING", "APPROVED"] } },
+    });
+    if (existing) {
+      throw new BadRequestException("Pagamento já foi gerado para este pedido");
+    }
+
     const totalBrl = order.totalCents / 100;
     const mpClient = this.getMpClient();
 
@@ -73,29 +81,31 @@ export class PaymentsService {
         external_reference: orderId,
         date_of_expiration: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       },
-      requestOptions: { idempotencyKey: randomUUID() },
+      requestOptions: { idempotencyKey: `pix-${orderId}` },
     });
 
     const transactionData = mpPayment.point_of_interaction?.transaction_data;
+    const pixExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
-    const payment = await this.prisma.payment.create({
-      data: {
-        orderId,
-        tenantId,
-        method: "PIX",
-        status: "PENDING",
-        amountCents: order.totalCents,
-        gatewayId: String(mpPayment.id),
-        gatewayResponse: mpPayment as object,
-        pixCopyPaste: transactionData?.qr_code ?? null,
-        pixExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
-      },
-    });
-
-    await this.prisma.order.update({
-      where: { id: orderId },
-      data: { status: "AWAITING_PAYMENT" },
-    });
+    const [payment] = await this.prisma.$transaction([
+      this.prisma.payment.create({
+        data: {
+          orderId,
+          tenantId,
+          method: "PIX",
+          status: "PENDING",
+          amountCents: order.totalCents,
+          gatewayId: String(mpPayment.id),
+          gatewayResponse: mpPayment as object,
+          pixCopyPaste: transactionData?.qr_code ?? null,
+          pixExpiresAt,
+        },
+      }),
+      this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: "AWAITING_PAYMENT" },
+      }),
+    ]);
 
     return {
       paymentId: payment.id,

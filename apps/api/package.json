@@ -20,6 +20,7 @@
     "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/platform-express": "^10.4.0",
     "@nestjs/platform-socket.io": "^10.4.0",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.4.0",
     "@types/amqplib": "^0.10.5",
     "amqplib": "^0.10.4",

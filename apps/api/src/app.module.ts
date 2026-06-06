@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { PrismaModule } from "./common/prisma/prisma.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { OrdersModule } from "./modules/orders/orders.module";
@@ -30,6 +32,9 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
         return env;
       },
     }),
+    ThrottlerModule.forRoot([
+      { name: "global", ttl: 60_000, limit: 120 },
+    ]),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -41,6 +46,9 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
   ],
-  providers: [InboxEventsConsumer],
+  providers: [
+    InboxEventsConsumer,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

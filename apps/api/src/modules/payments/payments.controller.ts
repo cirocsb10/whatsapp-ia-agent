@@ -1,5 +1,6 @@
 import { Controller, Post, Body, UseGuards, Headers, HttpCode, UnauthorizedException } from "@nestjs/common";
 import { timingSafeEqual } from "crypto";
+import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import { PaymentsService } from "./payments.service";
 import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
@@ -10,12 +11,14 @@ export class PaymentsController {
 
   @Post("generate")
   @UseGuards(ClerkAuthGuard)
+  @Throttle({ global: { ttl: 60_000, limit: 5 } })
   generatePix(@CurrentTenantId() tenantId: string, @Body("orderId") orderId: string) {
     return this.service.generatePix(tenantId, orderId);
   }
 
   @Post("generate-internal")
   @HttpCode(200)
+  @SkipThrottle()
   generatePixInternal(
     @Headers("x-internal-token") token: string,
     @Body() body: { orderId: string; tenantId: string; paymentMethod: string },
@@ -34,6 +37,7 @@ export class PaymentsController {
 
   @Post("webhooks/mercadopago")
   @HttpCode(200)
+  @SkipThrottle()
   async mercadoPagoWebhook(
     @Body() body: { type: string; data: { id: string } },
     @Headers("x-signature") xSignature?: string,
