@@ -292,68 +292,49 @@ function TabNotificacoes() {
 }
 
 function TabSeguranca() {
-  const [show2fa] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   return (
     <div className="settings-tab-content">
-      <SectionPanel title="Senha" description="Altere a senha da sua conta Clerk." accent="#6366f1">
-        <FieldRow label="Senha atual">
-          <input type="password" className="settings-input" placeholder="••••••••" />
-        </FieldRow>
-        <div className="settings-divider" />
-        <FieldRow label="Nova senha">
-          <input type="password" className="settings-input" placeholder="••••••••" />
-        </FieldRow>
-        <div className="settings-divider" />
-        <FieldRow label="Confirmar nova senha">
-          <input type="password" className="settings-input" placeholder="••••••••" />
-        </FieldRow>
-        <div className="flex justify-end mt-4">
-          <button className="settings-save-btn" style={{ width: "auto", padding: "0 20px" }}>
-            <Key className="w-3.5 h-3.5" />
-            Alterar senha
-          </button>
-        </div>
-      </SectionPanel>
-
-      <SectionPanel title="Autenticação em dois fatores" description="Adicione uma camada extra de segurança." accent="#f59e0b">
+      <SectionPanel
+        title="Senha e autenticação"
+        description="Gerencie sua senha, autenticação em dois fatores e sessões ativas."
+        accent="#6366f1"
+      >
         <div className="settings-2fa-row">
           <div className="settings-2fa-icon">
-            <Smartphone className="w-5 h-5 text-amber-400" strokeWidth={1.6} />
+            <Shield className="w-5 h-5 text-indigo-400" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-[#e2e8f0]">Autenticador por aplicativo</p>
+            <p className="text-[13px] font-medium text-[#e2e8f0]">Segurança da conta</p>
             <p className="text-[11px] text-[#64748b] mt-0.5">
-              {show2fa ? "Ativado — Google Authenticator ou Authy." : "Não configurado ainda."}
+              Senha, 2FA e sessões ativas gerenciados pelo Clerk
             </p>
           </div>
-          <span className={`tag ${show2fa ? "tag-green" : "tag-slate"}`}>
-            {show2fa ? "Ativo" : "Inativo"}
-          </span>
-          <button className="settings-link-btn shrink-0">
-            {show2fa ? "Desativar" : "Configurar"}
+          <button
+            onClick={() => setShowProfile(true)}
+            className="settings-save-btn"
+            style={{ width: "auto", padding: "0 16px" }}
+          >
+            <Key className="w-3.5 h-3.5" />
+            Gerenciar
           </button>
         </div>
       </SectionPanel>
 
-      <SectionPanel title="Sessões ativas" description="Dispositivos com acesso à sua conta." accent="#22c55e">
-        {[
-          { device: "Chrome — Windows 11", location: "São Paulo, BR", current: true,  time: "Agora"       },
-          { device: "Safari — iPhone 15",  location: "São Paulo, BR", current: false, time: "Há 2 dias"   },
-        ].map(({ device, location, current, time }) => (
-          <div key={device} className="settings-session-row">
-            <div className="settings-session-dot" style={{ background: current ? "#22c55e" : "#475569" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-[#e2e8f0]">{device}</p>
-              <p className="text-[10px] text-[#64748b] mt-0.5">{location} · {time}</p>
-            </div>
-            {current
-              ? <span className="tag tag-green">Este dispositivo</span>
-              : <button className="settings-danger-btn" style={{ padding: "3px 10px", fontSize: "11px" }}>Encerrar</button>
-            }
+      {showProfile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowProfile(false)}
+              className="absolute top-2 right-2 z-10 text-slate-400 hover:text-white bg-slate-900 rounded-full p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <UserProfile routing="hash" />
           </div>
-        ))}
-      </SectionPanel>
+        </div>
+      )}
     </div>
   );
 }
