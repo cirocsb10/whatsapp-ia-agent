@@ -76,7 +76,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     // Verify conversation belongs to client's tenant before joining
-    const tenantId = client.handshake.auth["tenantId"] as string;
+    const tenantId = (client as any).tenantId as string;
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: data.conversationId, tenantId },
       select: { id: true },

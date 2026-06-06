@@ -1,9 +1,30 @@
 import re
+import threading
 from dataclasses import dataclass
 from typing import Optional
 import structlog
 
 log = structlog.get_logger(__name__)
+
+_REGEX_TIMEOUT_SECONDS = 0.5
+
+
+def _safe_regex_search(pattern: str, text: str) -> bool:
+    """Run re.search with a hard timeout to prevent ReDoS from malicious patterns."""
+    result: list[bool] = [False]
+
+    def _run() -> None:
+        try:
+            result[0] = bool(re.search(pattern, text, re.IGNORECASE))
+        except re.error:
+            pass
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(_REGEX_TIMEOUT_SECONDS)
+    if t.is_alive():
+        log.warning("guard_rule regex timed out", pattern=pattern[:100])
+    return result[0]
 
 
 @dataclass
@@ -45,7 +66,7 @@ class GuardRailService:
 
         elif rule_type == "REGEX_MATCH":
             pattern = config.get("pattern", "")
-            if pattern and re.search(pattern, text, re.IGNORECASE):
+            if pattern and _safe_regex_search(pattern, text):
                 triggered = True
                 reason = f"Padrão regex disparado: {pattern}"
 

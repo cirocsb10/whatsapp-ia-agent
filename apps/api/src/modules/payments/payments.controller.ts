@@ -24,7 +24,9 @@ export class PaymentsController {
     if (!expectedToken) {
       throw new Error("INTERNAL_API_TOKEN is not configured");
     }
-    if (!token || !timingSafeEqual(Buffer.from(token), Buffer.from(expectedToken))) {
+    const tokenBuf = Buffer.from(token ?? "");
+    const expectedBuf = Buffer.from(expectedToken);
+    if (tokenBuf.length !== expectedBuf.length || !timingSafeEqual(tokenBuf, expectedBuf)) {
       throw new UnauthorizedException("Unauthorized");
     }
     return this.service.generatePix(body.tenantId, body.orderId);
