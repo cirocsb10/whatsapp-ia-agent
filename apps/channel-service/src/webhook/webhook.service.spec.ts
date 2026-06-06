@@ -220,10 +220,24 @@ describe("WebhookService", () => {
     expect(mockPrisma.message.create).toHaveBeenCalled();
   });
 
+  it("não publica quando agentConfig não existe (findFirst retorna null)", async () => {
+    mockPrisma.agentConfig.findFirst.mockResolvedValue(null);
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+    expect(mockPrisma.message.create).toHaveBeenCalled();
+    expect(mockSession.set).toHaveBeenCalledWith(
+      expect.stringContaining("agent:published:"), "false", 60
+    );
+  });
+
   it("usa cache Redis para isPublished e não bate no banco na segunda chamada", async () => {
     // Primeira chamada — DB hit
     await service.processWebhook(makeTextPayload("Msg 1"));
     expect(mockPrisma.agentConfig.findFirst).toHaveBeenCalledTimes(1);
+    // Deve ter escrito no cache após o DB hit
+    expect(mockSession.set).toHaveBeenCalledWith(
+      "agent:published:tenant-uuid-123", "true", 60
+    );
 
     // Simular cache Redis retornando "true"
     mockSession.get.mockImplementation((key: string) => {
