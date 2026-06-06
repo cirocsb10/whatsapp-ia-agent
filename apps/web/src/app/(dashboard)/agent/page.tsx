@@ -6,7 +6,7 @@ import { PublishAgentModal } from "@/components/agent/PublishAgentModal";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bot, Shield, Database, Settings, ArrowRight,
+  Bot, Shield, Database, ArrowRight,
   Sparkles, BookOpen, Cpu, Sliders, Zap,
   CheckCircle2, Circle, Rocket,
 } from "lucide-react";
@@ -47,17 +47,6 @@ const CONFIG_SECTIONS = [
     tag: "Segurança",
     step: 3,
     countKey: "rules" as const,
-  },
-  {
-    href: "/settings",
-    label: "Configurações",
-    desc: "Integrações, webhooks, modelos de IA e configurações avançadas.",
-    icon: Settings,
-    color: "#8b5cf6",
-    bg: "rgba(139,92,246,0.12)",
-    border: "rgba(139,92,246,0.25)",
-    tag: "Avançado",
-    step: 4,
   },
 ];
 
@@ -164,13 +153,6 @@ export default function AgentPage() {
             </div>
 
             <div className="agent-hero-body">
-              <div className={`agent-avatar-ring ${published ? "agent-avatar-ring--live" : ""}`}>
-                <div className="agent-avatar-inner">
-                  <Bot className="w-7 h-7 text-indigo-300" strokeWidth={1.5} />
-                </div>
-                {published && <span className="agent-avatar-pulse" aria-hidden="true" />}
-              </div>
-
               <div className="agent-hero-info">
                 <div className="agent-hero-title-row">
                   <h2 className="agent-hero-title">
@@ -270,7 +252,7 @@ export default function AgentPage() {
           <div className="agent-section-head">
             <div>
               <p className="agent-section-title">Configuração</p>
-              <p className="agent-section-sub">4 módulos para personalizar seu agente</p>
+              <p className="agent-section-sub">3 módulos essenciais para personalizar seu agente</p>
             </div>
           </div>
 

@@ -103,22 +103,17 @@ export default function AnalyticsPage() {
 
       <div className="dashboard-page">
         <div className="analytics-hero">
-          <div className="analytics-hero-left">
-            <div className="analytics-hero-icon">
-              <BarChart2 className="w-5 h-5 text-indigo-400" strokeWidth={1.8} />
+          <div className="analytics-hero-content">
+            <div className="analytics-hero-badge">
+              <BarChart2 className="w-3 h-3" strokeWidth={2} />
+              Performance
             </div>
-            <div>
-              <div className="analytics-hero-badge">
-                <BarChart2 className="w-2.5 h-2.5" />
-                Performance
-              </div>
-              <p className="analytics-hero-title">Relatório de Performance</p>
-              <p className="analytics-hero-sub">
-                Acompanhe conversões, funil de vendas e atividade do agente IA.
-              </p>
-            </div>
+            <h2 className="analytics-hero-title">Relatório de Performance</h2>
+            <p className="analytics-hero-sub">
+              Acompanhe conversões, funil de vendas e atividade do agente IA.
+            </p>
           </div>
-          <div className="analytics-hero-right">
+          <div className="analytics-hero-actions">
             <div className="analytics-period-pills">
               <CalendarDays className="w-3.5 h-3.5 text-[#475569] ml-1" />
               {PERIODS.map((p) => (

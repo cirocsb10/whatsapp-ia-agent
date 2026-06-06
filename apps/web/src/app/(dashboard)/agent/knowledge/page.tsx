@@ -150,11 +150,6 @@ export default function KnowledgePage() {
           <div className="kb-hero-mesh" aria-hidden="true" />
 
           <div className="kb-hero-content">
-            <div className={`kb-hero-icon ${stats.total > 0 ? "kb-hero-icon--active" : ""}`}>
-              <Database className="w-6 h-6 text-cyan-400" strokeWidth={1.5} />
-              {stats.pending > 0 && <span className="kb-hero-icon-pulse" aria-hidden="true" />}
-            </div>
-
             <div className="flex-1 min-w-0">
               <div className="kb-hero-badge">
                 <Sparkles className="w-3 h-3" strokeWidth={2} />

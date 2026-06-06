@@ -152,11 +152,6 @@ export default function GuardRulesPage() {
           <div className="rules-hero-mesh" aria-hidden="true" />
 
           <div className="rules-hero-content">
-            <div className={`rules-hero-icon ${stats.active > 0 ? "rules-hero-icon--active" : ""}`}>
-              <Shield className="w-6 h-6 text-green-400" strokeWidth={1.5} />
-              {stats.blocking > 0 && <span className="rules-hero-icon-pulse" aria-hidden="true" />}
-            </div>
-
             <div className="flex-1 min-w-0">
               <div className="rules-hero-badge">
                 <Sparkles className="w-3 h-3" strokeWidth={2} />

@@ -153,11 +153,6 @@ export default function PersonaPage() {
           <div className="persona-hero-glow persona-hero-glow--violet" aria-hidden="true" />
 
           <div className="persona-hero-content">
-            <div className={`persona-hero-avatar ${form.isPublished ? "persona-hero-avatar--live" : ""}`}>
-              <Bot className="w-6 h-6 text-indigo-300" strokeWidth={1.5} />
-              {form.isPublished && <span className="persona-hero-avatar-pulse" aria-hidden="true" />}
-            </div>
-
             <div className="flex-1 min-w-0">
               <div className="persona-hero-badge">
                 <Sparkles className="w-3 h-3" strokeWidth={2} />
