@@ -1,8 +1,11 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
+import { OrderDetailModal } from "@/components/orders/OrderDetailModal";
+import { UpdateStatusModal } from "@/components/orders/UpdateStatusModal";
 import { useApi } from "@/lib/hooks/useApi";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ShoppingCart, Search, SlidersHorizontal,
   TrendingUp, DollarSign, Clock,
@@ -53,29 +56,61 @@ function money(cents: number) {
 
 export default function OrdersPage() {
   const { apiFetch } = useApi();
+  const router = useRouter();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
+  const [updateOrder, setUpdateOrder] = useState<{ id: string; status: string } | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/orders?page=${page}&limit=20`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data.items ?? []);
+        setTotalPages(data.totalPages ?? 1);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [apiFetch, page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { void loadOrders(); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await apiFetch(`/orders?page=${page}&limit=20`);
-        if (res.ok) {
-          const data = await res.json();
-          setOrders(data.items ?? []);
-          setTotalPages(data.totalPages ?? 1);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
-  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!openMenuId) return;
+    const close = () => setOpenMenuId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openMenuId]);
+
+  function exportCsv() {
+    const header = "Pedido,Cliente,Telefone,Total,Status,Data\n";
+    const rows = orders.map((o) =>
+      [
+        o.orderNumber,
+        o.contact?.name ?? "",
+        o.contact?.phone ?? "",
+        (o.totalCents / 100).toFixed(2),
+        o.status,
+        new Date(o.createdAt).toLocaleDateString("pt-BR"),
+      ].join(",")
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pedidos-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const filtered = useMemo(() => orders.filter((order) => {
     const orderStatus = normalizeStatus(order.status);
@@ -107,7 +142,7 @@ export default function OrdersPage() {
             </p>
           </div>
           <div className="orders-hero-actions">
-            <button className="orders-btn orders-btn-primary">
+            <button className="orders-btn orders-btn-primary" onClick={() => setCreateOpen(true)}>
               Novo pedido
             </button>
           </div>
@@ -153,7 +188,7 @@ export default function OrdersPage() {
             <button className="orders-tool-btn" title="Filtros avancados">
               <SlidersHorizontal className="w-3.5 h-3.5" />
             </button>
-            <button className="orders-tool-btn" title="Exportar CSV">
+            <button className="orders-tool-btn" title="Exportar CSV" onClick={exportCsv}>
               <Download className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -184,10 +219,10 @@ export default function OrdersPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-1">
-                <button className="orders-btn orders-btn-secondary">
+                <button className="orders-btn orders-btn-secondary" onClick={() => router.push("/catalog")}>
                   Ver catalogo
                 </button>
-                <button className="orders-btn orders-btn-primary">
+                <button className="orders-btn orders-btn-primary" onClick={() => setCreateOpen(true)}>
                   Criar pedido manual
                 </button>
               </div>
@@ -222,8 +257,37 @@ export default function OrdersPage() {
                     <div className="orders-td">
                       {new Date(order.createdAt).toLocaleDateString("pt-BR")}
                     </div>
-                    <div className="orders-td">
-                      <MoreHorizontal className="w-4 h-4 text-[#64748b]" />
+                    <div className="orders-td" style={{ position: "relative" }}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === order.id ? null : order.id); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", color: "#64748b" }}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                      {openMenuId === order.id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50, background: "#0f172a", border: "1px solid rgba(51,65,85,0.8)", borderRadius: 10, padding: "4px 0", minWidth: 180, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+                        >
+                          {[
+                            { label: "Ver detalhes", action: () => { setDetailOrderId(order.id); setOpenMenuId(null); }, danger: false },
+                            { label: "Atualizar status", action: () => { setUpdateOrder({ id: order.id, status: order.status }); setOpenMenuId(null); }, danger: false },
+                            { label: "Cancelar pedido", action: async () => { setOpenMenuId(null); if (!confirm(`Cancelar ${order.orderNumber}?`)) return; await apiFetch(`/orders/${order.id}/cancel`, { method: "PATCH" }); void loadOrders(); }, danger: true },
+                          ].map(({ label, action, danger }) => (
+                            <button
+                              key={label}
+                              type="button"
+                              onClick={action}
+                              style={{ width: "100%", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, color: danger ? "#f87171" : "#94a3b8", display: "block" }}
+                              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)"; }}
+                              onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "none"; }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -268,6 +332,19 @@ export default function OrdersPage() {
           </div>
         </div>
       </div>
+
+      <OrderDetailModal
+        open={!!detailOrderId}
+        onClose={() => setDetailOrderId(null)}
+        orderId={detailOrderId}
+      />
+      <UpdateStatusModal
+        open={!!updateOrder}
+        onClose={() => setUpdateOrder(null)}
+        onUpdated={() => void loadOrders()}
+        orderId={updateOrder?.id ?? null}
+        currentStatus={updateOrder?.status ?? "DRAFT"}
+      />
     </div>
   );
 }
