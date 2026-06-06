@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from "@nestjs/common";
+import { OrderStatus } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
 
 @Injectable()
@@ -88,5 +89,26 @@ export class OrdersService {
     });
     if (!order) throw new NotFoundException(`Order ${id} not found`);
     return order;
+  }
+
+  async updateStatus(tenantId: string, id: string, status: string) {
+    const valid = Object.values(OrderStatus);
+    if (!valid.includes(status as OrderStatus)) {
+      throw new BadRequestException(`Status inválido: ${status}`);
+    }
+    const order = await this.prisma.order.findFirst({ where: { id, tenantId } });
+    if (!order) throw new NotFoundException(`Order ${id} not found`);
+    return this.prisma.order.update({
+      where: { id },
+      data: {
+        status: status as OrderStatus,
+        ...(status === OrderStatus.DELIVERED ? { deliveredAt: new Date() } : {}),
+        ...(status === OrderStatus.CANCELLED ? { cancelledAt: new Date() } : {}),
+      },
+    });
+  }
+
+  async cancelOrder(tenantId: string, id: string) {
+    return this.updateStatus(tenantId, id, "CANCELLED");
   }
 }

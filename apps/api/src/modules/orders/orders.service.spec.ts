@@ -1,4 +1,4 @@
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { OrdersService } from "./orders.service";
@@ -12,13 +12,24 @@ const mockOrder = {
   status: "DRAFT",
 };
 
+const mockProducts = [
+  { id: "p-1", priceCents: 1990, name: "Produto A" },
+  { id: "p-2", priceCents: 1010, name: "Produto B" },
+];
+
 const mockPrisma = {
   contact: { upsert: jest.fn().mockResolvedValue(mockContact) },
+  product: {
+    findMany: jest.fn().mockImplementation(({ where }: { where: { id: { in: string[] } } }) =>
+      Promise.resolve(mockProducts.filter((p) => where.id.in.includes(p.id))),
+    ),
+  },
   order: {
     create: jest.fn().mockResolvedValue(mockOrder),
     findMany: jest.fn(),
     findFirst: jest.fn(),
     count: jest.fn(),
+    update: jest.fn(),
   },
 };
 
@@ -63,6 +74,7 @@ describe("OrdersService", () => {
     });
 
     it("cria itens com subtotalCents por item", async () => {
+      mockPrisma.product.findMany.mockResolvedValueOnce([{ id: "p-1", priceCents: 500, name: "X" }]);
       await service.createInternal({
         tenantId: "t-1",
         contactPhone: "5511",
@@ -117,6 +129,28 @@ describe("OrdersService", () => {
       mockPrisma.order.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne("t-1", "bad-id")).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("updateStatus", () => {
+    it("updates status to PROCESSING", async () => {
+      jest.spyOn(mockPrisma.order, "findFirst").mockResolvedValue({ id: "o1", tenantId: "t1" } as any);
+      jest.spyOn(mockPrisma.order, "update").mockResolvedValue({ id: "o1", status: "PROCESSING" } as any);
+      const result = await service.updateStatus("t1", "o1", "PROCESSING");
+      expect(result.status).toBe("PROCESSING");
+      expect(mockPrisma.order.update).toHaveBeenCalledWith({
+        where: { id: "o1" },
+        data: { status: "PROCESSING" },
+      });
+    });
+
+    it("throws BadRequestException for invalid status", async () => {
+      await expect(service.updateStatus("t1", "o1", "INVALID")).rejects.toThrow(BadRequestException);
+    });
+
+    it("throws NotFoundException when order not found", async () => {
+      jest.spyOn(mockPrisma.order, "findFirst").mockResolvedValue(null);
+      await expect(service.updateStatus("t1", "missing", "PROCESSING")).rejects.toThrow(NotFoundException);
     });
   });
 });

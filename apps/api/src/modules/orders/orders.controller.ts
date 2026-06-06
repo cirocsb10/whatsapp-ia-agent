@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Param, Query, UseGuards, Headers, Body, HttpCode,
+  Controller, Get, Post, Patch, Param, Query, UseGuards, Headers, Body, HttpCode,
   UnauthorizedException,
 } from "@nestjs/common";
 import { timingSafeEqual } from "crypto";
@@ -25,6 +25,22 @@ export class OrdersController {
   @UseGuards(ClerkAuthGuard)
   findOne(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
     return this.service.findOne(tenantId, id);
+  }
+
+  @Patch(":id/status")
+  @UseGuards(ClerkAuthGuard)
+  updateStatus(
+    @CurrentTenantId() tenantId: string,
+    @Param("id") id: string,
+    @Body("status") status: string,
+  ) {
+    return this.service.updateStatus(tenantId, id, status);
+  }
+
+  @Patch(":id/cancel")
+  @UseGuards(ClerkAuthGuard)
+  cancelOrder(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
+    return this.service.cancelOrder(tenantId, id);
   }
 
   @Post("internal")
