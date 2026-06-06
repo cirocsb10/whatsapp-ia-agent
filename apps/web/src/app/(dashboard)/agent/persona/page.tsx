@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
+  Clock,
   MessageCircle,
   Sparkles,
   Cpu,
@@ -14,6 +15,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Check,
+  UserCheck,
   Zap,
 } from "lucide-react";
 
@@ -31,12 +33,60 @@ const FIXED_LLM_MODEL = {
   desc: "Rápido e econômico",
 } as const;
 
+type BusinessHoursDay = { enabled: boolean; start: string; end: string };
+type BusinessHoursMap = Record<string, BusinessHoursDay>;
+
+const DAYS: { key: string; label: string }[] = [
+  { key: "monday",    label: "Segunda" },
+  { key: "tuesday",   label: "Terça" },
+  { key: "wednesday", label: "Quarta" },
+  { key: "thursday",  label: "Quinta" },
+  { key: "friday",    label: "Sexta" },
+  { key: "saturday",  label: "Sábado" },
+  { key: "sunday",    label: "Domingo" },
+];
+
+const DEFAULT_BUSINESS_HOURS: BusinessHoursMap = Object.fromEntries(
+  DAYS.map(({ key }) => [
+    key,
+    { enabled: key !== "saturday" && key !== "sunday", start: "09:00", end: "18:00" },
+  ])
+);
+
+function normalizeBusinessHours(raw: unknown): BusinessHoursMap {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return DEFAULT_BUSINESS_HOURS;
+  }
+  return Object.fromEntries(
+    DAYS.map(({ key }) => {
+      const entry = (raw as Record<string, unknown>)[key];
+      if (typeof entry === "object" && entry !== null) {
+        const e = entry as Partial<BusinessHoursDay>;
+        return [key, {
+          enabled: e.enabled ?? (key !== "saturday" && key !== "sunday"),
+          start: e.start ?? "09:00",
+          end: e.end ?? "18:00",
+        }];
+      }
+      return [key, { enabled: key !== "saturday" && key !== "sunday", start: "09:00", end: "18:00" }];
+    })
+  );
+}
+
 type FormState = {
   agentName: string;
   tone: string;
   greetingMessage: string;
   inactivityMessage: string;
   closingMessage: string;
+  outOfHoursMessage: string;
+  handoffMessage: string;
+  autoHandoffThreshold: number;
+  handoffOrderValueBrl: string;
+  inactivityTimeoutMin: number;
+  sessionTtlHours: number;
+  maxConversationLength: number;
+  businessHours: BusinessHoursMap;
   llmModel: string;
   llmTemperature: number;
   maxResponseLength: number;
@@ -50,6 +100,14 @@ const DEFAULT_FORM: FormState = {
   greetingMessage: "Olá! Como posso ajudar?",
   inactivityMessage: "Ainda está por aqui?",
   closingMessage: "Até logo!",
+  outOfHoursMessage: "No momento estamos fechados. Retornaremos em breve!",
+  handoffMessage: "Estou transferindo você para um de nossos atendentes.",
+  autoHandoffThreshold: 0.3,
+  handoffOrderValueBrl: "",
+  inactivityTimeoutMin: 30,
+  sessionTtlHours: 24,
+  maxConversationLength: 50,
+  businessHours: DEFAULT_BUSINESS_HOURS,
   llmModel: "gpt-4o-mini",
   llmTemperature: 0.3,
   maxResponseLength: 500,
@@ -82,6 +140,10 @@ export default function PersonaPage() {
             ...current,
             ...data,
             llmModel: FIXED_LLM_MODEL.value,
+            handoffOrderValueBrl: data.handoffOrderValueBrl != null
+              ? String(data.handoffOrderValueBrl)
+              : "",
+            businessHours: normalizeBusinessHours(data.businessHours),
           }));
         }
       } finally {
@@ -105,9 +167,16 @@ export default function PersonaPage() {
   async function handleSave() {
     setSaving(true);
     try {
+      const payload = {
+        ...form,
+        llmModel: FIXED_LLM_MODEL.value,
+        handoffOrderValueBrl: form.handoffOrderValueBrl === ""
+          ? null
+          : Number(form.handoffOrderValueBrl),
+      };
       const res = await apiFetch("/agent/config", {
         method: "PATCH",
-        body: JSON.stringify({ ...form, llmModel: FIXED_LLM_MODEL.value }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       setDirty(false);
@@ -306,6 +375,210 @@ export default function PersonaPage() {
                     />
                   </label>
                 ))}
+              </div>
+            </section>
+
+            {/* Atendimento & Handoff */}
+            <section className="persona-card">
+              <div className="persona-card-head">
+                <div className="persona-card-icon persona-card-icon--indigo">
+                  <UserCheck className="w-4 h-4" strokeWidth={1.8} />
+                </div>
+                <div>
+                  <p className="persona-card-title">Atendimento & Handoff</p>
+                  <p className="persona-card-sub">Tempos de sessão e transferência humana</p>
+                </div>
+              </div>
+
+              <div className="persona-card-body persona-card-body--stack">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                  <label className="form-field">
+                    <span className="form-label">
+                      Inatividade
+                      <span className="form-label-hint"> — min</span>
+                    </span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={1440}
+                      step={5}
+                      value={form.inactivityTimeoutMin}
+                      onChange={(e) => patch("inactivityTimeoutMin", Number(e.target.value))}
+                      className="form-input"
+                      disabled={loading}
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="form-label">
+                      Sessão
+                      <span className="form-label-hint"> — horas</span>
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={720}
+                      step={1}
+                      value={form.sessionTtlHours}
+                      onChange={(e) => patch("sessionTtlHours", Number(e.target.value))}
+                      className="form-input"
+                      disabled={loading}
+                    />
+                  </label>
+                  <label className="form-field">
+                    <span className="form-label">Max. turnos</span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={500}
+                      step={5}
+                      value={form.maxConversationLength}
+                      onChange={(e) => patch("maxConversationLength", Number(e.target.value))}
+                      className="form-input"
+                      disabled={loading}
+                    />
+                  </label>
+                </div>
+
+                <div className="form-field">
+                  <div className="persona-slider-head">
+                    <span className="form-label">Limite de confiança para handoff</span>
+                    <span className="persona-slider-value">
+                      {form.autoHandoffThreshold.toFixed(2)}
+                      <span className="persona-slider-tag">
+                        {form.autoHandoffThreshold <= 0.2 ? "Raro" : form.autoHandoffThreshold <= 0.5 ? "Moderado" : "Frequente"}
+                      </span>
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={form.autoHandoffThreshold}
+                    onChange={(e) => patch("autoHandoffThreshold", Number(e.target.value))}
+                    className="persona-range"
+                    style={{ "--range-pct": `${form.autoHandoffThreshold * 100}%` } as React.CSSProperties}
+                    disabled={loading}
+                    aria-label="Limite de confiança para handoff"
+                  />
+                  <div className="persona-range-labels">
+                    <span>Raro</span>
+                    <span>Moderado</span>
+                    <span>Frequente</span>
+                  </div>
+                </div>
+
+                <label className="form-field">
+                  <span className="form-label">
+                    Valor mínimo para handoff (R$)
+                    <span className="form-label-hint"> — deixe vazio para desativar</span>
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={form.handoffOrderValueBrl}
+                    onChange={(e) => patch("handoffOrderValueBrl", e.target.value)}
+                    placeholder="Ex: 500,00"
+                    className="form-input"
+                    disabled={loading}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span className="form-label">
+                    Mensagem de handoff
+                    <span className="form-label-hint"> — exibida ao transferir para humano</span>
+                  </span>
+                  <textarea
+                    value={form.handoffMessage}
+                    onChange={(e) => patch("handoffMessage", e.target.value)}
+                    rows={2}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span className="form-label">
+                    Mensagem fora do horário
+                    <span className="form-label-hint"> — quando o agente está fechado</span>
+                  </span>
+                  <textarea
+                    value={form.outOfHoursMessage}
+                    onChange={(e) => patch("outOfHoursMessage", e.target.value)}
+                    rows={2}
+                    className="form-input"
+                    disabled={loading}
+                  />
+                </label>
+              </div>
+            </section>
+
+            {/* Horário de Funcionamento */}
+            <section className="persona-card">
+              <div className="persona-card-head">
+                <div className="persona-card-icon persona-card-icon--cyan">
+                  <Clock className="w-4 h-4" strokeWidth={1.8} />
+                </div>
+                <div>
+                  <p className="persona-card-title">Horário de Funcionamento</p>
+                  <p className="persona-card-sub">Define quando o agente responde automaticamente</p>
+                </div>
+              </div>
+
+              <div className="persona-card-body persona-card-body--stack">
+                {DAYS.map(({ key, label }) => {
+                  const day = form.businessHours[key] ?? { enabled: false, start: "09:00", end: "18:00" };
+                  return (
+                    <div key={key} className="persona-hours-row">
+                      <label className="persona-hours-toggle">
+                        <input
+                          type="checkbox"
+                          checked={day.enabled}
+                          onChange={(e) =>
+                            patch("businessHours", {
+                              ...form.businessHours,
+                              [key]: { ...day, enabled: e.target.checked },
+                            })
+                          }
+                          disabled={loading}
+                        />
+                        <span className="persona-hours-day">{label}</span>
+                      </label>
+                      <div
+                        className="persona-hours-times"
+                        style={{ opacity: day.enabled ? 1 : 0.35, pointerEvents: day.enabled ? "auto" : "none" }}
+                      >
+                        <input
+                          type="time"
+                          value={day.start}
+                          onChange={(e) =>
+                            patch("businessHours", {
+                              ...form.businessHours,
+                              [key]: { ...day, start: e.target.value },
+                            })
+                          }
+                          className="form-input persona-time-input"
+                          disabled={loading || !day.enabled}
+                        />
+                        <span className="persona-hours-sep">até</span>
+                        <input
+                          type="time"
+                          value={day.end}
+                          onChange={(e) =>
+                            patch("businessHours", {
+                              ...form.businessHours,
+                              [key]: { ...day, end: e.target.value },
+                            })
+                          }
+                          className="form-input persona-time-input"
+                          disabled={loading || !day.enabled}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 

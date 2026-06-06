@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -37,6 +38,57 @@ export class UpdateAgentConfigDto {
   @MaxLength(500)
   closingMessage?: string;
 
+  // ── Atendimento & Handoff ───────────────────────────────
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  outOfHoursMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  handoffMessage?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @Type(() => Number)
+  autoHandoffThreshold?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  handoffOrderValueBrl?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(5)
+  @Max(1440)
+  @Type(() => Number)
+  inactivityTimeoutMin?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(720)
+  @Type(() => Number)
+  sessionTtlHours?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(5)
+  @Max(500)
+  @Type(() => Number)
+  maxConversationLength?: number;
+
+  // ── Horário de funcionamento ────────────────────────────
+  @IsOptional()
+  @IsObject()
+  businessHours?: Record<string, { enabled: boolean; start: string; end: string }>;
+
+  // ── LLM Config ─────────────────────────────────────────
   @IsOptional()
   @IsString()
   llmModel?: string;

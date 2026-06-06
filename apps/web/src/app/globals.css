@@ -7975,6 +7975,53 @@
     border: 1px solid rgba(239,68,68,0.3);
   }
 
+  /* ── Persona — Business Hours ─────────────────────────── */
+  .persona-hours-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .persona-hours-row:last-child { border-bottom: none; }
+  .persona-hours-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+  .persona-hours-toggle input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: #6366f1;
+    cursor: pointer;
+  }
+  .persona-hours-day {
+    font-size: 12px;
+    font-weight: 500;
+    color: #cbd5e1;
+  }
+  .persona-hours-times {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    transition: opacity 0.15s;
+  }
+  .persona-hours-sep {
+    font-size: 11px;
+    color: #475569;
+    flex-shrink: 0;
+  }
+  .persona-time-input {
+    width: 100px !important;
+    flex-shrink: 0;
+    font-size: 12px !important;
+    padding: 5px 8px !important;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .persona-bubble { animation: none; }
     .persona-save-bar { transition: none; }
