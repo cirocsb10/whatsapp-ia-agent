@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/layout/Header";
 import { TestSimulator } from "@/components/agent/TestSimulator";
+import { PublishAgentModal } from "@/components/agent/PublishAgentModal";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -72,6 +73,8 @@ export default function AgentPage() {
   const [knowledgeCount, setKnowledgeCount] = useState(0);
   const [rulesCount, setRulesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -91,6 +94,23 @@ export default function AgentPage() {
     }
     void load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handlePublish() {
+    setPublishing(true);
+    try {
+      const res = await apiFetch("/agent/config", {
+        method: "PATCH",
+        body: JSON.stringify({ isPublished: true }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setConfig(updated);
+      }
+    } finally {
+      setPublishing(false);
+      setShowPublishModal(false);
+    }
+  }
 
   const published = Boolean(config?.isPublished);
   const hasPersona = Boolean(config?.agentName && config?.agentName !== "Assistente");
@@ -196,11 +216,15 @@ export default function AgentPage() {
             </div>
 
             {!published && (
-              <Link href="/agent/persona" className="agent-publish-cta">
+              <button
+                type="button"
+                onClick={() => setShowPublishModal(true)}
+                className="agent-publish-cta"
+              >
                 <Rocket className="w-4 h-4" strokeWidth={1.8} />
                 Publicar agente
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              </button>
             )}
           </div>
         </div>
@@ -300,6 +324,13 @@ export default function AgentPage() {
           </div>
         </section>
       </div>
+
+      <PublishAgentModal
+        open={showPublishModal}
+        publishing={publishing}
+        onConfirm={() => { void handlePublish(); }}
+        onClose={() => setShowPublishModal(false)}
+      />
     </div>
   );
 }
