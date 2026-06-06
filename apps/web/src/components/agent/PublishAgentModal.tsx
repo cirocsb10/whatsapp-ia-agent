@@ -1,24 +1,48 @@
 "use client";
+import { useEffect, useRef } from "react";
 import { Rocket, X, AlertTriangle } from "lucide-react";
 
 interface Props {
   open: boolean;
   publishing: boolean;
+  error?: string | null;
   onConfirm: () => void;
   onClose: () => void;
 }
 
-export function PublishAgentModal({ open, publishing, onConfirm, onClose }: Props) {
+export function PublishAgentModal({ open, publishing, error, onConfirm, onClose }: Props) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    cancelRef.current?.focus();
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !publishing) onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, publishing, onClose]);
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-6 shadow-2xl">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!publishing ? onClose : undefined}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="publish-modal-title"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/95 p-6 shadow-2xl"
+      >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 text-slate-500 hover:text-slate-300 transition-colors"
+          disabled={publishing}
+          aria-label="Fechar"
+          className="absolute right-4 top-4 text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50"
         >
           <X className="w-4 h-4" />
         </button>
@@ -29,7 +53,9 @@ export function PublishAgentModal({ open, publishing, onConfirm, onClose }: Prop
           </div>
 
           <div>
-            <h2 className="text-[17px] font-semibold text-[#e2e8f0]">Publicar agente?</h2>
+            <h2 id="publish-modal-title" className="text-[17px] font-semibold text-[#e2e8f0]">
+              Publicar agente?
+            </h2>
             <p className="mt-1.5 text-[13px] text-[#64748b] leading-relaxed">
               A partir de agora o agente passará a responder mensagens reais no WhatsApp.
               Certifique-se de que persona, base de conhecimento e guard rails estão configurados.
@@ -43,8 +69,15 @@ export function PublishAgentModal({ open, publishing, onConfirm, onClose }: Prop
             </p>
           </div>
 
+          {error && (
+            <p className="w-full rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-[12px] text-red-400">
+              {error}
+            </p>
+          )}
+
           <div className="flex w-full gap-3 pt-1">
             <button
+              ref={cancelRef}
               type="button"
               onClick={onClose}
               disabled={publishing}

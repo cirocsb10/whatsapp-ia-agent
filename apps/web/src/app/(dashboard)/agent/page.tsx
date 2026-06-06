@@ -75,6 +75,7 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(true);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -97,6 +98,7 @@ export default function AgentPage() {
 
   async function handlePublish() {
     setPublishing(true);
+    setPublishError(null);
     try {
       const res = await apiFetch("/agent/config", {
         method: "PATCH",
@@ -105,10 +107,14 @@ export default function AgentPage() {
       if (res.ok) {
         const updated = await res.json();
         setConfig(updated);
+        setShowPublishModal(false);
+      } else {
+        setPublishError("Não foi possível publicar o agente. Tente novamente.");
       }
+    } catch {
+      setPublishError("Erro de conexão. Verifique sua conexão e tente novamente.");
     } finally {
       setPublishing(false);
-      setShowPublishModal(false);
     }
   }
 
@@ -328,8 +334,9 @@ export default function AgentPage() {
       <PublishAgentModal
         open={showPublishModal}
         publishing={publishing}
-        onConfirm={() => { void handlePublish(); }}
-        onClose={() => setShowPublishModal(false)}
+        error={publishError}
+        onConfirm={handlePublish}
+        onClose={() => { setShowPublishModal(false); setPublishError(null); }}
       />
     </div>
   );
