@@ -95,6 +95,25 @@ export default function OrdersPage() {
       <Header title="Pedidos" subtitle="Gerencie pedidos gerados pelo agente IA" />
 
       <div className="dashboard-page">
+        <div className="orders-hero">
+          <div className="orders-hero-content">
+            <div className="orders-hero-badge">
+              <ShoppingCart className="w-3 h-3" strokeWidth={2} />
+              Central de pedidos
+            </div>
+            <h2 className="orders-hero-title">Pedidos do WhatsApp</h2>
+            <p className="orders-hero-sub">
+              Acompanhe pedidos criados pela IA, status de pagamento e próximas ações de entrega.
+            </p>
+          </div>
+          <div className="orders-hero-actions">
+            <button className="catalog-add-btn">
+              <Plus className="w-3.5 h-3.5" />
+              Novo pedido
+            </button>
+          </div>
+        </div>
+
         <div className="support-stats-grid">
           {stats.map(({ label, value, icon: Icon, color, bg, border }) => (
             <div key={label} className="support-stat-card" style={{ "--stat-border": border } as React.CSSProperties}>
@@ -137,10 +156,6 @@ export default function OrdersPage() {
             </button>
             <button className="inbox-filter-btn" title="Exportar CSV">
               <Download className="w-3.5 h-3.5" />
-            </button>
-            <button className="catalog-add-btn">
-              <Plus className="w-3.5 h-3.5" />
-              Novo pedido
             </button>
           </div>
         </div>

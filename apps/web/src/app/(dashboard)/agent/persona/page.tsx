@@ -10,12 +10,11 @@ import {
   Sparkles,
   Cpu,
   Thermometer,
-  ArrowLeft,
+  ChevronLeft,
   CheckCircle2,
   AlertCircle,
-  Save,
+  Check,
   Zap,
-  Globe,
 } from "lucide-react";
 
 const TONES = [
@@ -26,11 +25,11 @@ const TONES = [
   { value: "REGIONAL", label: "Regional", desc: "Linguagem local" },
 ] as const;
 
-const MODELS = [
-  { value: "gpt-4o-mini", label: "GPT-4o Mini", desc: "Rápido e econômico" },
-  { value: "gpt-4o", label: "GPT-4o", desc: "Equilíbrio ideal" },
-  { value: "gpt-4-turbo", label: "GPT-4 Turbo", desc: "Máxima capacidade" },
-];
+const FIXED_LLM_MODEL = {
+  value: "gpt-4o-mini",
+  label: "GPT-4o Mini",
+  desc: "Rápido e econômico",
+} as const;
 
 type FormState = {
   agentName: string;
@@ -79,7 +78,11 @@ export default function PersonaPage() {
         const res = await apiFetch("/agent/config");
         if (res.ok) {
           const data = await res.json();
-          setForm((current) => ({ ...current, ...data }));
+          setForm((current) => ({
+            ...current,
+            ...data,
+            llmModel: FIXED_LLM_MODEL.value,
+          }));
         }
       } finally {
         setLoading(false);
@@ -104,7 +107,7 @@ export default function PersonaPage() {
     try {
       const res = await apiFetch("/agent/config", {
         method: "PATCH",
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, llmModel: FIXED_LLM_MODEL.value }),
       });
       if (!res.ok) throw new Error();
       setDirty(false);
@@ -117,7 +120,6 @@ export default function PersonaPage() {
   }
 
   const toneMeta = TONES.find((t) => t.value === form.tone) ?? TONES[2];
-  const modelMeta = MODELS.find((m) => m.value === form.llmModel) ?? MODELS[0];
 
   const previewTime = useMemo(
     () =>
@@ -129,12 +131,7 @@ export default function PersonaPage() {
   );
 
   return (
-    <div className="fade-up flex flex-col h-screen overflow-y-auto">
-      <Header
-        title="Persona do Agente"
-        subtitle="Identidade, tom de voz e comportamento da IA"
-      />
-
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       {toast && (
         <div className={`persona-toast persona-toast--${toast.type}`}>
           {toast.type === "success" ? (
@@ -146,7 +143,13 @@ export default function PersonaPage() {
         </div>
       )}
 
-      <div className="dashboard-page persona-page">
+      <div className="fade-up flex flex-col flex-1 min-h-0 overflow-y-auto">
+        <Header
+          title="Persona do Agente"
+          subtitle="Identidade, tom de voz e comportamento da IA"
+        />
+
+        <div className="dashboard-page persona-page">
         {/* Hero */}
         <div className={`persona-hero ${form.isPublished ? "persona-hero--live" : ""}`}>
           <div className="persona-hero-glow persona-hero-glow--indigo" aria-hidden="true" />
@@ -164,7 +167,7 @@ export default function PersonaPage() {
               <p className="persona-hero-sub">
                 Tom <span className="persona-hero-accent">{toneMeta.label.toLowerCase()}</span>
                 {" · "}
-                {modelMeta.label}
+                {FIXED_LLM_MODEL.label}
                 {" · "}
                 temp. {form.llmTemperature.toFixed(1)}
               </p>
@@ -194,11 +197,11 @@ export default function PersonaPage() {
             <p className="persona-info-title">Como a persona funciona</p>
             <p className="persona-info-desc">
               A persona define como seu agente se apresenta e responde no WhatsApp.
-              Ajuste o tom, mensagens e modelo — o preview à direita atualiza em tempo real.
+              Ajuste o tom e as mensagens — o preview à direita atualiza em tempo real.
             </p>
           </div>
           <Link href="/agent" className="persona-info-link">
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="persona-info-link-chevron" strokeWidth={1.5} />
             Voltar ao agente
           </Link>
         </div>
@@ -314,26 +317,19 @@ export default function PersonaPage() {
                 </div>
                 <div>
                   <p className="persona-card-title">Modelo de IA</p>
-                  <p className="persona-card-sub">LLM, criatividade e limites</p>
+                  <p className="persona-card-sub">Criatividade e limites de resposta</p>
                 </div>
               </div>
 
               <div className="persona-card-body">
-                <label className="form-field">
+                <div className="form-field">
                   <span className="form-label">Modelo LLM</span>
-                  <select
-                    value={form.llmModel}
-                    onChange={(e) => patch("llmModel", e.target.value)}
-                    className="form-input form-select"
-                    disabled={loading}
-                  >
-                    {MODELS.map(({ value, label, desc }) => (
-                      <option key={value} value={value}>
-                        {label} — {desc}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <div className="persona-model-fixed">
+                    <span className="persona-model-fixed-name">{FIXED_LLM_MODEL.label}</span>
+                    <span className="persona-model-fixed-sep">—</span>
+                    <span className="persona-model-fixed-desc">{FIXED_LLM_MODEL.desc}</span>
+                  </div>
+                </div>
 
                 <div className="form-field">
                   <div className="persona-slider-head">
@@ -398,34 +394,6 @@ export default function PersonaPage() {
                 </label>
               </div>
             </section>
-
-            {/* Publicação */}
-            <section className="persona-card persona-card--publish">
-              <div className="persona-publish-row">
-                <div className="persona-publish-info">
-                  <div className="persona-card-icon persona-card-icon--green">
-                    <Globe className="w-4 h-4" strokeWidth={1.8} />
-                  </div>
-                  <div>
-                    <p className="persona-card-title">Publicar agente</p>
-                    <p className="persona-card-sub">
-                      Ativa respostas automáticas no WhatsApp
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={form.isPublished}
-                  onClick={() => patch("isPublished", !form.isPublished)}
-                  className={`persona-toggle ${form.isPublished ? "persona-toggle--on" : ""}`}
-                  disabled={loading}
-                  aria-label={form.isPublished ? "Despublicar agente" : "Publicar agente"}
-                >
-                  <span className="persona-toggle-thumb" />
-                </button>
-              </div>
-            </section>
           </div>
 
           {/* Preview column */}
@@ -484,7 +452,7 @@ export default function PersonaPage() {
               <div className="persona-preview-meta">
                 <div className="persona-meta-chip">
                   <Cpu className="w-3 h-3" />
-                  {modelMeta.label}
+                  {FIXED_LLM_MODEL.label}
                 </div>
                 <div className="persona-meta-chip">
                   <Thermometer className="w-3 h-3" />
@@ -498,8 +466,8 @@ export default function PersonaPage() {
           </aside>
         </div>
       </div>
+      </div>
 
-      {/* Sticky save bar */}
       <div className="persona-save-bar">
         <p className="persona-save-hint">
           {dirty ? "Alterações não salvas" : "Nenhuma alteração pendente"}
@@ -510,7 +478,9 @@ export default function PersonaPage() {
           disabled={saving || loading || !dirty}
           className="persona-save-btn"
         >
-          <Save className="w-4 h-4" strokeWidth={2} />
+          <span className="persona-save-btn-icon" aria-hidden="true">
+            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+          </span>
           {saving ? "Salvando…" : "Salvar persona"}
         </button>
       </div>

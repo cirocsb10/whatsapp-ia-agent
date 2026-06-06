@@ -33,6 +33,25 @@ export default function CatalogPage() {
       <Header title="Catálogo" subtitle="Gerencie os produtos do seu agente IA" />
 
       <div className="dashboard-page">
+        {/* Hero */}
+        <div className="catalog-hero">
+          <div className="catalog-hero-content">
+            <div className="catalog-hero-badge">
+              <Package className="w-3 h-3" strokeWidth={2} />
+              Catálogo inteligente
+            </div>
+            <h2 className="catalog-hero-title">Produtos do agente</h2>
+            <p className="catalog-hero-sub">
+              Organize itens, preços e destaques para que a IA venda com contexto e precisão no WhatsApp.
+            </p>
+          </div>
+          <div className="catalog-hero-actions">
+            <button className="catalog-add-btn">
+              <Plus className="w-3.5 h-3.5" />
+              Adicionar produto
+            </button>
+          </div>
+        </div>
 
         {/* Stats */}
         <div className="support-stats-grid">
@@ -100,11 +119,6 @@ export default function CatalogPage() {
               </button>
             </div>
 
-            {/* Add product */}
-            <button className="catalog-add-btn">
-              <Plus className="w-3.5 h-3.5" />
-              Adicionar produto
-            </button>
           </div>
         </div>
 

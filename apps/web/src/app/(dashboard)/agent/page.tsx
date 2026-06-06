@@ -6,9 +6,9 @@ import { PublishAgentModal } from "@/components/agent/PublishAgentModal";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bot, Shield, Database, ArrowRight,
-  Sparkles, BookOpen, Cpu, Sliders, Zap,
-  CheckCircle2, Circle, Rocket,
+  Bot, Shield, Database, ChevronRight,
+  Sparkles, BookOpen, Cpu, Sliders,
+  Rocket,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -34,7 +34,6 @@ const CONFIG_SECTIONS = [
     border: "rgba(6,182,212,0.25)",
     tag: "Conhecimento",
     step: 2,
-    countKey: "knowledge" as const,
   },
   {
     href: "/agent/rules",
@@ -46,7 +45,6 @@ const CONFIG_SECTIONS = [
     border: "rgba(34,197,94,0.25)",
     tag: "Segurança",
     step: 3,
-    countKey: "rules" as const,
   },
 ];
 
@@ -119,8 +117,6 @@ export default function AgentPage() {
   const readiness = Math.round(
     (Object.values(setupDone).filter(Boolean).length / SETUP_STEPS.length) * 100
   );
-
-  const counts: Record<string, number> = { knowledge: knowledgeCount, rules: rulesCount };
 
   const stats = [
     { label: "Modelo LLM", value: config?.llmModel ?? "—", icon: Cpu, color: "#6366f1", bg: "rgba(99,102,241,0.12)", border: "rgba(99,102,241,0.25)" },
@@ -209,43 +205,17 @@ export default function AgentPage() {
                 onClick={() => setShowPublishModal(true)}
                 className="agent-publish-cta"
               >
-                <Rocket className="w-4 h-4" strokeWidth={1.8} />
-                Publicar agente
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="agent-publish-cta-main">
+                  <span className="agent-publish-cta-icon">
+                    <Rocket className="w-3.5 h-3.5" strokeWidth={1.8} />
+                  </span>
+                  <span className="agent-publish-cta-label">Publicar agente</span>
+                </span>
+                <ChevronRight className="agent-publish-chevron" strokeWidth={1.5} />
               </button>
             )}
           </div>
         </div>
-
-        {/* Setup checklist */}
-        {!published && (
-          <div className="agent-setup-banner">
-            <div className="agent-setup-banner-icon">
-              <Zap className="w-4 h-4 text-amber-400" strokeWidth={2} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="agent-setup-banner-title">Complete a configuração antes de publicar</p>
-              <div className="agent-setup-steps">
-                {SETUP_STEPS.map(({ key, label }) => {
-                  const done = setupDone[key];
-                  return (
-                    <span key={key} className={`agent-setup-step ${done ? "agent-setup-step--done" : ""}`}>
-                      {done
-                        ? <CheckCircle2 className="w-3 h-3" strokeWidth={2} />
-                        : <Circle className="w-3 h-3" strokeWidth={2} />
-                      }
-                      {label}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-            <Link href="/agent/persona" className="agent-setup-banner-cta">
-              Continuar setup
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        )}
 
         {/* Config grid */}
         <section className="agent-section">
@@ -257,7 +227,7 @@ export default function AgentPage() {
           </div>
 
           <div className="agent-config-grid">
-            {CONFIG_SECTIONS.map(({ href, label, desc, icon: Icon, color, bg, border, tag, step, countKey }) => (
+            {CONFIG_SECTIONS.map(({ href, label, desc, icon: Icon, color, bg, border, tag, step }) => (
               <Link
                 key={href}
                 href={href}
@@ -280,16 +250,11 @@ export default function AgentPage() {
                 <div className="agent-config-body">
                   <p className="agent-config-label">{label}</p>
                   <p className="agent-config-desc">{desc}</p>
-                  {countKey && (
-                    <p className="agent-config-count" style={{ color }}>
-                      {loading ? "…" : `${counts[countKey]} ${countKey === "knowledge" ? "documento(s)" : "regra(s)"}`}
-                    </p>
-                  )}
                 </div>
 
                 <div className="agent-config-cta" style={{ borderColor: `${color}20` }}>
                   <span style={{ color }}>Configurar</span>
-                  <ArrowRight className="w-3.5 h-3.5" style={{ color }} strokeWidth={2} />
+                  <ChevronRight className="agent-config-chevron" style={{ color }} strokeWidth={1.5} />
                 </div>
               </Link>
             ))}

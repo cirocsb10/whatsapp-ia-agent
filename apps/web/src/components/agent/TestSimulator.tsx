@@ -11,8 +11,14 @@ export function TestSimulator() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (messages.length === 0 && !loading) return;
+    const el = bodyRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
 
   async function send() {
     if (!input.trim() || loading) return;
@@ -59,7 +65,7 @@ export function TestSimulator() {
         </button>
       </div>
 
-      <div className="simulator-body">
+      <div ref={bodyRef} className="simulator-body">
         {messages.length === 0 && (
           <div className="simulator-empty">
             <div className="simulator-empty-icon">
@@ -115,8 +121,6 @@ export function TestSimulator() {
             </div>
           )}
         </div>
-
-        <div ref={bottomRef} />
       </div>
 
       <div className="simulator-input-bar">
