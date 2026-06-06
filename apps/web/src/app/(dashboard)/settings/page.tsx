@@ -9,7 +9,7 @@ import {
   Mail, MessageSquare, ShoppingCart, Bot,
 } from "lucide-react";
 import { useApi } from "@/lib/hooks/useApi";
-import { useClerk } from "@clerk/nextjs";
+import { useClerk, UserProfile } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
@@ -70,10 +70,12 @@ function FieldRow({ label, hint, children }: { label: string; hint?: string; chi
 
 function TabConta() {
   const { apiFetch } = useApi();
+  const { signOut } = useClerk();
   const [name, setName] = useState("Minha Loja");
   const [email] = useState("contato@minhaloja.com");
   const [slug, setSlug] = useState("minhaloja");
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
+  const [segment, setSegment] = useState("ecommerce");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -85,6 +87,7 @@ function TabConta() {
       setName(data.name ?? "Minha Loja");
       setSlug(data.slug ?? "minhaloja");
       setTimezone(data.timezone ?? "America/Sao_Paulo");
+      setSegment(data.segment ?? "ecommerce");
     }
     void load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -93,7 +96,7 @@ function TabConta() {
     setSaving(true);
     const res = await apiFetch("/settings/company", {
       method: "PATCH",
-      body: JSON.stringify({ name, timezone }),
+      body: JSON.stringify({ name, timezone, segment }),
     });
     setSaving(false);
     if (res.ok) {
@@ -108,15 +111,11 @@ function TabConta() {
       <SectionPanel title="Perfil" description="Informações visíveis no painel e relatórios." accent="#6366f1">
         <div className="settings-avatar-row">
           <div className="settings-avatar">
-            <span className="text-[18px] font-bold text-indigo-400">ML</span>
-            <button className="settings-avatar-btn" aria-label="Trocar foto">
-              <Camera className="w-3 h-3" />
-            </button>
+            <User className="w-8 h-8 text-slate-400" />
           </div>
           <div>
             <p className="text-[13px] font-medium text-[#e2e8f0]">Foto do perfil</p>
-            <p className="text-[11px] text-[#64748b] mt-1">PNG ou JPG. Máximo 2 MB.</p>
-            <button className="settings-link-btn mt-2">Fazer upload</button>
+            <p className="text-[11px] text-[#64748b] mt-1">Upload de avatar em breve.</p>
           </div>
         </div>
 
@@ -160,12 +159,16 @@ function TabConta() {
         <div className="settings-divider" />
 
         <FieldRow label="Segmento" hint="Ajuda o agente IA a adaptar o tom das respostas.">
-          <select className="settings-input">
-            <option>E-commerce / Varejo</option>
-            <option>Serviços</option>
-            <option>Alimentação / Delivery</option>
-            <option>Moda / Beleza</option>
-            <option>Tecnologia</option>
+          <select
+            className="settings-input"
+            value={segment}
+            onChange={(e) => setSegment(e.target.value)}
+          >
+            <option value="ecommerce">E-commerce / Varejo</option>
+            <option value="servicos">Serviços</option>
+            <option value="alimentacao">Alimentação / Delivery</option>
+            <option value="moda">Moda / Beleza</option>
+            <option value="tech">Tecnologia</option>
           </select>
         </FieldRow>
       </SectionPanel>
@@ -180,13 +183,16 @@ function TabConta() {
           </div>
         </div>
         <div className="settings-danger-actions">
-          <button className="settings-danger-btn">
+          <button
+            className="settings-danger-btn"
+            onClick={() => window.open("mailto:suporte@whatsagent.app?subject=Solicitar exclusão de conta", "_blank")}
+          >
             <Trash2 className="w-3.5 h-3.5" />
             Excluir conta
           </button>
-          <button className="settings-danger-btn">
+          <button className="settings-danger-btn" onClick={() => signOut()}>
             <LogOut className="w-3.5 h-3.5" />
-            Encerrar todas as sessões
+            Encerrar sessão atual
           </button>
         </div>
       </div>
