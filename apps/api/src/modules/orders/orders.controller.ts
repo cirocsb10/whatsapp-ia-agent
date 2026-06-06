@@ -43,6 +43,16 @@ export class OrdersController {
     return this.service.cancelOrder(tenantId, id);
   }
 
+  @Post()
+  @HttpCode(201)
+  @UseGuards(ClerkAuthGuard)
+  createFromUi(
+    @CurrentTenantId() tenantId: string,
+    @Body() body: { contactPhone: string; items: Array<{ productId: string; quantity: number }>; notes?: string },
+  ) {
+    return this.service.createFromUi(tenantId, body);
+  }
+
   @Post("internal")
   @HttpCode(201)
   createInternal(

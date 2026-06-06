@@ -111,4 +111,48 @@ export class OrdersService {
   async cancelOrder(tenantId: string, id: string) {
     return this.updateStatus(tenantId, id, "CANCELLED");
   }
+
+  async createFromUi(tenantId: string, body: {
+    contactPhone: string;
+    items: Array<{ productId: string; quantity: number }>;
+    notes?: string;
+  }) {
+    const productIds = body.items.map((i) => i.productId);
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, tenantId },
+      select: { id: true, priceCents: true, name: true },
+    });
+    if (products.length !== productIds.length) {
+      const missing = productIds.filter((id) => !products.find((p) => p.id === id));
+      throw new NotFoundException(`Produtos não encontrados: ${missing.join(", ")}`);
+    }
+    const priceMap = new Map(products.map((p) => [p.id, { priceCents: p.priceCents, name: p.name }]));
+    const resolvedItems = body.items.map((i) => ({
+      productId: i.productId,
+      productName: priceMap.get(i.productId)!.name,
+      priceCents: priceMap.get(i.productId)!.priceCents,
+      quantity: i.quantity,
+      subtotalCents: priceMap.get(i.productId)!.priceCents * i.quantity,
+      variationSelected: {},
+    }));
+    const subtotal = resolvedItems.reduce((sum, i) => sum + i.subtotalCents, 0);
+    const contact = await this.prisma.contact.upsert({
+      where: { tenantId_phone: { tenantId, phone: body.contactPhone } },
+      create: { tenantId, phone: body.contactPhone },
+      update: {},
+    });
+    const orderNumber = `ORD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    return this.prisma.order.create({
+      data: {
+        tenantId,
+        contactId: contact.id,
+        orderNumber,
+        subtotalCents: subtotal,
+        totalCents: subtotal,
+        status: "DRAFT",
+        notes: body.notes ?? null,
+        items: { create: resolvedItems },
+      },
+    });
+  }
 }
