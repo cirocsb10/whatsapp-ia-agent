@@ -27,6 +27,26 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
         ) : (
           <Package className="w-8 h-8" style={{ color: "#334155" }} />
         )}
+
+        <div className="product-card-action-overlay" aria-label="Ações do produto">
+          <button
+            className="product-card-action-icon"
+            onClick={() => onEdit(product)}
+            title="Editar produto"
+            type="button"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+          </button>
+          <span className="product-card-action-divider" aria-hidden="true" />
+          <button
+            className="product-card-action-icon danger"
+            onClick={() => onDelete(product)}
+            title="Excluir produto"
+            type="button"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="product-card-body">
@@ -72,26 +92,6 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
           />
           {STATUS_LABEL[product.status]}
         </div>
-      </div>
-
-      <div className="product-card-actions">
-        <button
-          className="product-card-btn"
-          onClick={() => onEdit(product)}
-          title="Editar produto"
-          type="button"
-        >
-          <Pencil className="w-3 h-3" style={{ display: "inline", marginRight: 4 }} />
-          Editar
-        </button>
-        <button
-          className="product-card-btn danger"
-          onClick={() => onDelete(product)}
-          title="Excluir produto"
-          type="button"
-        >
-          <Trash2 className="w-3 h-3" style={{ display: "inline" }} />
-        </button>
       </div>
     </div>
   );
