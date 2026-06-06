@@ -10,4 +10,9 @@ export class UpdateCompanyDto {
   @IsOptional()
   @MaxLength(60)
   timezone?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(60)
+  segment?: string;
 }

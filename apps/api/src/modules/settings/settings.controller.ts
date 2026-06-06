@@ -35,4 +35,19 @@ export class SettingsController {
   ) {
     return this.service.updateWhatsappSettings(tenantId, dto);
   }
+
+  @Get("notifications")
+  @Roles("OWNER", "ADMIN")
+  getNotifications(@CurrentTenantId() tenantId: string) {
+    return this.service.getNotificationPrefs(tenantId);
+  }
+
+  @Patch("notifications")
+  @Roles("OWNER", "ADMIN")
+  updateNotifications(
+    @CurrentTenantId() tenantId: string,
+    @Body() body: Record<string, boolean>,
+  ) {
+    return this.service.updateNotificationPrefs(tenantId, body);
+  }
 }

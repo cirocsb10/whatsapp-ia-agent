@@ -37,7 +37,15 @@ describe("SettingsService", () => {
 
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith({
         where: { id: "t-1" },
-        select: { id: true, name: true, slug: true, timezone: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          timezone: true,
+          segment: true,
+          whatsappStatus: true,
+          whatsappPhoneId: true,
+        },
       });
       expect(result).toEqual({
         id: "t-1",
@@ -72,7 +80,15 @@ describe("SettingsService", () => {
       expect(mockPrisma.tenant.update).toHaveBeenCalledWith({
         where: { id: "t-1" },
         data: { name: "Nova", timezone: "America/Manaus" },
-        select: { id: true, name: true, slug: true, timezone: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          timezone: true,
+          segment: true,
+          whatsappStatus: true,
+          whatsappPhoneId: true,
+        },
       });
       expect(result.name).toBe("Nova");
     });
