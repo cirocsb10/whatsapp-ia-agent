@@ -3,7 +3,9 @@ import {
   UseGuards, HttpCode, HttpStatus,
 } from "@nestjs/common";
 import { ProductsService } from "./products.service";
-import { CreateProductDto, UpdateProductDto, ListProductsDto } from "./dto/create-product.dto";
+import { CreateProductDto, ListProductsDto } from "./dto/create-product.dto";
+import { UpdateProductDto } from "./dto/update-product.dto";
+import { ImportProductsDto } from "./dto/import-products.dto";
 import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -20,9 +22,23 @@ export class ProductsController {
     return this.service.create(tenantId, dto);
   }
 
+  @Post("import")
+  @Roles("OWNER", "ADMIN")
+  bulkImport(
+    @CurrentTenantId() tenantId: string,
+    @Body() dto: ImportProductsDto,
+  ) {
+    return this.service.bulkImport(tenantId, dto.products);
+  }
+
   @Get()
   findAll(@CurrentTenantId() tenantId: string, @Query() query: ListProductsDto) {
     return this.service.findAll(tenantId, query);
+  }
+
+  @Get("stats")
+  getStats(@CurrentTenantId() tenantId: string) {
+    return this.service.getStats(tenantId);
   }
 
   @Get(":id")

@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
-import { CreateProductDto, UpdateProductDto, ListProductsDto } from "./dto/create-product.dto";
+import { CreateProductDto, ListProductsDto } from "./dto/create-product.dto";
+import { UpdateProductDto } from "./dto/update-product.dto";
+import { ImportProductItemDto } from "./dto/import-products.dto";
 
 @Injectable()
 export class ProductsService {
@@ -56,6 +59,21 @@ export class ProductsService {
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }
 
+  async getStats(tenantId: string): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    outOfStock: number;
+  }> {
+    const [total, active, inactive, outOfStock] = await Promise.all([
+      this.prisma.product.count({ where: { tenantId } }),
+      this.prisma.product.count({ where: { tenantId, status: "ACTIVE" } }),
+      this.prisma.product.count({ where: { tenantId, status: "INACTIVE" } }),
+      this.prisma.product.count({ where: { tenantId, status: "OUT_OF_STOCK" } }),
+    ]);
+    return { total, active, inactive, outOfStock };
+  }
+
   async findOne(tenantId: string, id: string) {
     const product = await this.prisma.product.findFirst({
       where: { id, tenantId },
@@ -66,28 +84,68 @@ export class ProductsService {
 
   async update(tenantId: string, id: string, dto: UpdateProductDto) {
     await this.findOne(tenantId, id);
+
+    const data: Prisma.ProductUpdateInput = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.description !== undefined) data.description = dto.description ?? null;
+    if (dto.sku !== undefined) data.sku = dto.sku ?? null;
+    if (dto.priceCents !== undefined) data.priceCents = dto.priceCents;
+    if (dto.comparePriceCents !== undefined) data.comparePriceCents = dto.comparePriceCents ?? null;
+    if (dto.stockQty !== undefined) data.stockQty = dto.stockQty;
+    if (dto.lowStockThreshold !== undefined) data.lowStockThreshold = dto.lowStockThreshold;
+    if (dto.categoryId !== undefined) {
+      data.category = dto.categoryId
+        ? { connect: { id: dto.categoryId } }
+        : { disconnect: true };
+    }
+    if (dto.status !== undefined) data.status = dto.status as any;
+    if (dto.tags !== undefined) data.tags = dto.tags ?? [];
+    if (dto.imageUrls !== undefined) data.imageUrls = dto.imageUrls ?? [];
+    if (dto.weight !== undefined) data.weight = dto.weight ?? null;
+
     return this.prisma.product.update({
       where: { id },
-      data: {
-        name: dto.name,
-        description: dto.description ?? null,
-        sku: dto.sku ?? null,
-        priceCents: dto.priceCents,
-        comparePriceCents: dto.comparePriceCents ?? null,
-        stockQty: dto.stockQty,
-        ...(dto.lowStockThreshold !== undefined && { lowStockThreshold: dto.lowStockThreshold }),
-        categoryId: dto.categoryId ?? null,
-        status: dto.status as any,
-        tags: dto.tags ?? [],
-        imageUrls: dto.imageUrls ?? [],
-        weight: dto.weight ?? null,
-      },
+      data,
     });
   }
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
     await this.prisma.product.delete({ where: { id } });
+  }
+
+  async bulkImport(
+    tenantId: string,
+    items: ImportProductItemDto[],
+  ): Promise<{ imported: number; errors: Array<{ row: number; message: string }> }> {
+    const errors: Array<{ row: number; message: string }> = [];
+    let imported = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item) continue;
+      try {
+        await this.prisma.product.create({
+          data: {
+            tenantId,
+            name: item.name,
+            description: item.description ?? null,
+            sku: item.sku ?? null,
+            priceCents: item.priceCents,
+            stockQty: item.stockQty,
+            tags: item.tags ?? [],
+            status: "ACTIVE",
+            lowStockThreshold: 5,
+            reservedQty: 0,
+          },
+        });
+        imported++;
+      } catch (err) {
+        errors.push({ row: i + 2, message: (err as Error).message });
+      }
+    }
+
+    return { imported, errors };
   }
 
   async bulkImportFromCsv(tenantId: string, rows: Array<Record<string, string>>) {

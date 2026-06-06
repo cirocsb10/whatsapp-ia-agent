@@ -68,8 +68,6 @@ export class CreateProductDto {
   weight?: number;
 }
 
-export class UpdateProductDto extends CreateProductDto {}
-
 export class ListProductsDto {
   @IsOptional()
   @Type(() => Number)
