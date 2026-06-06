@@ -3,11 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Eye,
-  FileSpreadsheet,
   Grid3X3,
   List,
   Package,
-  Plus,
   Search,
   SlidersHorizontal,
   Tag,
@@ -207,26 +205,11 @@ export default function CatalogPage() {
             <button
               onClick={() => setImportOpen(true)}
               type="button"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                height: 34,
-                padding: "0 14px",
-                borderRadius: 8,
-                fontSize: 12,
-                fontWeight: 500,
-                background: "rgba(34,197,94,0.08)",
-                color: "#86efac",
-                border: "1px solid rgba(34,197,94,0.2)",
-                cursor: "pointer",
-              }}
+              className="catalog-btn-secondary"
             >
-              <FileSpreadsheet className="w-4 h-4" />
               Importar
             </button>
             <button onClick={openCreate} className="catalog-add-btn" type="button">
-              <Plus className="w-3.5 h-3.5" />
               Adicionar produto
             </button>
           </div>
@@ -296,7 +279,7 @@ export default function CatalogPage() {
                   key={tab}
                   type="button"
                   onClick={() => handleTabChange(tab)}
-                  className={`inbox-tab ${filterTab === tab ? "inbox-tab-active" : ""}`}
+                  className={`orders-tab ${filterTab === tab ? "orders-tab-active" : ""}`}
                 >
                   {FILTER_LABELS[tab]}
                 </button>
@@ -324,7 +307,7 @@ export default function CatalogPage() {
 
             <button
               type="button"
-              className="inbox-filter-btn"
+              className="orders-tool-btn"
               title="Filtros avançados"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -358,7 +341,6 @@ export default function CatalogPage() {
                   className="catalog-add-btn mt-2"
                   onClick={openCreate}
                 >
-                  <Plus className="w-3.5 h-3.5" />
                   Adicionar primeiro produto
                 </button>
               )}

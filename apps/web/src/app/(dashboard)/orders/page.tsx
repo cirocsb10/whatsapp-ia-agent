@@ -4,8 +4,8 @@ import { Header } from "@/components/layout/Header";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ShoppingCart, Plus, Search, SlidersHorizontal,
-  Package, TrendingUp, DollarSign, Clock,
+  ShoppingCart, Search, SlidersHorizontal,
+  TrendingUp, DollarSign, Clock,
   CheckCircle2, XCircle, Loader2, Download,
   ArrowRight, MoreHorizontal, Truck,
 } from "lucide-react";
@@ -107,8 +107,7 @@ export default function OrdersPage() {
             </p>
           </div>
           <div className="orders-hero-actions">
-            <button className="catalog-add-btn">
-              <Plus className="w-3.5 h-3.5" />
+            <button className="orders-btn orders-btn-primary">
               Novo pedido
             </button>
           </div>
@@ -140,21 +139,21 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="catalog-filter-tabs">
+            <div className="orders-filter-tabs">
               {STATUS_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setStatus(tab.key)}
-                  className={`inbox-tab ${status === tab.key ? "inbox-tab-active" : ""}`}
+                  className={`orders-tab ${status === tab.key ? "orders-tab-active" : ""}`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <button className="inbox-filter-btn" title="Filtros avancados">
+            <button className="orders-tool-btn" title="Filtros avancados">
               <SlidersHorizontal className="w-3.5 h-3.5" />
             </button>
-            <button className="inbox-filter-btn" title="Exportar CSV">
+            <button className="orders-tool-btn" title="Exportar CSV">
               <Download className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -185,12 +184,10 @@ export default function OrdersPage() {
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-1">
-                <button className="orders-ghost-btn">
-                  <Package className="w-3.5 h-3.5" />
+                <button className="orders-btn orders-btn-secondary">
                   Ver catalogo
                 </button>
-                <button className="catalog-add-btn">
-                  <Plus className="w-3.5 h-3.5" />
+                <button className="orders-btn orders-btn-primary">
                   Criar pedido manual
                 </button>
               </div>
@@ -236,11 +233,11 @@ export default function OrdersPage() {
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="inbox-filter-btn disabled:opacity-40">
+          <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="orders-btn orders-btn-secondary disabled:opacity-40">
             Anterior
           </button>
           <span className="text-[11px] text-[#64748b]">Pagina {page} de {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="inbox-filter-btn disabled:opacity-40">
+          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="orders-btn orders-btn-secondary disabled:opacity-40">
             Proxima
           </button>
         </div>

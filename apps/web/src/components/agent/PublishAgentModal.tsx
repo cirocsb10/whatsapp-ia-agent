@@ -33,11 +33,7 @@ export function PublishAgentModal({ open, publishing, error, onConfirm, onClose 
       subtitle="Ative respostas automáticas no WhatsApp"
       size="sm"
       panelClassName="publish-modal-panel"
-      headerLeading={
-        <div className="publish-modal-header-icon">
-          <Rocket className="w-5 h-5 text-green-400" strokeWidth={1.6} />
-        </div>
-      }
+      headerLeading={<Rocket className="w-5 h-5 text-green-400" strokeWidth={1.6} />}
       footer={
         <>
           <button

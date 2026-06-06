@@ -11,7 +11,7 @@ interface ModalProps {
   subtitle?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   panelClassName?: string;
   headerLeading?: React.ReactNode;
 }
@@ -42,7 +42,14 @@ export function Modal({
 
   if (!open) return null;
 
-  const sizeClass = size === "sm" ? "max-w-md" : size === "lg" ? "max-w-2xl" : "max-w-lg";
+  const sizeClass =
+    size === "sm"
+      ? "modal-panel-sm"
+      : size === "lg"
+        ? "modal-panel-lg"
+        : size === "xl"
+          ? "modal-panel-xl"
+          : "modal-panel-md";
 
   return (
     <div
@@ -55,9 +62,11 @@ export function Modal({
     >
       <div className={cn("modal-panel", sizeClass, panelClassName)}>
         <div className="modal-header">
-          <div className={cn(headerLeading && "modal-header-with-icon")}>
-            {headerLeading}
-            <div>
+          <div className="modal-header-main">
+            {headerLeading && (
+              <div className="modal-header-icon">{headerLeading}</div>
+            )}
+            <div className="modal-header-text">
               <h2 id="modal-title" className="modal-title">{title}</h2>
               {subtitle && <p className="modal-subtitle">{subtitle}</p>}
             </div>

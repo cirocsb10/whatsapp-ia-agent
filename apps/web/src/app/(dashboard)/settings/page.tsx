@@ -14,12 +14,18 @@ import { useEffect, useState } from "react";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
 
-const TABS: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "conta",        label: "Conta",        icon: User       },
-  { key: "notificacoes", label: "Notificações",  icon: Bell       },
-  { key: "seguranca",    label: "Segurança",     icon: Shield     },
-  { key: "integracoes",  label: "Integrações",   icon: Plug       },
-  { key: "plano",        label: "Plano",         icon: CreditCard },
+const TABS: {
+  key: Tab;
+  label: string;
+  icon: React.ElementType;
+  desc: string;
+  accent: string;
+}[] = [
+  { key: "conta",        label: "Conta",        icon: User,       desc: "Perfil, loja e preferências da conta",     accent: "#6366f1" },
+  { key: "notificacoes", label: "Notificações",  icon: Bell,       desc: "Alertas de conversas, pedidos e relatórios", accent: "#f59e0b" },
+  { key: "seguranca",    label: "Segurança",     icon: Shield,     desc: "Senha, 2FA e sessões ativas",                accent: "#818cf8" },
+  { key: "integracoes",  label: "Integrações",   icon: Plug,       desc: "WhatsApp, pagamentos e serviços conectados", accent: "#22c55e" },
+  { key: "plano",        label: "Plano",         icon: CreditCard, desc: "Assinatura, uso e histórico de pagamentos",   accent: "#06b6d4" },
 ];
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -42,7 +48,8 @@ function SectionPanel({ title, description, accent, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="settings-panel" style={{ "--panel-accent": accent } as React.CSSProperties}>
+    <div className="settings-panel" style={{ "--panel-accent": accent ?? "#6366f1" } as React.CSSProperties}>
+      <div className="settings-panel-accent-bar" />
       <div className="settings-panel-head">
         <div>
           <p className="settings-panel-title">{title}</p>
@@ -205,11 +212,10 @@ function TabConta() {
               <span className="settings-save-spinner" />
               Salvando…
             </>
+          ) : saved ? (
+            "Salvo"
           ) : (
-            <>
-              <Check className="w-3.5 h-3.5" />
-              {saved ? "Salvo" : "Salvar alteracoes"}
-            </>
+            "Salvar alterações"
           )}
         </button>
       </div>
@@ -329,11 +335,10 @@ function TabNotificacoes() {
               <span className="settings-save-spinner" />
               Salvando…
             </>
+          ) : saved ? (
+            "Salvo!"
           ) : (
-            <>
-              <Check className="w-3.5 h-3.5" />
-              {saved ? "Salvo!" : "Salvar preferências"}
-            </>
+            "Salvar preferências"
           )}
         </button>
       </div>
@@ -373,15 +378,24 @@ function TabSeguranca() {
       </SectionPanel>
 
       {showProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setShowProfile(false)}
-              className="absolute top-2 right-2 z-10 text-slate-400 hover:text-white bg-slate-900 rounded-full p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <UserProfile routing="hash" />
+        <div className="settings-modal-overlay" onClick={() => setShowProfile(false)}>
+          <div className="settings-modal settings-modal-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-head">
+              <div>
+                <p className="settings-modal-title">Segurança da conta</p>
+                <p className="settings-modal-desc">Gerencie senha, 2FA e sessões via Clerk</p>
+              </div>
+              <button
+                onClick={() => setShowProfile(false)}
+                className="settings-modal-close"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="settings-modal-body">
+              <UserProfile routing="hash" />
+            </div>
           </div>
         </div>
       )}
@@ -484,7 +498,7 @@ function TabIntegracoes() {
                 <div className="settings-integ-icon" style={{ background: bg, borderColor: border }}>
                   <Icon className="w-4 h-4" style={{ color }} strokeWidth={1.8} />
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="settings-integ-status">
                   {statusIcon(status)}
                   <span
                     className="text-[10px] font-medium"
@@ -529,48 +543,52 @@ function TabIntegracoes() {
       </SectionPanel>
 
       {showWhatsAppModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-white">Configurar Meta Cloud API</h3>
-              <button onClick={() => setShowWhatsAppModal(false)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
+        <div className="settings-modal-overlay" onClick={() => setShowWhatsAppModal(false)}>
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-head">
+              <div className="flex items-start gap-3">
+                <div className="settings-modal-icon" style={{ background: "rgba(251,191,36,0.12)", borderColor: "rgba(251,191,36,0.25)" }}>
+                  <MessageSquare className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
+                </div>
+                <div>
+                  <p className="settings-modal-title">Configurar Meta Cloud API</p>
+                  <p className="settings-modal-desc">Conecte seu número WhatsApp Business</p>
+                </div>
+              </div>
+              <button onClick={() => setShowWhatsAppModal(false)} className="settings-modal-close" aria-label="Fechar">
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-slate-400 block mb-1">Phone Number ID</label>
+            <div className="settings-modal-body settings-modal-form">
+              <FieldRow label="Phone Number ID" hint="Meta for Developers → WhatsApp → Phone Numbers">
                 <input
                   type="text"
                   value={phoneId}
                   onChange={(e) => setPhoneId(e.target.value)}
                   placeholder="123456789012345"
-                  className="settings-input w-full"
+                  className="settings-input"
                 />
-                <p className="text-xs text-slate-500 mt-1">Meta for Developers → seu app → WhatsApp → Phone Numbers</p>
-              </div>
-              <div>
-                <label className="text-sm text-slate-400 block mb-1">Access Token</label>
+              </FieldRow>
+              <FieldRow label="Access Token" hint="Token permanente do Meta Business Suite">
                 <input
                   type="password"
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
                   placeholder="EAAxxxxxxxxxxxxxxxx"
-                  className="settings-input w-full"
+                  className="settings-input"
                 />
-                <p className="text-xs text-slate-500 mt-1">Token permanente gerado no Meta Business Suite</p>
-              </div>
+              </FieldRow>
             </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowWhatsAppModal(false)} className="settings-danger-btn flex-1 justify-center">
+            <div className="settings-modal-footer">
+              <button onClick={() => setShowWhatsAppModal(false)} className="settings-danger-btn">
                 Cancelar
               </button>
               <button
                 onClick={handleSaveWhatsApp}
                 disabled={!phoneId || !accessToken || savingWA}
-                className="settings-save-btn flex-1"
+                className="settings-save-btn settings-save-btn-inline"
               >
-                {savingWA ? "Salvando..." : savedWA ? "Salvo!" : "Salvar"}
+                {savingWA ? "Salvando…" : savedWA ? "Salvo!" : "Salvar conexão"}
               </button>
             </div>
           </div>
@@ -644,8 +662,11 @@ function TabPlano() {
 
   if (loading) {
     return (
-      <div className="settings-tab-content flex items-center justify-center h-64 text-slate-400">
-        Carregando...
+      <div className="settings-tab-content">
+        <div className="settings-loading">
+          <span className="settings-save-spinner" />
+          <p>Carregando informações do plano…</p>
+        </div>
       </div>
     );
   }
@@ -721,18 +742,23 @@ function TabPlano() {
             <p className="text-[12px] text-[#475569]">Nenhum pagamento registrado ainda.</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="settings-invoice-list">
             {invoices.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
-                <div>
-                  <p className="text-sm text-white">{new Date(inv.date).toLocaleDateString("pt-BR")}</p>
-                  <p className="text-xs text-slate-500">{inv.status}</p>
+              <div key={inv.id} className="settings-invoice-row">
+                <div className="settings-invoice-date">
+                  <CreditCard className="w-3.5 h-3.5 text-indigo-400 shrink-0" strokeWidth={1.8} />
+                  <div>
+                    <p className="text-[13px] font-medium text-[#e2e8f0]">
+                      {new Date(inv.date).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                    <p className="text-[11px] text-[#64748b] mt-0.5">{inv.status ?? "Processado"}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-white">{inv.currency} {inv.amount}</span>
+                <div className="settings-invoice-meta">
+                  <span className="settings-invoice-amount">{inv.currency} {inv.amount}</span>
                   {inv.pdfUrl && (
-                    <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="text-indigo-400 hover:text-indigo-300">
-                      <ExternalLink className="w-4 h-4" />
+                    <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="settings-invoice-link" aria-label="Baixar fatura">
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}
                 </div>
@@ -749,6 +775,8 @@ function TabPlano() {
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("conta");
+  const activeTab = TABS.find((t) => t.key === tab)!;
+  const ActiveIcon = activeTab.icon;
 
   const content: Record<Tab, React.ReactNode> = {
     conta:        <TabConta />,
@@ -763,25 +791,51 @@ export default function SettingsPage() {
       <Header title="Configurações" subtitle="Gerencie sua conta, integrações e plano" />
 
       <div className="settings-shell">
-        {/* Left nav */}
-        <nav className="settings-nav">
-          <p className="section-title px-3 mb-2">Menu</p>
-          {TABS.map(({ key, label, icon: Icon }) => (
+        <nav className="settings-nav" aria-label="Seções de configuração">
+          <p className="settings-nav-label">Preferências</p>
+          {TABS.map(({ key, label, icon: Icon, accent }) => (
             <button
               key={key}
               onClick={() => setTab(key)}
+              aria-current={tab === key ? "page" : undefined}
               className={`settings-nav-item ${tab === key ? "settings-nav-item-active" : ""}`}
+              style={{ "--nav-accent": accent } as React.CSSProperties}
             >
-              <Icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
-              {label}
-              {tab === key && <ChevronRight className="w-3 h-3 ml-auto opacity-40" />}
+              <span className="settings-nav-icon">
+                <Icon className="w-4 h-4 shrink-0" strokeWidth={1.8} />
+              </span>
+              <span className="settings-nav-text">
+                <span className="settings-nav-title">{label}</span>
+              </span>
+              {tab === key && <ChevronRight className="w-3 h-3 ml-auto opacity-50 shrink-0" />}
             </button>
           ))}
         </nav>
 
-        {/* Right content */}
         <div className="settings-content">
-          {content[tab]}
+          <div className="settings-content-inner">
+            <div
+              className="settings-hero"
+              style={{ "--hero-accent": activeTab.accent } as React.CSSProperties}
+            >
+              <div className="settings-hero-glow settings-hero-glow-a" />
+              <div className="settings-hero-glow settings-hero-glow-b" />
+              <div className="settings-hero-inner">
+                <div className="settings-hero-icon">
+                  <ActiveIcon className="w-5 h-5" strokeWidth={1.7} />
+                </div>
+                <div>
+                  <p className="settings-hero-eyebrow">Configurações</p>
+                  <h2 className="settings-hero-title">{activeTab.label}</h2>
+                  <p className="settings-hero-desc">{activeTab.desc}</p>
+                </div>
+              </div>
+            </div>
+
+            <div key={tab} className="settings-tab-enter">
+              {content[tab]}
+            </div>
+          </div>
         </div>
       </div>
     </div>

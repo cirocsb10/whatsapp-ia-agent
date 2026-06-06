@@ -124,11 +124,7 @@ export function RuleFormModal({ open, onClose, onSubmit, rule, loading }: RuleFo
       subtitle="Configure limites e comportamentos do agente IA"
       size="lg"
       panelClassName="rules-modal-panel"
-      headerLeading={
-        <div className="rules-modal-header-icon">
-          <Shield className="w-5 h-5 text-green-400" strokeWidth={1.6} />
-        </div>
-      }
+      headerLeading={<Shield className="w-5 h-5 text-green-400" strokeWidth={1.6} />}
       footer={
         <>
           <button type="button" onClick={onClose} className="btn-ghost">

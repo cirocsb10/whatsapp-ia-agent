@@ -2,10 +2,22 @@
 
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { Download, FileSpreadsheet, Upload, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, FileSpreadsheet, Upload, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { ImportProductItem, ImportResult } from "@/types/product";
+import { ImportProductItem, ImportResult, formatPrice } from "@/types/product";
 import { useApi } from "@/lib/hooks/useApi";
+
+interface ImportPreviewRow {
+  rowNumber: number;
+  name: string;
+  description?: string;
+  sku?: string;
+  priceCents: number | null;
+  stockQty: number | null;
+  tags?: string[];
+  errors: string[];
+  isValid: boolean;
+}
 
 interface Props {
   open: boolean;
@@ -25,7 +37,18 @@ function downloadTemplate() {
   XLSX.writeFile(wb, "template-importacao-produtos.xlsx");
 }
 
-function parseSheet(file: File): Promise<ImportProductItem[]> {
+function previewRowToItem(row: ImportPreviewRow): ImportProductItem {
+  return {
+    name: row.name,
+    description: row.description,
+    sku: row.sku,
+    priceCents: row.priceCents!,
+    stockQty: row.stockQty!,
+    tags: row.tags,
+  };
+}
+
+function parseSheetPreview(file: File): Promise<ImportPreviewRow[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -33,33 +56,52 @@ function parseSheet(file: File): Promise<ImportProductItem[]> {
         const data = new Uint8Array(e.target!.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: "array" });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
+        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
 
-        const items: ImportProductItem[] = rows.map((row, i) => {
+        const preview: ImportPreviewRow[] = [];
+
+        rows.forEach((row, i) => {
+          const rowNumber = i + 2;
+          const errors: string[] = [];
+
           const name = String(row["nome*"] ?? row["nome"] ?? "").trim();
-          const priceCents = parseInt(String(row["preco_centavos*"] ?? row["preco_centavos"] ?? "0"), 10);
-          const stockQty = parseInt(String(row["estoque*"] ?? row["estoque"] ?? "0"), 10);
+          const priceRaw = row["preco_centavos*"] ?? row["preco_centavos"] ?? "";
+          const stockRaw = row["estoque*"] ?? row["estoque"] ?? "";
+          const description = String(row["descricao"] ?? "").trim();
+          const sku = String(row["sku"] ?? "").trim();
 
-          if (!name) throw new Error(`Linha ${i + 2}: campo "nome*" é obrigatório.`);
-          if (isNaN(priceCents)) throw new Error(`Linha ${i + 2}: "preco_centavos*" deve ser um número.`);
-          if (isNaN(stockQty)) throw new Error(`Linha ${i + 2}: "estoque*" deve ser um número.`);
+          const hasAnyData =
+            name || priceRaw !== "" || stockRaw !== "" || description || sku || String(row["tags"] ?? "").trim();
+          if (!hasAnyData) return;
+
+          const priceCents = parseInt(String(priceRaw), 10);
+          const stockQty = parseInt(String(stockRaw), 10);
+
+          if (!name) errors.push('Campo "nome*" é obrigatório');
+          if (priceRaw === "" || isNaN(priceCents)) errors.push('"preco_centavos*" deve ser um número');
+          else if (priceCents < 0) errors.push("Preço não pode ser negativo");
+          if (stockRaw === "" || isNaN(stockQty)) errors.push('"estoque*" deve ser um número');
+          else if (stockQty < 0) errors.push("Estoque não pode ser negativo");
 
           const tagsRaw = String(row["tags"] ?? "").trim();
           const tags = tagsRaw
             ? tagsRaw.split("|").map((t) => t.trim()).filter(Boolean)
             : undefined;
 
-          return {
-            name,
-            description: String(row["descricao"] ?? "").trim() || undefined,
-            sku: String(row["sku"] ?? "").trim() || undefined,
-            priceCents,
-            stockQty,
+          preview.push({
+            rowNumber,
+            name: name || "—",
+            description: description || undefined,
+            sku: sku || undefined,
+            priceCents: isNaN(priceCents) ? null : priceCents,
+            stockQty: isNaN(stockQty) ? null : stockQty,
             tags,
-          };
+            errors,
+            isValid: errors.length === 0,
+          });
         });
 
-        resolve(items);
+        resolve(preview);
       } catch (err) {
         reject(err);
       }
@@ -73,34 +115,60 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
   const { apiFetch } = useApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [previewRows, setPreviewRows] = useState<ImportPreviewRow[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
 
-  function handleFileChange(f: File | null) {
+  const validRows = previewRows.filter((row) => row.isValid);
+  const invalidCount = previewRows.length - validRows.length;
+
+  function clearFile() {
+    setFile(null);
+    setPreviewRows([]);
+    setParseError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleFileChange(f: File | null) {
     if (!f) return;
     if (!f.name.match(/\.(xlsx|xls|csv)$/i)) {
       setParseError("Arquivo inválido. Use .xlsx, .xls ou .csv.");
       return;
     }
+
     setFile(f);
     setParseError(null);
     setResult(null);
+    setPreviewRows([]);
+    setParsing(true);
+
+    try {
+      const rows = await parseSheetPreview(f);
+      if (rows.length === 0) {
+        setParseError("Nenhum produto encontrado na planilha.");
+        clearFile();
+        return;
+      }
+      setPreviewRows(rows);
+    } catch (err) {
+      setParseError((err as Error).message);
+      clearFile();
+    } finally {
+      setParsing(false);
+    }
   }
 
   async function handleImport() {
-    if (!file) return;
+    if (validRows.length === 0) return;
     setImporting(true);
     setParseError(null);
     setResult(null);
 
     try {
-      const products = await parseSheet(file);
-      if (products.length === 0) {
-        setParseError("Nenhum produto encontrado na planilha.");
-        return;
-      }
+      const products = validRows.map(previewRowToItem);
 
       const res = await apiFetch("/products/import", {
         method: "POST",
@@ -123,8 +191,7 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
   }
 
   function handleClose() {
-    setFile(null);
-    setParseError(null);
+    clearFile();
     setResult(null);
     onClose();
   }
@@ -135,7 +202,7 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
       onClose={handleClose}
       title="Importar produtos"
       subtitle="Importe vários produtos de uma vez via planilha Excel"
-      size="md"
+      size={previewRows.length > 0 ? "xl" : "md"}
       headerLeading={<FileSpreadsheet className="w-5 h-5 text-green-400" />}
       footer={
         <>
@@ -145,12 +212,16 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
           {!result && (
             <button
               onClick={handleImport}
-              disabled={!file || importing}
+              disabled={validRows.length === 0 || parsing || importing}
               className="catalog-add-btn"
               style={{ minWidth: 120 }}
               type="button"
             >
-              {importing ? "Importando…" : "Importar"}
+              {importing
+                ? "Importando…"
+                : validRows.length > 0
+                  ? `Importar ${validRows.length} produto${validRows.length !== 1 ? "s" : ""}`
+                  : "Importar"}
             </button>
           )}
         </>
@@ -199,65 +270,139 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
 
         {!result && (
           <>
-            <div
-              className={`import-drop-zone${dragging ? " dragging" : ""}`}
-              onClick={() => fileInputRef.current?.click()}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragging(false);
-                handleFileChange(e.dataTransfer.files[0] ?? null);
-              }}
-            >
-              <div className="import-drop-zone-icon">
-                <Upload className="w-8 h-8" style={{ margin: "0 auto" }} />
+            {!file && (
+              <div
+                className={`import-drop-zone${dragging ? " dragging" : ""}`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragging(false);
+                  handleFileChange(e.dataTransfer.files[0] ?? null);
+                }}
+              >
+                <div className="import-drop-zone-icon">
+                  <Upload className="w-8 h-8" style={{ margin: "0 auto" }} />
+                </div>
+                <div className="import-drop-zone-title">
+                  Arraste a planilha ou clique para selecionar
+                </div>
+                <div className="import-drop-zone-subtitle">
+                  Formatos suportados: .xlsx, .xls, .csv
+                </div>
               </div>
-              <div className="import-drop-zone-title">
-                Arraste a planilha ou clique para selecionar
-              </div>
-              <div className="import-drop-zone-subtitle">
-                Formatos suportados: .xlsx, .xls, .csv
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                style={{ display: "none" }}
-                onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-              />
-            </div>
+            )}
 
-            {file && !parseError && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              style={{ display: "none" }}
+              onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+            />
+
+            {file && (
               <div className="import-file-selected">
                 <FileSpreadsheet className="w-4 h-4 flex-shrink-0" />
-                <span
-                  style={{
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {file.name}
-                </span>
+                <span className="import-file-name">{file.name}</span>
                 <button
-                  onClick={() => {
-                    setFile(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
+                  onClick={clearFile}
+                  disabled={parsing || importing}
                   type="button"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#64748b",
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
+                  className="import-file-remove"
+                  aria-label="Remover arquivo"
                 >
                   ×
                 </button>
               </div>
+            )}
+
+            {parsing && (
+              <div className="import-preview-status">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Analisando planilha…
+              </div>
+            )}
+
+            {previewRows.length > 0 && !parsing && (
+              <>
+                <div className="import-preview-summary">
+                  <span>
+                    {previewRows.length} produto{previewRows.length !== 1 ? "s" : ""} encontrado
+                    {previewRows.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="import-preview-summary-valid">
+                    {validRows.length} válido{validRows.length !== 1 ? "s" : ""}
+                  </span>
+                  {invalidCount > 0 && (
+                    <span className="import-preview-summary-invalid">
+                      {invalidCount} com erro{invalidCount !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+
+                <div className="import-preview-table-wrap">
+                  <table className="import-preview-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>SKU</th>
+                        <th>Preço</th>
+                        <th>Estoque</th>
+                        <th>Tags</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((row) => (
+                        <tr key={row.rowNumber} className={row.isValid ? "" : "invalid"}>
+                          <td>{row.rowNumber}</td>
+                          <td title={row.name}>{row.name}</td>
+                          <td>{row.sku ?? "—"}</td>
+                          <td>
+                            {row.priceCents !== null ? formatPrice(row.priceCents) : "—"}
+                          </td>
+                          <td>{row.stockQty ?? "—"}</td>
+                          <td title={row.tags?.join(", ")}>
+                            {row.tags?.length ? row.tags.join(" · ") : "—"}
+                          </td>
+                          <td>
+                            {row.isValid ? (
+                              <span className="import-preview-badge valid">OK</span>
+                            ) : (
+                              <span className="import-preview-badge invalid" title={row.errors.join(" · ")}>
+                                Erro
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {invalidCount > 0 && (
+                  <div className="import-preview-errors">
+                    {previewRows
+                      .filter((row) => !row.isValid)
+                      .slice(0, 5)
+                      .map((row) => (
+                        <div key={row.rowNumber} className="import-preview-error-item">
+                          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                          Linha {row.rowNumber}: {row.errors.join(" · ")}
+                        </div>
+                      ))}
+                    {invalidCount > 5 && (
+                      <div className="import-preview-error-more">
+                        + {invalidCount - 5} erro{invalidCount - 5 !== 1 ? "s" : ""} adicional
+                        {invalidCount - 5 !== 1 ? "is" : ""}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

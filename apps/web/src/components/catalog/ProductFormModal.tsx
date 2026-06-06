@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import { Package } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { Product } from "@/types/product";
+import { FormSelect } from "@/components/ui/FormSelect";
+import { DecimalInput } from "@/components/ui/DecimalInput";
+import { NumericInput } from "@/components/ui/NumericInput";
+import { Product, ProductStatus, STATUS_COLOR, STATUS_LABEL } from "@/types/product";
 import { useApi } from "@/lib/hooks/useApi";
+import { centsToMaskedPrice, maskedPriceToCents } from "@/lib/decimal-mask";
+
+const STATUS_OPTIONS: ProductStatus[] = ["ACTIVE", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"];
 
 interface Props {
   open: boolean;
@@ -42,9 +48,9 @@ function productToForm(p: Product): FormState {
     name: p.name,
     description: p.description ?? "",
     sku: p.sku ?? "",
-    priceReais: (p.priceCents / 100).toFixed(2),
+    priceReais: centsToMaskedPrice(p.priceCents),
     comparePriceReais: p.comparePriceCents
-      ? (p.comparePriceCents / 100).toFixed(2)
+      ? centsToMaskedPrice(p.comparePriceCents)
       : "",
     stockQty: String(p.stockQty),
     lowStockThreshold: String(p.lowStockThreshold),
@@ -77,12 +83,12 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
     setSaving(true);
     setError(null);
 
-    const priceCents = Math.round(parseFloat(form.priceReais.replace(",", ".")) * 100);
-    const comparePriceCents = form.comparePriceReais
-      ? Math.round(parseFloat(form.comparePriceReais.replace(",", ".")) * 100)
+    const priceCents = maskedPriceToCents(form.priceReais);
+    const comparePriceCents = form.comparePriceReais.trim()
+      ? maskedPriceToCents(form.comparePriceReais)
       : null;
 
-    if (isNaN(priceCents) || priceCents < 0) {
+    if (priceCents === null || priceCents < 0) {
       setError("Preço inválido.");
       setSaving(false);
       return;
@@ -126,7 +132,7 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
       onClose={onClose}
       title={isEditing ? "Editar produto" : "Novo produto"}
       subtitle={isEditing ? `Editando: ${product?.name}` : "Preencha os dados do produto"}
-      size="lg"
+      size="md"
       headerLeading={<Package className="w-5 h-5 text-indigo-400" />}
       footer={
         <>
@@ -184,65 +190,49 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
 
           <div className="form-field">
             <label className="form-label">Status</label>
-            <select
-              className="form-input"
+            <FormSelect
               value={form.status}
-              onChange={(e) => set("status", e.target.value)}
-            >
-              <option value="ACTIVE">Ativo</option>
-              <option value="INACTIVE">Inativo</option>
-              <option value="OUT_OF_STOCK">Esgotado</option>
-              <option value="DISCONTINUED">Descontinuado</option>
-            </select>
+              onChange={(v) => set("status", v)}
+              options={STATUS_OPTIONS.map((status) => ({
+                value: status,
+                label: STATUS_LABEL[status],
+                color: STATUS_COLOR[status],
+              }))}
+            />
           </div>
 
           <div className="form-field">
             <label className="form-label">Preço (R$) *</label>
-            <input
-              className="form-input"
-              type="number"
-              min="0"
-              step="0.01"
+            <DecimalInput
               value={form.priceReais}
-              onChange={(e) => set("priceReais", e.target.value)}
-              placeholder="0,00"
+              onChange={(v) => set("priceReais", v)}
               required
             />
           </div>
 
           <div className="form-field">
             <label className="form-label">Preço comparativo (R$)</label>
-            <input
-              className="form-input"
-              type="number"
-              min="0"
-              step="0.01"
+            <DecimalInput
               value={form.comparePriceReais}
-              onChange={(e) => set("comparePriceReais", e.target.value)}
-              placeholder="Preço de riscado"
+              onChange={(v) => set("comparePriceReais", v)}
+              placeholder="Preço riscado"
             />
           </div>
 
           <div className="form-field">
             <label className="form-label">Estoque *</label>
-            <input
-              className="form-input"
-              type="number"
-              min="0"
+            <NumericInput
               value={form.stockQty}
-              onChange={(e) => set("stockQty", e.target.value)}
+              onChange={(v) => set("stockQty", v)}
               required
             />
           </div>
 
           <div className="form-field">
             <label className="form-label">Alerta de estoque baixo</label>
-            <input
-              className="form-input"
-              type="number"
-              min="0"
+            <NumericInput
               value={form.lowStockThreshold}
-              onChange={(e) => set("lowStockThreshold", e.target.value)}
+              onChange={(v) => set("lowStockThreshold", v)}
             />
             <span className="form-hint">Notifica quando estoque atingir este valor</span>
           </div>
