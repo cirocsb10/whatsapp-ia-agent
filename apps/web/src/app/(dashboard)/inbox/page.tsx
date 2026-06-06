@@ -269,7 +269,7 @@ function InboxContent() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="inbox-conv-list">
             {filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center gap-3">
                 <div className="inbox-empty-icon">
@@ -289,32 +289,27 @@ function InboxContent() {
                     key={conv.id}
                     type="button"
                     onClick={() => void handleSelectConv(conv.id)}
-                    className={`inbox-conv-item ${isActive ? "inbox-conv-item-active" : ""}`}
+                    className={`inbox-conv-item${isActive ? " inbox-conv-item-active" : ""}${conv.unreadCount > 0 ? " inbox-conv-item-unread" : ""}`}
                   >
-                    {/* Circular Avatar */}
                     <div
-                      className="inbox-avatar flex-shrink-0"
-                      style={{ background: `${color}22`, color }}
+                      className="inbox-avatar"
+                      style={{ "--avatar-color": color } as React.CSSProperties}
                     >
                       {initials}
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0 py-1">
-                      <div className="flex items-center justify-between gap-2 mb-0.5">
-                        <span className="text-[14px] font-medium truncate" style={{ color: "var(--wa-text)" }}>
+                    <div className="inbox-conv-body">
+                      <div className="inbox-conv-row">
+                        <span className="inbox-conv-name">
                           {conv.contact.name ?? conv.contact.phone}
                         </span>
-                        <span
-                          className="text-[11px] flex-shrink-0 tabular-nums"
-                          style={{ color: conv.unreadCount > 0 ? "#4ade80" : "var(--wa-muted)" }}
-                        >
+                        <span className={`inbox-conv-time${conv.unreadCount > 0 ? " inbox-conv-time-unread" : ""}`}>
                           {relativeTime(conv.lastMessageAt)}
                         </span>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-[13px] truncate flex-1 leading-normal" style={{ color: "var(--wa-muted)" }}>
+                      <div className="inbox-conv-row">
+                        <p className="inbox-conv-preview">
                           {conv.isHandoff ? (
                             <span className="inbox-handoff-hint">
                               <Phone className="w-3 h-3 flex-shrink-0" />
@@ -470,26 +465,13 @@ function InboxContent() {
             <div className="inbox-chat-bg flex-1 flex items-center justify-center">
               <div className="inbox-empty-state">
                 <div className="inbox-empty-state-logo">
-                  <svg viewBox="0 0 39 39" width="48" height="48" fill="none">
-                    <path fillRule="evenodd" clipRule="evenodd"
-                      d="M19.5 0C8.73 0 0 8.73 0 19.5 0 23.08 1.02 26.42 2.79 29.23L0 39l10.05-2.63A19.43 19.43 0 0 0 19.5 39C30.27 39 39 30.27 39 19.5S30.27 0 19.5 0z"
-                      fill="#22c55e" />
-                    <path fillRule="evenodd" clipRule="evenodd"
-                      d="M29.36 23.74c-.38-.19-2.24-1.1-2.59-1.23-.35-.13-.6-.19-.86.19-.25.38-1 1.23-1.22 1.49-.23.25-.45.28-.83.09-.38-.19-1.6-.59-3.04-1.88a11.4 11.4 0 0 1-2.1-2.63c-.22-.38 0-.58.17-.77.15-.17.34-.44.5-.66.17-.22.23-.38.35-.63.12-.25.06-.47-.03-.66-.1-.19-.86-2.07-1.18-2.83-.31-.74-.63-.64-.86-.65h-.74c-.25 0-.66.1-.1.38-.35.98-1.32 2.85 1.25 4.5a11.8 11.8 0 0 0 4.56 4.07c.57.25 1.01.4 1.36.5.57.19 1.09.16 1.5.1.46-.07 1.4-.57 1.6-1.13.2-.56.2-1.04.14-1.13-.07-.1-.25-.16-.53-.28z"
-                      fill="white" />
-                  </svg>
+                  <MessageSquare strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <div>
                   <p className="inbox-empty-state-title">WhatsAgent</p>
                   <p className="inbox-empty-state-desc">
                     Selecione uma conversa na lista ao lado para visualizar mensagens e interagir com seus clientes.
                   </p>
-                </div>
-                <div className="inbox-empty-state-badge">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
-                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-                  </svg>
-                  Mensagens protegidas end-to-end via Meta Cloud API
                 </div>
               </div>
             </div>
