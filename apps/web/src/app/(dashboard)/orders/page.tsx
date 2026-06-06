@@ -3,6 +3,7 @@
 import { Header } from "@/components/layout/Header";
 import { OrderDetailModal } from "@/components/orders/OrderDetailModal";
 import { UpdateStatusModal } from "@/components/orders/UpdateStatusModal";
+import { CreateOrderModal } from "@/components/orders/CreateOrderModal";
 import { useApi } from "@/lib/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -333,6 +334,11 @@ export default function OrdersPage() {
         </div>
       </div>
 
+      <CreateOrderModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => { setCreateOpen(false); void loadOrders(); }}
+      />
       <OrderDetailModal
         open={!!detailOrderId}
         onClose={() => setDetailOrderId(null)}
