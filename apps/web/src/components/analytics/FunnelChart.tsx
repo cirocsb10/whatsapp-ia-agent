@@ -1,5 +1,5 @@
 "use client";
-import { TrendingDown, ArrowRight } from "lucide-react";
+import { TrendingDown, ChevronDown } from "lucide-react";
 
 interface FunnelData {
   conversations: number;
@@ -10,11 +10,11 @@ interface FunnelData {
 }
 
 const STAGES = [
-  { key: "conversations"      as const, label: "Conversas Iniciadas",  color: "#6366f1" },
-  { key: "catalog_viewed"     as const, label: "Catálogo Consultado",  color: "#8b5cf6" },
-  { key: "cart_started"       as const, label: "Carrinho Adicionado",  color: "#ec4899" },
-  { key: "payment_generated"  as const, label: "Pagamento Gerado",     color: "#f59e0b" },
-  { key: "payment_confirmed"  as const, label: "Pagamento Confirmado", color: "#22c55e" },
+  { key: "conversations"      as const, label: "Conversas Iniciadas",  color: "#6366f1", num: "01" },
+  { key: "catalog_viewed"     as const, label: "Catálogo Consultado",  color: "#8b5cf6", num: "02" },
+  { key: "cart_started"       as const, label: "Carrinho Adicionado",  color: "#ec4899", num: "03" },
+  { key: "payment_generated"  as const, label: "Pagamento Gerado",     color: "#f59e0b", num: "04" },
+  { key: "payment_confirmed"  as const, label: "Pagamento Confirmado", color: "#22c55e", num: "05" },
 ];
 
 export function ConversionFunnel({ data }: { data: FunnelData }) {
@@ -23,10 +23,9 @@ export function ConversionFunnel({ data }: { data: FunnelData }) {
 
   return (
     <div className="analytics-panel">
-      {/* Header */}
       <div className="analytics-panel-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="analytics-panel-icon" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="analytics-panel-icon" style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}>
             <TrendingDown className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
           </div>
           <div>
@@ -56,31 +55,53 @@ export function ConversionFunnel({ data }: { data: FunnelData }) {
 
             return (
               <div key={s.key} className="analytics-funnel-row">
+                {/* Label row */}
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-medium text-[#94a3b8]">{s.label}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="text-[9px] font-mono font-bold flex-shrink-0"
+                      style={{ color: s.color, opacity: 0.6 }}
+                    >
+                      {s.num}
+                    </span>
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                      style={{ background: s.color, boxShadow: `0 0 5px ${s.color}80` }}
+                    />
+                    <span className="text-[11px] font-medium text-[#94a3b8] truncate">{s.label}</span>
                   </div>
-                  <div className="flex items-center gap-3">
+
+                  <div className="flex items-center gap-4 flex-shrink-0 ml-3">
                     {i > 0 && drop > 0 && (
-                      <span className="flex items-center gap-1 text-[10px] text-red-400 tabular-nums">
-                        <ArrowRight className="w-2.5 h-2.5 rotate-90" strokeWidth={2} />
-                        -{drop}%
+                      <span className="flex items-center gap-0.5 text-[10px] text-red-400/70 tabular-nums font-medium">
+                        <ChevronDown className="w-3 h-3" strokeWidth={2.5} />
+                        {drop}%
                       </span>
                     )}
-                    <span className="text-[13px] font-semibold text-[#e2e8f0] tabular-nums">
+                    <span className="text-[13px] font-semibold text-[#e2e8f0] tabular-nums w-8 text-right">
                       {value.toLocaleString("pt-BR")}
                     </span>
                   </div>
                 </div>
+
+                {/* Bar track */}
                 <div className="analytics-funnel-track">
-                  <div
-                    className="analytics-funnel-fill"
-                    style={{ width: `${pct}%`, background: `${s.color}22`, borderColor: s.color }}
-                  >
-                    <span className="text-[10px] font-bold px-2" style={{ color: s.color }}>
-                      {pct}%
-                    </span>
-                  </div>
+                  {pct > 0 ? (
+                    <div
+                      className="analytics-funnel-fill"
+                      style={{
+                        width: `${pct}%`,
+                        background: `linear-gradient(90deg, ${s.color}50, ${s.color}16)`,
+                        borderColor: s.color,
+                      }}
+                    >
+                      <span className="text-[10px] font-bold px-2" style={{ color: s.color }}>
+                        {pct}%
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="analytics-funnel-fill-zero" />
+                  )}
                 </div>
               </div>
             );

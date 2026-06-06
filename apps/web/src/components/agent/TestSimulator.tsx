@@ -5,7 +5,7 @@ import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
-export function TestSimulator({ tenantId }: { tenantId: string }) {
+export function TestSimulator() {
   const { getToken } = useAuth();
   const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -25,21 +25,20 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
       const res = await fetch(`${API_URL}/agent/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ message: msg, tenantId }),
+        body: JSON.stringify({ message: msg }),
       });
       const data = res.ok ? await res.json() : null;
-      setMessages((p) => [...p, { role: "assistant", content: data?.reply ?? "Nao consegui responder agora." }]);
+      setMessages((p) => [...p, { role: "assistant", content: data?.reply ?? "Não consegui responder agora." }]);
     } catch {
-      setMessages((p) => [...p, { role: "assistant", content: "Erro de conexao com o simulador." }]);
+      setMessages((p) => [...p, { role: "assistant", content: "Erro de conexão com o simulador." }]);
     }
     setLoading(false);
   }
 
   return (
     <div className="simulator-shell">
-      {/* Header */}
       <div className="simulator-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="flex items-center gap-2.5">
           <div className="simulator-icon">
             <Bot className="w-3.5 h-3.5 text-green-400" strokeWidth={1.8} />
           </div>
@@ -50,25 +49,24 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
                 <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
                 <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
               </span>
-              <span className="text-[10px] text-[#475569]">Simulação local — sem integração real</span>
+              <span className="text-[10px] text-[#64748b]">Simulação local — sem integração real</span>
             </div>
           </div>
         </div>
-        <button onClick={() => setMessages([])} className="simulator-reset-btn">
+        <button type="button" onClick={() => setMessages([])} className="simulator-reset-btn">
           <RefreshCw className="w-3 h-3" />
           Resetar
         </button>
       </div>
 
-      {/* Messages */}
       <div className="simulator-body">
         {messages.length === 0 && (
           <div className="simulator-empty">
             <div className="simulator-empty-icon">
               <Sparkles className="w-5 h-5 text-indigo-400" strokeWidth={1.5} />
             </div>
-            <p className="text-[13px] font-semibold text-[#e2e8f0]">Teste seu agente</p>
-            <p className="text-[12px] text-[#475569] text-center max-w-[220px] leading-relaxed">
+            <p className="text-[14px] font-semibold text-[#e2e8f0]">Teste seu agente</p>
+            <p className="text-[12px] text-[#64748b] text-center max-w-[260px] leading-relaxed">
               Envie uma mensagem como se fosse um cliente no WhatsApp
             </p>
           </div>
@@ -78,94 +76,38 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
           {messages.map((m, i) => (
             <div
               key={i}
-              style={{
-                display: "flex",
-                gap: 8,
-                justifyContent: m.role === "user" ? "flex-end" : "flex-start",
-                alignItems: "flex-end",
-              }}
+              className={`simulator-msg-row ${m.role === "user" ? "simulator-msg-row--user" : "simulator-msg-row--bot"}`}
             >
-              {/* Bot avatar */}
               {m.role === "assistant" && (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: "rgba(99,102,241,0.12)",
-                  border: "1px solid rgba(99,102,241,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                  <Bot style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+                <div className="simulator-avatar">
+                  <Bot className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
                 </div>
               )}
 
-              {/* Bubble */}
-              <div style={{
-                maxWidth: "72%",
-                padding: "10px 14px",
-                borderRadius: m.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                fontSize: 13,
-                lineHeight: 1.55,
-                wordBreak: "break-word",
-                ...(m.role === "user"
-                  ? {
-                      background: "rgba(99,102,241,0.18)",
-                      border: "1px solid rgba(99,102,241,0.3)",
-                      color: "#e2e8f0",
-                    }
-                  : {
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      color: "#cbd5e1",
-                    }
-                ),
-              }}>
-                <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{m.content}</p>
+              <div className={`simulator-bubble ${m.role === "user" ? "simulator-bubble--user" : "simulator-bubble--bot"}`}>
+                <p>{m.content}</p>
               </div>
 
-              {/* User avatar */}
               {m.role === "user" && (
-                <div style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  background: "rgba(99,102,241,0.12)",
-                  border: "1px solid rgba(99,102,241,0.22)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0,
-                }}>
-                  <User style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+                <div className="simulator-avatar">
+                  <User className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
                 </div>
               )}
             </div>
           ))}
 
-          {/* Typing indicator */}
           {loading && (
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 8,
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.22)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                <Bot style={{ width: 14, height: 14, color: "#818cf8" }} strokeWidth={1.8} />
+            <div className="simulator-msg-row simulator-msg-row--bot">
+              <div className="simulator-avatar">
+                <Bot className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
               </div>
-              <div style={{
-                padding: "10px 16px",
-                borderRadius: "14px 14px 14px 4px",
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}>
-                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              <div className="simulator-typing">
+                <div className="simulator-typing-dots">
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      style={{
-                        width: 6, height: 6, borderRadius: "50%",
-                        background: "#6366f1",
-                        opacity: 0.6,
-                        animation: "pulse-dot 1.4s ease-in-out infinite",
-                        animationDelay: `${i * 180}ms`,
-                      }}
+                      className="simulator-typing-dot"
+                      style={{ animationDelay: `${i * 180}ms` }}
                     />
                   ))}
                 </div>
@@ -177,7 +119,6 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <div className="simulator-input-bar">
         <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="simulator-input-form">
           <input
@@ -188,7 +129,7 @@ export function TestSimulator({ tenantId }: { tenantId: string }) {
             className="simulator-input"
             disabled={loading}
           />
-          <button type="submit" disabled={loading || !input.trim()} className="simulator-send-btn">
+          <button type="submit" disabled={loading || !input.trim()} className="simulator-send-btn" aria-label="Enviar">
             <Send className="w-3.5 h-3.5" />
           </button>
         </form>

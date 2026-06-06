@@ -1,12 +1,17 @@
 "use client";
 import { Header } from "@/components/layout/Header";
+import { useSocket } from "@/hooks/useSocket";
+import { useApi } from "@/lib/hooks/useApi";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import {
   PhoneCall, Bot, Clock, CheckCircle2,
-  User, ArrowRight, Inbox, MessageSquare,
-  AlertCircle, LifeBuoy,
+  User, ArrowRight, MessageSquare, ChevronRight,
+  AlertCircle, LifeBuoy, Search,
+  Sparkles, Headphones, Zap, RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 function relativeTime(iso?: string): string {
   if (!iso) return "";
@@ -17,6 +22,11 @@ function relativeTime(iso?: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h atrás`;
   return `${Math.floor(h / 24)}d atrás`;
+}
+
+function waitMinutes(iso?: string): number {
+  if (!iso) return 0;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
 }
 
 function getInitials(name?: string, phone?: string): string {
@@ -42,183 +52,390 @@ function accentFor(id: string) {
 
 type SupportTab = "pending" | "active" | "resolved";
 
+const STATS = [
+  { key: "pending",  label: "Aguardando atendimento", icon: PhoneCall,    color: "#f59e0b", bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.25)"  },
+  { key: "ai",       label: "IA respondendo agora",     icon: Bot,          color: "#6366f1", bg: "rgba(99,102,241,0.12)",  border: "rgba(99,102,241,0.25)"  },
+  { key: "resolved", label: "Resolvidos hoje",          icon: CheckCircle2, color: "#22c55e", bg: "rgba(34,197,94,0.12)",   border: "rgba(34,197,94,0.25)"   },
+  { key: "avg",      label: "Tempo médio resposta",     icon: Clock,        color: "#06b6d4", bg: "rgba(6,182,212,0.12)",   border: "rgba(6,182,212,0.25)"   },
+] as const;
+
 export default function SupportPage() {
+  useSocket();
+  const router = useRouter();
+  const { apiFetch } = useApi();
   const conversations = useInboxStore((s) => s.conversations);
+  const setConversations = useInboxStore((s) => s.setConversations);
+  const socketStatus = useInboxStore((s) => s.socketStatus);
   const [tab, setTab] = useState<SupportTab>("pending");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  function handleAttend(convId: string) {
+    router.push(`/inbox?conv=${encodeURIComponent(convId)}`);
+  }
+
+  async function loadConversations() {
+    setLoading(true);
+    try {
+      const res = await apiFetch("/conversations");
+      if (res.ok) setConversations(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadConversations();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handoffs = conversations.filter((c) => c.isHandoff);
   const aiActive = conversations.filter((c) => !c.isHandoff);
 
-  const pendingHandoffs = handoffs.filter((c) => c.status === "HUMAN_HANDOFF");
+  const pendingHandoffs = handoffs.filter((c) => c.status === "HUMAN_HANDOFF" && !c.isAssumed);
+  const activeHandoffs = handoffs.filter((c) => c.status === "HUMAN_HANDOFF" && c.isAssumed);
   const resolvedToday: typeof conversations = [];
 
   const tabItems: { key: SupportTab; label: string; count: number; icon: typeof PhoneCall }[] = [
-    { key: "pending",  label: "Aguardando",  count: pendingHandoffs.length, icon: AlertCircle },
-    { key: "active",   label: "Em andamento", count: 0,                     icon: MessageSquare },
-    { key: "resolved", label: "Resolvidos",   count: resolvedToday.length,  icon: CheckCircle2 },
+    { key: "pending",  label: "Aguardando",   count: pendingHandoffs.length, icon: AlertCircle },
+    { key: "active",   label: "Em andamento", count: activeHandoffs.length,  icon: Headphones },
+    { key: "resolved", label: "Resolvidos",   count: resolvedToday.length,   icon: CheckCircle2 },
   ];
 
-  const visibleList =
-    tab === "pending" ? pendingHandoffs :
-    tab === "resolved" ? resolvedToday : [];
+  const visibleList = useMemo(() => {
+    const base =
+      tab === "pending" ? pendingHandoffs :
+      tab === "active"  ? activeHandoffs :
+                          resolvedToday;
+    if (!search.trim()) return base;
+    const q = search.toLowerCase();
+    return base.filter((c) =>
+      (c.contact.name ?? "").toLowerCase().includes(q) ||
+      c.contact.phone.includes(q) ||
+      (c.lastMessage ?? "").toLowerCase().includes(q)
+    );
+  }, [tab, pendingHandoffs, activeHandoffs, resolvedToday, search]);
 
-  const stats = [
-    { label: "Aguardando atendimento", value: pendingHandoffs.length, icon: PhoneCall,    color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.2)"  },
-    { label: "IA respondendo agora",   value: aiActive.length,        icon: Bot,          color: "#6366f1", bg: "rgba(99,102,241,0.1)",  border: "rgba(99,102,241,0.2)"  },
-    { label: "Resolvidos hoje",         value: resolvedToday.length,   icon: CheckCircle2, color: "#22c55e", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)"   },
-    { label: "Tempo médio resposta",    value: "—",                    icon: Clock,        color: "#06b6d4", bg: "rgba(6,182,212,0.1)",   border: "rgba(6,182,212,0.2)"   },
-  ];
+  const statValues: Record<string, string | number> = {
+    pending: pendingHandoffs.length,
+    ai: aiActive.length,
+    resolved: resolvedToday.length,
+    avg: "—",
+  };
+
+  const hasUrgent = pendingHandoffs.some((c) => waitMinutes(c.lastMessageAt) >= 5);
+  const isLive = socketStatus === "connected";
+
+  const date = new Date().toLocaleDateString("pt-BR", {
+    weekday: "long", day: "numeric", month: "long",
+  });
 
   return (
     <div className="fade-up flex flex-col h-screen">
       <Header title="Suporte" subtitle="Gestão de atendimentos e handoffs" />
 
-      <div className="dashboard-page">
-        {/* Stats row */}
+      <div className="dashboard-page support-page">
+        {/* Hero */}
+        <div className="support-hero">
+          <div className="support-hero-content">
+            <div className="support-hero-badge">
+              <Sparkles className="w-3 h-3" strokeWidth={2} />
+              Central de atendimento
+            </div>
+            <h2 className="support-hero-title">Fila de handoffs</h2>
+            <p className="support-hero-sub">
+              {date} — Monitore transferências da IA e assuma conversas que precisam de atenção humana.
+            </p>
+          </div>
+          <div className="support-hero-actions">
+            <div className={`support-live-pill ${isLive ? "support-live-pill--on" : ""}`}>
+              <span className="support-live-dot" />
+              {isLive ? "Tempo real ativo" : "Reconectando…"}
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadConversations()}
+              className="support-refresh-btn"
+              aria-label="Atualizar fila"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Urgency banner */}
+        {pendingHandoffs.length > 0 && (
+          <div className={`support-alert ${hasUrgent ? "support-alert--urgent" : ""}`}>
+            <div className="support-alert-icon">
+              {hasUrgent
+                ? <Zap className="w-4 h-4 text-amber-400" strokeWidth={2} />
+                : <AlertCircle className="w-4 h-4 text-amber-400" strokeWidth={2} />
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="support-alert-title">
+                {pendingHandoffs.length === 1
+                  ? "1 cliente aguardando atendimento humano"
+                  : `${pendingHandoffs.length} clientes aguardando atendimento humano`}
+              </p>
+              <p className="support-alert-sub">
+                {hasUrgent
+                  ? "Há conversas com tempo de espera elevado. Priorize o atendimento."
+                  : "A IA transferiu conversas que precisam de um operador."}
+              </p>
+            </div>
+            {pendingHandoffs[0] && (
+              <button
+                type="button"
+                onClick={() => handleAttend(pendingHandoffs[0]!.id)}
+                className="support-alert-cta"
+              >
+                Atender agora
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Stats */}
         <div className="support-stats-grid">
-          {stats.map(({ label, value, icon: Icon, color, bg, border }) => (
-            <div key={label} className="support-stat-card" style={{ "--stat-border": border } as React.CSSProperties}>
+          {STATS.map(({ key, label, icon: Icon, color, bg, border }) => (
+            <div
+              key={key}
+              className="support-stat-card"
+              style={{
+                "--stat-accent": color,
+                "--stat-border": border,
+                "--stat-glow": `${color}18`,
+              } as React.CSSProperties}
+            >
+              <div className="support-stat-glow" aria-hidden="true" />
               <div className="support-stat-icon" style={{ background: bg, borderColor: border }}>
                 <Icon className="w-4 h-4" style={{ color }} strokeWidth={1.8} />
               </div>
-              <div>
-                <p className="support-stat-value">{value}</p>
+              <div className="support-stat-body">
+                <p className="support-stat-value">{loading ? "…" : statValues[key]}</p>
                 <p className="support-stat-label">{label}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Tabs + list */}
+        {/* Queue panel */}
         <div className="support-panel">
-          {/* Panel header */}
           <div className="support-panel-header">
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div style={{ width: 28, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                <LifeBuoy className="w-3.5 h-3.5 text-amber-400" strokeWidth={1.8} />
+            <div className="support-panel-title">
+              <div className="support-panel-title-icon">
+                <LifeBuoy className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
               </div>
-              <span className="text-[13px] font-semibold text-[#e2e8f0]">Fila de atendimento</span>
+              <div>
+                <span className="support-panel-title-text">Fila de atendimento</span>
+                <span className="support-panel-title-meta">
+                  {pendingHandoffs.length + activeHandoffs.length} na fila
+                </span>
+              </div>
             </div>
-            <div className="support-tabs">
-              {tabItems.map(({ key, label, count, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setTab(key)}
-                  className={`support-tab ${tab === key ? "support-tab-active" : ""}`}
-                >
-                  <Icon className="w-3 h-3" strokeWidth={1.8} />
-                  {label}
-                  {count > 0 && (
-                    <span className={`inbox-tab-count ${tab === key ? "inbox-tab-count-active" : ""}`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              ))}
+
+            <div className="support-panel-toolbar">
+              <div className="support-search">
+                <Search className="support-search-icon" strokeWidth={1.8} />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por nome, telefone…"
+                  className="support-search-input"
+                  aria-label="Buscar na fila"
+                />
+              </div>
+              <div className="support-tabs" role="tablist">
+                {tabItems.map(({ key, label, count, icon: Icon }) => (
+                  <button
+                    key={key}
+                    role="tab"
+                    aria-selected={tab === key}
+                    onClick={() => setTab(key)}
+                    className={`support-tab ${tab === key ? "support-tab-active" : ""}`}
+                  >
+                    <Icon className="w-3 h-3" strokeWidth={1.8} />
+                    {label}
+                    {count > 0 && (
+                      <span className={`support-tab-count ${tab === key ? "support-tab-count-active" : ""}`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* List */}
-          {visibleList.length === 0 ? (
+          {loading ? (
+            <div className="support-skeleton-list">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="support-skeleton-row">
+                  <div className="shimmer w-12 h-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="shimmer h-3 w-32 rounded" />
+                    <div className="shimmer h-2.5 w-48 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : visibleList.length === 0 ? (
             <div className="support-empty">
+              <div className="support-empty-glow" aria-hidden="true" />
               <div className="support-empty-icon">
                 {tab === "pending"
-                  ? <PhoneCall className="w-6 h-6 text-slate-600" />
+                  ? <PhoneCall className="w-6 h-6 text-slate-500" />
                   : tab === "resolved"
-                  ? <CheckCircle2 className="w-6 h-6 text-slate-600" />
-                  : <MessageSquare className="w-6 h-6 text-slate-600" />
+                  ? <CheckCircle2 className="w-6 h-6 text-slate-500" />
+                  : <MessageSquare className="w-6 h-6 text-slate-500" />
                 }
               </div>
-              <p className="text-[14px] font-semibold text-[#e2e8f0]">
-                {tab === "pending" ? "Nenhum handoff pendente" :
-                 tab === "active"  ? "Nenhum atendimento ativo" :
-                                     "Nenhuma conversa resolvida hoje"}
+              <p className="support-empty-title">
+                {search.trim()
+                  ? "Nenhum resultado encontrado"
+                  : tab === "pending" ? "Nenhum handoff pendente" :
+                    tab === "active"  ? "Nenhum atendimento ativo" :
+                                        "Nenhuma conversa resolvida hoje"}
               </p>
-              <p className="text-[12px] text-[#475569] leading-relaxed max-w-xs text-center">
-                {tab === "pending"
-                  ? "Quando o agente IA precisar de suporte humano, as conversas aparecerão aqui."
+              <p className="support-empty-desc">
+                {search.trim()
+                  ? "Tente outro termo de busca ou limpe o filtro."
+                  : tab === "pending"
+                  ? "Quando o agente IA precisar de suporte humano, as conversas aparecerão aqui automaticamente."
                   : tab === "active"
-                  ? "Atendimentos em andamento serão exibidos aqui."
+                  ? "Atendimentos em andamento serão exibidos aqui após você assumir uma conversa."
                   : "Conversas marcadas como resolvidas hoje aparecerão aqui."}
               </p>
+              {tab === "pending" && !search.trim() && (
+                <Link href="/inbox" className="support-empty-link">
+                  Ver todas as conversas
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
           ) : (
             <div className="support-list">
               {visibleList.map((conv) => {
                 const accent = accentFor(conv.id);
                 const initials = getInitials(conv.contact.name, conv.contact.phone);
+                const wait = waitMinutes(conv.lastMessageAt);
+                const isUrgent = tab === "pending" && wait >= 5;
                 return (
-                  <div key={conv.id} className="support-conv-row">
-                    {/* Avatar */}
+                  <article
+                    key={conv.id}
+                    className={`support-conv-row ${isUrgent ? "support-conv-row--urgent" : ""} ${conv.isAssumed ? "support-conv-row--clickable" : ""}`}
+                    {...(conv.isAssumed ? {
+                      role: "button",
+                      tabIndex: 0,
+                      onClick: () => handleAttend(conv.id),
+                      onKeyDown: (e: React.KeyboardEvent) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleAttend(conv.id);
+                        }
+                      },
+                    } : {})}
+                  >
                     <div
-                      className="inbox-avatar"
-                      style={{ background: `${accent}18`, borderColor: `${accent}30`, color: accent }}
+                      className="support-conv-accent"
+                      style={{ background: isUrgent ? "#f59e0b" : accent }}
+                      aria-hidden="true"
+                    />
+
+                    <div
+                      className="inbox-avatar support-conv-avatar"
+                      style={{ background: `${accent}18`, borderColor: `${accent}35`, color: accent }}
                     >
                       {initials}
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span className="text-[13px] font-semibold text-[#f1f5f9]">
-                          {conv.contact.name ?? conv.contact.phone}
-                        </span>
-                        <span className="inbox-status-tag inbox-status-handoff">
-                          <PhoneCall className="w-2.5 h-2.5" />
-                          Handoff
+                    <div className="support-conv-body">
+                      <div className="support-conv-header">
+                        <div className="support-conv-tags">
+                          <span className="support-conv-name">
+                            {conv.contact.name ?? conv.contact.phone}
+                          </span>
+                          <span className={`inbox-status-tag ${conv.isAssumed ? "inbox-status-ai" : "inbox-status-handoff"}`}>
+                            {conv.isAssumed
+                              ? <><Headphones className="w-2.5 h-2.5" /> Em atendimento</>
+                              : <><PhoneCall className="w-2.5 h-2.5" /> Handoff</>
+                            }
+                          </span>
+                          {isUrgent && (
+                            <span className="support-urgency-tag">
+                              <Zap className="w-2.5 h-2.5" />
+                              Urgente
+                            </span>
+                          )}
+                        </div>
+                        <span className="support-conv-time">
+                          <Clock className="w-3 h-3" strokeWidth={1.8} />
+                          {relativeTime(conv.lastMessageAt)}
                         </span>
                       </div>
                       {conv.contact.name && (
-                        <p className="text-[11px] text-[#475569] font-mono mb-1">{conv.contact.phone}</p>
+                        <p className="support-conv-phone">{conv.contact.phone}</p>
                       )}
-                      <p className="text-[12px] text-[#64748b] truncate">
+                      <p className="support-conv-preview">
                         {conv.lastMessage ?? "Sem mensagens"}
                       </p>
                     </div>
 
-                    {/* Right meta */}
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <span className="text-[10px] text-[#475569] tabular-nums">
-                        {relativeTime(conv.lastMessageAt)}
-                      </span>
+                    <div className={`support-conv-aside ${conv.isAssumed ? "support-conv-aside--nav" : "support-conv-aside--action"}`}>
                       {conv.unreadCount > 0 && (
                         <span className="inbox-badge">{conv.unreadCount > 9 ? "9+" : conv.unreadCount}</span>
                       )}
-                      <button className="support-attend-btn">
-                        Atender
-                        <ArrowRight className="w-3 h-3" />
-                      </button>
+                      {conv.isAssumed ? (
+                        <ChevronRight className="support-conv-chevron" strokeWidth={1.8} aria-hidden="true" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleAttend(conv.id)}
+                          className="support-attend-btn"
+                        >
+                          Atender
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
         </div>
 
-        {/* Info panel */}
+        {/* Info cards */}
         <div className="support-info-row">
           <div className="support-info-card">
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: 10 }}>
-              <div className="support-info-icon" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}>
-                <Bot className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+            <div className="support-info-card-glow support-info-card-glow--indigo" aria-hidden="true" />
+            <div className="support-info-card-header">
+              <div className="support-info-step">1</div>
+              <div className="support-info-icon" style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}>
+                <Bot className="w-4 h-4 text-indigo-400" strokeWidth={1.8} />
               </div>
-              <span className="text-[12px] font-semibold text-[#e2e8f0]">Como funciona o handoff</span>
+              <span className="support-info-title">Como funciona o handoff</span>
             </div>
-            <p className="text-[11px] text-[#64748b] leading-relaxed">
-              Quando o agente IA detecta que uma conversa precisa de atenção humana — por frustração do cliente, pergunta complexa ou solicitação explícita — ele transfere automaticamente para esta fila.
+            <p className="support-info-desc">
+              Quando o agente IA detecta frustração, pergunta complexa ou solicitação explícita,
+              ele transfere automaticamente a conversa para esta fila de atendimento humano.
             </p>
           </div>
 
           <div className="support-info-card">
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: 10 }}>
-              <div className="support-info-icon" style={{ background: "rgba(34,197,94,0.1)", borderColor: "rgba(34,197,94,0.2)" }}>
-                <User className="w-3.5 h-3.5 text-green-400" strokeWidth={1.8} />
+            <div className="support-info-card-glow support-info-card-glow--green" aria-hidden="true" />
+            <div className="support-info-card-header">
+              <div className="support-info-step">2</div>
+              <div className="support-info-icon" style={{ background: "rgba(34,197,94,0.12)", borderColor: "rgba(34,197,94,0.25)" }}>
+                <User className="w-4 h-4 text-green-400" strokeWidth={1.8} />
               </div>
-              <span className="text-[12px] font-semibold text-[#e2e8f0]">Retomada pela IA</span>
+              <span className="support-info-title">Retomada pela IA</span>
             </div>
-            <p className="text-[11px] text-[#64748b] leading-relaxed">
-              Após resolver o atendimento, você pode marcar como resolvido para o agente IA voltar a monitorar a conversa automaticamente para futuras interações.
+            <p className="support-info-desc">
+              Após resolver o atendimento, marque como resolvido para o agente IA voltar a monitorar
+              a conversa e responder automaticamente em futuras interações.
             </p>
           </div>
         </div>

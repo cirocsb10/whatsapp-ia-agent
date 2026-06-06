@@ -57,14 +57,22 @@ export function KpiCard({
       className="kpi kpi-accent"
       style={{
         ["--kpi-accent" as string]: accent,
-        ["--kpi-accent-glow" as string]: `${accent}26`,
+        ["--kpi-accent-glow" as string]: `${accent}22`,
       }}
     >
       {empty && <EmptySparkline color={accent} />}
 
       <div className="flex items-center justify-between relative z-10">
-        <span className="section-title">{title}</span>
-        <div className="kpi-icon-wrap">
+        <span
+          className="text-[10px] font-600 uppercase tracking-widest"
+          style={{ color: "#475569", letterSpacing: "0.08em" }}
+        >
+          {title}
+        </span>
+        <div
+          className="kpi-icon-wrap"
+          style={{ background: `${accent}14`, borderColor: `${accent}30` }}
+        >
           <Icon className={cn("w-3.5 h-3.5", iconColor)} />
         </div>
       </div>

@@ -9,7 +9,7 @@ import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   Target, Users, ShoppingCart, DollarSign, Clock, Zap,
-  CalendarDays, Star, Cpu,
+  CalendarDays, Star, Cpu, BarChart2,
 } from "lucide-react";
 
 const KPI_CARDS = [
@@ -102,31 +102,43 @@ export default function AnalyticsPage() {
       <Header title="Analytics" subtitle="Metricas e performance do agente" />
 
       <div className="dashboard-page">
-        <div className="analytics-intro">
-          <div>
-            <p className="dashboard-greeting-title">Relatorio de Performance</p>
-            <p className="dashboard-greeting-sub">
-              Acompanhe conversoes, funil de vendas e atividade do agente IA.
-            </p>
+        <div className="analytics-hero">
+          <div className="analytics-hero-left">
+            <div className="analytics-hero-icon">
+              <BarChart2 className="w-5 h-5 text-indigo-400" strokeWidth={1.8} />
+            </div>
+            <div>
+              <div className="analytics-hero-badge">
+                <BarChart2 className="w-2.5 h-2.5" />
+                Performance
+              </div>
+              <p className="analytics-hero-title">Relatório de Performance</p>
+              <p className="analytics-hero-sub">
+                Acompanhe conversões, funil de vendas e atividade do agente IA.
+              </p>
+            </div>
           </div>
-          <div className="analytics-period-pills">
-            <CalendarDays className="w-3.5 h-3.5 text-[#475569]" />
-            {PERIODS.map((p) => (
-              <button
-                key={p.days}
-                onClick={() => setPeriod(p.days)}
-                className={`analytics-period-pill ${period === p.days ? "analytics-period-pill-active" : ""}`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className="analytics-hero-right">
+            <div className="analytics-period-pills">
+              <CalendarDays className="w-3.5 h-3.5 text-[#475569] ml-1" />
+              {PERIODS.map((p) => (
+                <button
+                  key={p.days}
+                  onClick={() => setPeriod(p.days)}
+                  className={`analytics-period-pill ${period === p.days ? "analytics-period-pill-active" : ""}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         <section>
-          <div className="dashboard-section-head">
-            <p className="section-title">Metricas do periodo</p>
-            <span className="text-[10px] text-[#475569]">Ultimos {period} dias</span>
+          <div className="analytics-section-head">
+            <div className="analytics-section-accent" />
+            <p className="analytics-section-label">Métricas do Período</p>
+            <span className="text-[10px] text-[#334155] tabular-nums">Últimos {period} {period === 1 ? "dia" : "dias"}</span>
           </div>
           <div className="analytics-kpi-grid">
             {KPI_CARDS.map((card) => {
@@ -145,12 +157,24 @@ export default function AnalyticsPage() {
           </div>
         </section>
 
-        <div className="analytics-bento-top">
-          <ConversionFunnel data={funnel} />
-          <HandoffReasons data={handoffs} />
-        </div>
+        <section>
+          <div className="analytics-section-head">
+            <div className="analytics-section-accent" style={{ background: "linear-gradient(180deg,#ec4899,#8b5cf6)" }} />
+            <p className="analytics-section-label">Jornada & Handoffs</p>
+          </div>
+          <div className="analytics-bento-top">
+            <ConversionFunnel data={funnel} />
+            <HandoffReasons data={handoffs} />
+          </div>
+        </section>
 
-        <ActivityHeatmap data={heatmap} />
+        <section>
+          <div className="analytics-section-head">
+            <div className="analytics-section-accent" style={{ background: "linear-gradient(180deg,#06b6d4,#6366f1)" }} />
+            <p className="analytics-section-label">Atividade por Horário</p>
+          </div>
+          <ActivityHeatmap data={heatmap} />
+        </section>
       </div>
     </div>
   );

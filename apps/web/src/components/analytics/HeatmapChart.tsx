@@ -3,17 +3,19 @@ import { Activity } from "lucide-react";
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
-const PEAK_HOURS = [9, 12, 15, 18, 21];
+const PEAK_HOURS = [6, 9, 12, 15, 18, 21];
 
 function cellColor(v: number, max: number): string {
-  if (!v) return "rgba(15,23,42,0.6)";
+  if (!v) return "rgba(15,23,42,0.55)";
   const p = v / max;
-  if (p < 0.15) return "rgba(99,102,241,0.15)";
-  if (p < 0.35) return "rgba(99,102,241,0.3)";
-  if (p < 0.55) return "rgba(99,102,241,0.5)";
-  if (p < 0.75) return "rgba(99,102,241,0.7)";
-  return "rgba(99,102,241,0.92)";
+  if (p < 0.15) return "rgba(99,102,241,0.2)";
+  if (p < 0.35) return "rgba(99,102,241,0.38)";
+  if (p < 0.55) return "rgba(99,102,241,0.56)";
+  if (p < 0.75) return "rgba(99,102,241,0.74)";
+  return "rgba(99,102,241,0.96)";
 }
+
+const LEGEND_STEPS = [0.08, 0.25, 0.45, 0.70, 1];
 
 export function ActivityHeatmap({ data }: { data: Array<{ hour: number; day: number; value: number }> }) {
   const max = Math.max(...data.map((d) => d.value), 1);
@@ -23,10 +25,9 @@ export function ActivityHeatmap({ data }: { data: Array<{ hour: number; day: num
 
   return (
     <div className="analytics-panel">
-      {/* Header */}
       <div className="analytics-panel-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div className="analytics-panel-icon" style={{ background: "rgba(6,182,212,0.1)", borderColor: "rgba(6,182,212,0.2)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="analytics-panel-icon" style={{ background: "rgba(6,182,212,0.12)", borderColor: "rgba(6,182,212,0.25)" }}>
             <Activity className="w-3.5 h-3.5 text-cyan-400" strokeWidth={1.8} />
           </div>
           <div>
@@ -34,50 +35,85 @@ export function ActivityHeatmap({ data }: { data: Array<{ hour: number; day: num
             <p className="text-[11px] text-[#475569] mt-0.5">Volume de mensagens por hora e dia da semana</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#475569]">Menos</span>
-          {[0.1, 0.3, 0.5, 0.75, 1].map((p) => (
-            <span
+
+        {/* Legend — using inline-block divs to avoid span collapse bug */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+          <span style={{ fontSize: 10, color: "#475569" }}>Menos</span>
+          {LEGEND_STEPS.map((p) => (
+            <div
               key={p}
-              className="w-3 h-3 rounded-sm"
-              style={{ background: cellColor(p * max, max) }}
+              style={{
+                display: "inline-block",
+                width: 14,
+                height: 14,
+                borderRadius: 3,
+                flexShrink: 0,
+                background: cellColor(p * max, max),
+              }}
             />
           ))}
-          <span className="text-[10px] text-[#475569]">Mais</span>
+          <span style={{ fontSize: 10, color: "#475569" }}>Mais</span>
         </div>
       </div>
 
       {isEmpty ? (
-        <div className="analytics-empty-inner" style={{ minHeight: 180 }}>
+        <div className="analytics-empty-inner" style={{ minHeight: 190 }}>
           <Activity className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
           <p className="text-[12px] text-[#475569]">Sem atividade no período</p>
         </div>
       ) : (
-        <div className="p-4 overflow-x-auto">
-          <div style={{ minWidth: 600 }}>
-            {/* Hour labels */}
-            <div className="flex items-center gap-0.5 mb-1 pl-10">
+        <div style={{ padding: "18px 20px 20px", overflowX: "auto" }}>
+          <div style={{ minWidth: 580 }}>
+            {/* Hour axis labels */}
+            <div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 6, paddingLeft: 38 }}>
               {HOURS.map((h) => (
-                <div key={h} className="flex-1 text-center">
+                <div key={h} style={{ flex: 1, textAlign: "center" }}>
                   {PEAK_HOURS.includes(h) && (
-                    <span className="text-[9px] text-[#334155] tabular-nums">{h}h</span>
+                    <span style={{ fontSize: 9, color: "#475569", fontVariantNumeric: "tabular-nums" }}>
+                      {h}h
+                    </span>
                   )}
                 </div>
               ))}
             </div>
-            {/* Grid */}
+
+            {/* Day rows */}
             {DAYS.map((day, di) => (
-              <div key={day} className="flex items-center gap-0.5 mb-0.5">
-                <span className="text-[10px] text-[#334155] w-9 text-right pr-2 flex-shrink-0">{day}</span>
-                <div className="flex flex-1 gap-0.5">
+              <div key={day} style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 3 }}>
+                <span style={{
+                  fontSize: 10,
+                  color: "#64748b",
+                  width: 32,
+                  textAlign: "right",
+                  paddingRight: 6,
+                  flexShrink: 0,
+                  fontWeight: 500,
+                }}>
+                  {day}
+                </span>
+                <div style={{ display: "flex", flex: 1, gap: 2 }}>
                   {HOURS.map((h) => {
                     const val = grid[`${di}-${h}`] ?? 0;
                     return (
                       <div
                         key={h}
-                        className="flex-1 h-5 rounded-sm cursor-default transition-opacity hover:opacity-80"
-                        style={{ background: cellColor(val, max) }}
-                        title={`${day} ${h}h: ${val} msgs`}
+                        title={`${day} ${h}h — ${val} msgs`}
+                        style={{
+                          flex: 1,
+                          height: 22,
+                          borderRadius: 3,
+                          cursor: "default",
+                          background: cellColor(val, max),
+                          transition: "opacity 150ms ease, transform 150ms ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.opacity = "0.7";
+                          (e.currentTarget as HTMLElement).style.transform = "scale(1.15)";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.opacity = "1";
+                          (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                        }}
                       />
                     );
                   })}

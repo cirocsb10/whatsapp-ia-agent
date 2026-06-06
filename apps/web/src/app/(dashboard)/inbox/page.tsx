@@ -6,7 +6,8 @@ import { ChatInputBar } from "@/components/chat/ChatInputBar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useApi } from "@/lib/hooks/useApi";
 import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 function getInitials(name?: string, phone?: string): string {
   if (name && name.trim()) {
@@ -48,7 +49,25 @@ function avatarColor(id: string) {
 type FilterTab = "all" | "ai" | "handoff";
 
 export default function InboxPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-full flex-col">
+        <Header title="Conversas" subtitle="Inbox unificado em tempo real" />
+        <div className="flex flex-1 items-center justify-center text-[13px] text-[#64748b]">
+          Carregando inbox…
+        </div>
+      </div>
+    }>
+      <InboxContent />
+    </Suspense>
+  );
+}
+
+function InboxContent() {
   useSocket();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const convFromUrl = searchParams.get("conv");
   const { apiFetch } = useApi();
   const conversations = useInboxStore((s) => s.conversations);
   const messages = useInboxStore((s) => s.messages);
@@ -67,6 +86,7 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const handledConvRef = useRef<string | null>(null);
 
   async function loadConversations() {
     setLoading(true);
@@ -81,6 +101,27 @@ export default function InboxPage() {
   useEffect(() => {
     void loadConversations();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!convFromUrl || loading) return;
+    if (handledConvRef.current === convFromUrl) return;
+
+    const match = conversations.find((c) => c.id === convFromUrl);
+    if (!match) return;
+
+    handledConvRef.current = convFromUrl;
+
+    void (async () => {
+      setActive(convFromUrl);
+      markAsRead(convFromUrl);
+      setDraft("");
+      if (!messages[convFromUrl]?.length) {
+        const res = await apiFetch(`/conversations/${convFromUrl}/messages`);
+        if (res.ok) setMessages(convFromUrl, await res.json());
+      }
+      router.replace("/inbox", { scroll: false });
+    })();
+  }, [convFromUrl, loading, conversations, messages, apiFetch, markAsRead, router, setActive, setMessages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
