@@ -58,4 +58,71 @@ export class BillingService {
       if (tenantId) await this.prisma.tenant.update({ where: { id: tenantId }, data: { status: "CANCELLED" } });
     }
   }
+
+  async getSubscription(tenantId: string) {
+    const [billing, tenant] = await Promise.all([
+      this.prisma.platformBilling.findUnique({ where: { tenantId } }),
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { planType: true, status: true, stripeCustomerId: true },
+      }),
+    ]);
+
+    let renewalDate: string | null = null;
+    if (tenant?.stripeCustomerId) {
+      try {
+        const stripe = this.getStripe();
+        const subs = await stripe.subscriptions.list({
+          customer: tenant.stripeCustomerId,
+          status: "active",
+          limit: 1,
+        });
+        if (subs.data.length > 0) {
+          renewalDate = new Date(subs.data[0].current_period_end * 1000).toISOString();
+        }
+      } catch {
+        // Stripe indisponível — prosseguir sem renewalDate
+      }
+    }
+
+    return {
+      plan: tenant?.planType ?? "STARTER",
+      status: tenant?.status ?? "TRIAL",
+      renewalDate,
+      usage: {
+        conversations: { used: billing?.conversationsThisMonth ?? 0, limit: billing?.conversationsLimit ?? 100 },
+        orders: { used: 0, limit: 500 },
+        products: { used: 0, limit: 200 },
+      },
+    };
+  }
+
+  async getBillingHistory(tenantId: string) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!tenant?.stripeCustomerId) return { invoices: [] };
+
+    try {
+      const stripe = this.getStripe();
+      const invoices = await stripe.invoices.list({
+        customer: tenant.stripeCustomerId,
+        limit: 12,
+      });
+      return {
+        invoices: invoices.data.map((inv: { id: string; created: number; amount_paid: number; currency: string; status: string | null; invoice_pdf: string | null }) => ({
+          id: inv.id,
+          date: new Date(inv.created * 1000).toISOString(),
+          amount: (inv.amount_paid / 100).toFixed(2),
+          currency: inv.currency.toUpperCase(),
+          status: inv.status,
+          pdfUrl: inv.invoice_pdf,
+        })),
+      };
+    } catch {
+      return { invoices: [] };
+    }
+  }
 }

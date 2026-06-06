@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Body, Headers, HttpCode, Req, Logger } from "@nestjs/common";
+import { Controller, Get, Post, UseGuards, Body, Headers, HttpCode, Req, Logger } from "@nestjs/common";
 import { BillingService } from "./billing.service";
 import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -10,6 +10,20 @@ import { CreateCheckoutDto } from "./dto/create-checkout.dto";
 export class BillingController {
   private readonly logger = new Logger(BillingController.name);
   constructor(private readonly billingService: BillingService) {}
+
+  @Get("subscription")
+  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @Roles("OWNER", "ADMIN")
+  getSubscription(@CurrentTenantId() tenantId: string) {
+    return this.billingService.getSubscription(tenantId);
+  }
+
+  @Get("history")
+  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @Roles("OWNER", "ADMIN")
+  getBillingHistory(@CurrentTenantId() tenantId: string) {
+    return this.billingService.getBillingHistory(tenantId);
+  }
 
   @Post("checkout")
   @UseGuards(ClerkAuthGuard, RolesGuard)
