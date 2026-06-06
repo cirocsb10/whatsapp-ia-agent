@@ -35,6 +35,9 @@ const mockPrisma: Record<string, any> = {
     create: jest.fn(),
     updateMany: jest.fn(),
   },
+  agentConfig: {
+    findFirst: jest.fn().mockResolvedValue({ isPublished: true }),
+  },
 };
 
 function makeTextPayload(text: string) {
@@ -81,6 +84,7 @@ describe("WebhookService", () => {
     mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
     mockPrisma.conversation.create.mockResolvedValue(mockConversation);
     mockPrisma.message.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: true });
   });
 
   it("publishes inbound event for text message", async () => {
@@ -108,7 +112,11 @@ describe("WebhookService", () => {
   });
 
   it("uses cached tenant ID from Redis without hitting DB", async () => {
-    mockSession.get.mockResolvedValue("cached-tenant-id");
+    mockSession.get.mockImplementation((key: string) => {
+      if (key.startsWith("tenant:phone:")) return Promise.resolve("cached-tenant-id");
+      if (key.startsWith("agent:published:")) return Promise.resolve("true");
+      return Promise.resolve(null);
+    });
     await service.processWebhook(makeTextPayload("Olá"));
     expect(mockPrisma.tenant.findFirst).not.toHaveBeenCalled();
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
@@ -202,5 +210,29 @@ describe("WebhookService", () => {
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
       expect.objectContaining({ audioId: "media_id", audioTranscript: "camiseta" }),
     );
+  });
+
+  it("não publica no RabbitMQ quando agentConfig.isPublished=false", async () => {
+    mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: false });
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+    // Mensagem ainda deve ser salva no banco
+    expect(mockPrisma.message.create).toHaveBeenCalled();
+  });
+
+  it("usa cache Redis para isPublished e não bate no banco na segunda chamada", async () => {
+    // Primeira chamada — DB hit
+    await service.processWebhook(makeTextPayload("Msg 1"));
+    expect(mockPrisma.agentConfig.findFirst).toHaveBeenCalledTimes(1);
+
+    // Simular cache Redis retornando "true"
+    mockSession.get.mockImplementation((key: string) => {
+      if (key.startsWith("agent:published:")) return Promise.resolve("true");
+      return Promise.resolve(null);
+    });
+
+    // Segunda chamada — deve usar cache, não bater no DB novamente
+    await service.processWebhook(makeTextPayload("Msg 2"));
+    expect(mockPrisma.agentConfig.findFirst).toHaveBeenCalledTimes(1); // ainda 1
   });
 });

@@ -150,6 +150,13 @@ export class WebhookService {
     // After transaction — if opt-out or blocked, return early
     if (!conversation) return;
 
+    // Gate: só rotear para IA se o agente estiver publicado
+    const published = await this.isAgentPublished(tenantId);
+    if (!published) {
+      this.logger.log(`Agent not published for tenant ${tenantId} — message saved but not routed`);
+      return;
+    }
+
     const event: Record<string, unknown> = {
       tenantId,
       whatsappPhoneId: phoneNumberId,
@@ -217,6 +224,21 @@ export class WebhookService {
     const known = ["TEXT", "AUDIO", "IMAGE", "DOCUMENT", "STICKER", "LOCATION", "INTERACTIVE"];
     const upper = type.toUpperCase();
     return (known.includes(upper) ? upper : "TEXT") as ReturnType<typeof this.resolveMessageType>;
+  }
+
+  private async isAgentPublished(tenantId: string): Promise<boolean> {
+    const key = `agent:published:${tenantId}`;
+    const cached = await this.session.get(key);
+    if (cached !== null) return cached === "true";
+
+    const config = await this.prisma.agentConfig.findFirst({
+      where: { tenantId },
+      select: { isPublished: true },
+    });
+
+    const published = config?.isPublished ?? false;
+    await this.session.set(key, String(published), 60);
+    return published;
   }
 
   private async resolveTenantId(phoneNumberId: string): Promise<string | null> {
