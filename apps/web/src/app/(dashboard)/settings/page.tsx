@@ -9,6 +9,7 @@ import {
   Mail, MessageSquare, ShoppingCart, Bot,
 } from "lucide-react";
 import { useApi } from "@/lib/hooks/useApi";
+import { useClerk } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
@@ -352,21 +353,62 @@ function TabSeguranca() {
 }
 
 function TabIntegracoes() {
-  type ConnStatus = "connected" | "disconnected" | "error";
+  const { apiFetch } = useApi();
+  const [company, setCompany] = useState<{ whatsappStatus: string; whatsappPhoneId: string | null } | null>(null);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [phoneId, setPhoneId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [savingWA, setSavingWA] = useState(false);
+  const [savedWA, setSavedWA] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const webhookUrl = `${process.env.NEXT_PUBLIC_API_URL ?? "https://api.whatsagent.app"}/webhooks/meta`;
+
+  useEffect(() => {
+    apiFetch("/settings/company").then(async (r) => {
+      if (r.ok) setCompany(await r.json());
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleCopyWebhook = async () => {
+    await navigator.clipboard.writeText(webhookUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  const handleSaveWhatsApp = async () => {
+    setSavingWA(true);
+    const res = await apiFetch("/settings/whatsapp", {
+      method: "PATCH",
+      body: JSON.stringify({ whatsappPhoneId: phoneId, metaAccessToken: accessToken }),
+    });
+    setSavingWA(false);
+    if (res.ok) {
+      const data = await res.json();
+      setSavedWA(true);
+      setShowWhatsAppModal(false);
+      setCompany((c) => c ? { ...c, whatsappPhoneId: data.whatsappPhoneId, whatsappStatus: data.whatsappStatus } : c);
+      setTimeout(() => setSavedWA(false), 2000);
+    }
+  };
+
+  const waStatus = company?.whatsappStatus ?? "DISCONNECTED";
+  const isWAConnected = waStatus === "CONNECTED";
+
+  type ConnStatus = "connected" | "disconnected" | "pending";
 
   const INTEGRATIONS: {
     id: string; name: string; desc: string; icon: React.ElementType;
     color: string; bg: string; border: string; status: ConnStatus; badge: string;
+    onAction?: () => void; actionLabel?: string;
   }[] = [
     {
-      id: "mercadopago", name: "MercadoPago", desc: "Links de pagamento para pedidos.",
-      icon: DollarSign, color: "#06b6d4", bg: "rgba(6,182,212,0.1)", border: "rgba(6,182,212,0.2)",
-      status: "disconnected", badge: "Não conectado",
-    },
-    {
-      id: "stripe", name: "Stripe", desc: "Cobrança da assinatura do plano.",
-      icon: CreditCard, color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.2)",
-      status: "connected", badge: "Conectado",
+      id: "meta", name: "Meta Cloud API", desc: "Envio e recebimento via WhatsApp.",
+      icon: MessageSquare, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)",
+      status: isWAConnected ? "connected" : waStatus === "PENDING" ? "pending" : "disconnected",
+      badge: isWAConnected ? "Conectado" : waStatus === "PENDING" ? "Pendente" : "Desconectado",
+      onAction: () => { setPhoneId(company?.whatsappPhoneId ?? ""); setAccessToken(""); setShowWhatsAppModal(true); },
+      actionLabel: isWAConnected ? "Gerenciar" : "Configurar",
     },
     {
       id: "openai", name: "OpenAI", desc: "Modelo de linguagem e Whisper.",
@@ -374,15 +416,20 @@ function TabIntegracoes() {
       status: "connected", badge: "Conectado",
     },
     {
-      id: "meta", name: "Meta Cloud API", desc: "Envio e recebimento via WhatsApp.",
-      icon: MessageSquare, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)",
-      status: "disconnected", badge: "Não configurado",
+      id: "stripe", name: "Stripe", desc: "Cobrança da assinatura do plano.",
+      icon: CreditCard, color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.2)",
+      status: "connected", badge: "Conectado",
+    },
+    {
+      id: "mercadopago", name: "Mercado Pago", desc: "Pagamentos Pix para seus clientes via WhatsApp.",
+      icon: DollarSign, color: "#06b6d4", bg: "rgba(6,182,212,0.1)", border: "rgba(6,182,212,0.2)",
+      status: "connected", badge: "Via servidor",
     },
   ];
 
   const statusIcon = (s: ConnStatus) => {
-    if (s === "connected")    return <CheckCircle2 className="w-3.5 h-3.5 text-green-400"  strokeWidth={2} />;
-    if (s === "error")        return <XCircle      className="w-3.5 h-3.5 text-red-400"    strokeWidth={2} />;
+    if (s === "connected") return <CheckCircle2 className="w-3.5 h-3.5 text-green-400" strokeWidth={2} />;
+    if (s === "pending") return <div className="w-3.5 h-3.5 rounded-full bg-amber-400/30 border border-amber-400 flex-shrink-0" />;
     return <div className="w-3.5 h-3.5 rounded-full border border-[#334155] flex-shrink-0" />;
   };
 
@@ -394,7 +441,7 @@ function TabIntegracoes() {
         accent="#6366f1"
       >
         <div className="settings-integ-grid">
-          {INTEGRATIONS.map(({ id, name, desc, icon: Icon, color, bg, border, status, badge }) => (
+          {INTEGRATIONS.map(({ id, name, desc, icon: Icon, color, bg, border, status, badge, onAction, actionLabel }) => (
             <div key={id} className="settings-integ-card">
               <div className="settings-integ-card-top">
                 <div className="settings-integ-icon" style={{ background: bg, borderColor: border }}>
@@ -404,7 +451,7 @@ function TabIntegracoes() {
                   {statusIcon(status)}
                   <span
                     className="text-[10px] font-medium"
-                    style={{ color: status === "connected" ? "#4ade80" : "#475569" }}
+                    style={{ color: status === "connected" ? "#4ade80" : status === "pending" ? "#fbbf24" : "#475569" }}
                   >
                     {badge}
                   </span>
@@ -412,32 +459,86 @@ function TabIntegracoes() {
               </div>
               <p className="text-[13px] font-semibold text-[#e2e8f0] mt-3">{name}</p>
               <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">{desc}</p>
-              <button className={`settings-integ-btn mt-4 ${status === "connected" ? "settings-integ-btn-connected" : ""}`}>
-                {status === "connected" ? "Gerenciar" : "Conectar"}
-                {status === "connected"
-                  ? <ExternalLink className="w-3 h-3" />
-                  : <ChevronRight className="w-3 h-3" />
-                }
-              </button>
+              {actionLabel && onAction && (
+                <button
+                  onClick={onAction}
+                  className={`settings-integ-btn mt-4 ${status === "connected" ? "settings-integ-btn-connected" : ""}`}
+                >
+                  {actionLabel}
+                  {status === "connected"
+                    ? <ExternalLink className="w-3 h-3" />
+                    : <ChevronRight className="w-3 h-3" />
+                  }
+                </button>
+              )}
             </div>
           ))}
         </div>
       </SectionPanel>
 
-      <SectionPanel title="Webhook" description="Endpoint para receber eventos externos." accent="#22c55e">
+      <SectionPanel title="Webhook" description="Configure este URL no painel da Meta para receber mensagens." accent="#22c55e">
         <FieldRow label="URL do webhook" hint="Configure no painel de cada serviço externo.">
           <div className="settings-webhook-wrap">
             <input
               className="settings-input settings-webhook-input"
-              value="https://api.whatsagent.app/webhooks/meta"
+              value={webhookUrl}
               readOnly
             />
-            <button className="settings-webhook-copy" onClick={() => navigator.clipboard.writeText("https://api.whatsagent.app/webhooks/meta")}>
-              Copiar
+            <button className="settings-webhook-copy" onClick={handleCopyWebhook}>
+              {copied ? "Copiado!" : "Copiar"}
             </button>
           </div>
         </FieldRow>
       </SectionPanel>
+
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-white">Configurar Meta Cloud API</h3>
+              <button onClick={() => setShowWhatsAppModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-slate-400 block mb-1">Phone Number ID</label>
+                <input
+                  type="text"
+                  value={phoneId}
+                  onChange={(e) => setPhoneId(e.target.value)}
+                  placeholder="123456789012345"
+                  className="settings-input w-full"
+                />
+                <p className="text-xs text-slate-500 mt-1">Meta for Developers → seu app → WhatsApp → Phone Numbers</p>
+              </div>
+              <div>
+                <label className="text-sm text-slate-400 block mb-1">Access Token</label>
+                <input
+                  type="password"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder="EAAxxxxxxxxxxxxxxxx"
+                  className="settings-input w-full"
+                />
+                <p className="text-xs text-slate-500 mt-1">Token permanente gerado no Meta Business Suite</p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowWhatsAppModal(false)} className="settings-danger-btn flex-1 justify-center">
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveWhatsApp}
+                disabled={!phoneId || !accessToken || savingWA}
+                className="settings-save-btn flex-1"
+              >
+                {savingWA ? "Salvando..." : savedWA ? "Salvo!" : "Salvar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
