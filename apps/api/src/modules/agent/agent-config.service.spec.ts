@@ -6,12 +6,18 @@ const mockPrisma = {
   agentConfig: { upsert: jest.fn() },
 };
 
+const mockRedis = { del: jest.fn() };
+
 describe("AgentConfigService", () => {
   let service: AgentConfigService;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [AgentConfigService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AgentConfigService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: "REDIS_CLIENT", useValue: mockRedis },
+      ],
     }).compile();
     service = module.get(AgentConfigService);
     jest.clearAllMocks();
@@ -46,5 +52,29 @@ describe("AgentConfigService", () => {
         update: expect.objectContaining({ agentName: "Bot", isPublished: true, publishedAt: expect.any(Date) }),
       }),
     );
+  });
+
+  it("deletes Redis cache key when isPublished is set to true", async () => {
+    mockPrisma.agentConfig.upsert.mockResolvedValue({ tenantId: "t-1", isPublished: true });
+
+    await service.updateConfig("t-1", { isPublished: true });
+
+    expect(mockRedis.del).toHaveBeenCalledWith("agent:published:t-1");
+  });
+
+  it("deletes Redis cache key when isPublished is set to false", async () => {
+    mockPrisma.agentConfig.upsert.mockResolvedValue({ tenantId: "t-1", isPublished: false, publishedAt: null });
+
+    await service.updateConfig("t-1", { isPublished: false });
+
+    expect(mockRedis.del).toHaveBeenCalledWith("agent:published:t-1");
+  });
+
+  it("does not delete Redis cache when isPublished is not in dto", async () => {
+    mockPrisma.agentConfig.upsert.mockResolvedValue({ tenantId: "t-1", agentName: "Bot" });
+
+    await service.updateConfig("t-1", { agentName: "Bot" });
+
+    expect(mockRedis.del).not.toHaveBeenCalled();
   });
 });
