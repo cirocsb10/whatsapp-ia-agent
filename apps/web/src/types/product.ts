@@ -68,3 +68,42 @@ export function formatPrice(cents: number): string {
     currency: "BRL",
   });
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  parentId: string | null;
+}
+
+export interface AdvancedFilters {
+  minPriceCents?: number;
+  maxPriceCents?: number;
+  minStock?: number;
+  categoryId?: string;
+  sortBy?: "name" | "priceCents" | "stockQty" | "createdAt";
+  sortOrder?: "asc" | "desc";
+}
+
+export const SORT_OPTIONS: { value: AdvancedFilters["sortBy"]; label: string }[] = [
+  { value: "createdAt", label: "Data de criação" },
+  { value: "name", label: "Nome" },
+  { value: "priceCents", label: "Preço" },
+  { value: "stockQty", label: "Estoque" },
+];
+
+export const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
+  sortBy: "createdAt",
+  sortOrder: "desc",
+};
+
+export function countActiveFilters(filters: AdvancedFilters): number {
+  let count = 0;
+  if (filters.minPriceCents !== undefined) count++;
+  if (filters.maxPriceCents !== undefined) count++;
+  if (filters.minStock !== undefined) count++;
+  if (filters.categoryId) count++;
+  if (filters.sortBy && filters.sortBy !== "createdAt") count++;
+  if (filters.sortOrder && filters.sortOrder !== "desc") count++;
+  return count;
+}
