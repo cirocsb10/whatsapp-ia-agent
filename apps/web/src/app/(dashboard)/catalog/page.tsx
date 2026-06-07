@@ -17,12 +17,17 @@ import { ProductListRow } from "@/components/catalog/ProductListRow";
 import { ProductFormModal } from "@/components/catalog/ProductFormModal";
 import { DeleteProductModal } from "@/components/catalog/DeleteProductModal";
 import { ImportProductsModal } from "@/components/catalog/ImportProductsModal";
+import { AdvancedFilterPanel } from "@/components/catalog/AdvancedFilterPanel";
 import { useApi } from "@/lib/hooks/useApi";
 import {
   Product,
   ProductStats,
   ProductsResponse,
   ProductStatus,
+  AdvancedFilters,
+  Category,
+  DEFAULT_ADVANCED_FILTERS,
+  countActiveFilters,
 } from "@/types/product";
 
 type ViewMode = "grid" | "list";
@@ -51,6 +56,9 @@ export default function CatalogPage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [advFilters, setAdvFilters] = useState<AdvancedFilters>(DEFAULT_ADVANCED_FILTERS);
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [stats, setStats] = useState<ProductStats>({
     total: 0,
@@ -83,7 +91,7 @@ export default function CatalogPage() {
   }, [apiFetch]);
 
   const loadProducts = useCallback(
-    async (p: number, q: string, tab: FilterTab) => {
+    async (p: number, q: string, tab: FilterTab, filters: AdvancedFilters) => {
       setLoadingProducts(true);
       try {
         const params = new URLSearchParams({
@@ -93,6 +101,16 @@ export default function CatalogPage() {
         if (q.trim()) params.set("search", q.trim());
         const status = STATUS_MAP[tab];
         if (status) params.set("status", status);
+        if (filters.minPriceCents !== undefined) {
+          params.set("minPriceCents", String(filters.minPriceCents));
+        }
+        if (filters.maxPriceCents !== undefined) {
+          params.set("maxPriceCents", String(filters.maxPriceCents));
+        }
+        if (filters.minStock !== undefined) params.set("minStock", String(filters.minStock));
+        if (filters.categoryId) params.set("categoryId", filters.categoryId);
+        if (filters.sortBy) params.set("sortBy", filters.sortBy);
+        if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
 
         const res = await apiFetch(`/products?${params}`);
         if (res.ok) {
@@ -112,17 +130,36 @@ export default function CatalogPage() {
   }, [loadStats]);
 
   useEffect(() => {
-    void loadProducts(page, search, filterTab);
+    async function loadCategories() {
+      try {
+        const res = await apiFetch("/categories");
+        if (res.ok) {
+          const data: Category[] = await res.json();
+          setCategories(data);
+        }
+      } catch {
+        // categories are optional — fail silently
+      }
+    }
+    void loadCategories();
+  }, [apiFetch]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [advFilters]);
+
+  useEffect(() => {
+    void loadProducts(page, search, filterTab, advFilters);
     // search debounce handles typing; page/filterTab trigger immediate reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filterTab, loadProducts]);
+  }, [page, filterTab, advFilters, loadProducts]);
 
   function handleSearchChange(value: string) {
     setSearch(value);
     setPage(1);
     if (searchDebounce.current) clearTimeout(searchDebounce.current);
     searchDebounce.current = setTimeout(() => {
-      void loadProducts(1, value, filterTab);
+      void loadProducts(1, value, filterTab, advFilters);
     }, 300);
   }
 
@@ -139,13 +176,13 @@ export default function CatalogPage() {
 
   function onSaved() {
     void loadStats();
-    void loadProducts(page, search, filterTab);
+    void loadProducts(page, search, filterTab, advFilters);
     setToast({ type: "success", msg: "Produto salvo com sucesso!" });
   }
 
   function onDeleted() {
     void loadStats();
-    void loadProducts(page, search, filterTab);
+    void loadProducts(page, search, filterTab, advFilters);
     setToast({ type: "success", msg: "Produto excluído." });
   }
 
@@ -172,6 +209,7 @@ export default function CatalogPage() {
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const activeFilterCount = countActiveFilters(advFilters);
 
   const STATS_CARDS = [
     { label: "Total de produtos", value: loadingStats ? "…" : stats.total, icon: Package, color: "#6366f1" },
@@ -307,10 +345,14 @@ export default function CatalogPage() {
 
             <button
               type="button"
-              className="orders-tool-btn"
+              className={`orders-tool-btn relative${activeFilterCount > 0 ? " orders-tool-btn--active" : ""}`}
               title="Filtros avançados"
+              onClick={() => setFilterPanelOpen(true)}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
+              {activeFilterCount > 0 && (
+                <span className="filter-badge">{activeFilterCount}</span>
+              )}
             </button>
           </div>
         </div>
@@ -326,16 +368,16 @@ export default function CatalogPage() {
                 <Package className="w-6 h-6" style={{ color: "#475569" }} />
               </div>
               <p className="text-[15px] font-semibold text-[#e2e8f0]">
-                {search || filterTab !== "all"
+                {search || filterTab !== "all" || activeFilterCount > 0
                   ? "Nenhum produto encontrado"
                   : "Nenhum produto cadastrado"}
               </p>
               <p className="text-[12px] text-[#475569] leading-relaxed text-center max-w-xs">
-                {search || filterTab !== "all"
+                {search || filterTab !== "all" || activeFilterCount > 0
                   ? "Tente outros termos ou limpe os filtros"
                   : "Adicione produtos ou importe uma planilha"}
               </p>
-              {!search && filterTab === "all" && (
+              {!search && filterTab === "all" && activeFilterCount === 0 && (
                 <button
                   type="button"
                   className="catalog-add-btn mt-2"
@@ -427,6 +469,14 @@ export default function CatalogPage() {
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImported={onImported}
+      />
+
+      <AdvancedFilterPanel
+        open={filterPanelOpen}
+        onClose={() => setFilterPanelOpen(false)}
+        filters={advFilters}
+        categories={categories}
+        onApply={setAdvFilters}
       />
 
       {toast && (
