@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, MessageSquare, Bot, Package,
+  LayoutDashboard, MessageSquare, Bot, Package, Kanban,
   ShoppingCart, BarChart3, PhoneCall, Settings, Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -28,6 +28,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
   { section: "Configurar", items: [
     { href: "/agent",    label: "Agente IA",    icon: Bot },
     { href: "/catalog",  label: "Catálogo",     icon: Package },
+    { href: "/crm",      label: "CRM",          icon: Kanban },
     { href: "/orders",   label: "Pedidos",      icon: ShoppingCart, badge: "pending_orders" },
     { href: "/settings", label: "Configurações",icon: Settings },
   ]},
