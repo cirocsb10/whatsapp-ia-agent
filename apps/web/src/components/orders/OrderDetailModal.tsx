@@ -72,7 +72,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
       open={open}
       onClose={onClose}
       title={order ? order.orderNumber : "Detalhes do pedido"}
-      subtitle={order ? `Criado em ${new Date(order.createdAt).toLocaleDateString("pt-BR")}` : undefined}
+      {...(order ? { subtitle: `Criado em ${new Date(order.createdAt).toLocaleDateString("pt-BR")}` } : {})}
       size="lg"
       headerLeading={<ShoppingCart className="w-5 h-5 text-indigo-400" />}
     >

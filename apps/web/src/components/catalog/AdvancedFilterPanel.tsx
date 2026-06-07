@@ -68,11 +68,15 @@ export function AdvancedFilterPanel({
   }
 
   function handleApply() {
+    const minPriceCents = minPriceMask ? maskedPriceToCents(minPriceMask) : undefined;
+    const maxPriceCents = maxPriceMask ? maskedPriceToCents(maxPriceMask) : undefined;
+    const minStock = minStockMask === "" ? undefined : parseInt(minStockMask, 10);
+
     const next: AdvancedFilters = {
       ...local,
-      minPriceCents: minPriceMask ? maskedPriceToCents(minPriceMask) ?? undefined : undefined,
-      maxPriceCents: maxPriceMask ? maskedPriceToCents(maxPriceMask) ?? undefined : undefined,
-      minStock: minStockMask === "" ? undefined : parseInt(minStockMask, 10),
+      ...(minPriceCents != null ? { minPriceCents } : {}),
+      ...(maxPriceCents != null ? { maxPriceCents } : {}),
+      ...(minStock != null && !Number.isNaN(minStock) ? { minStock } : {}),
     };
     onApply(next);
     onClose();

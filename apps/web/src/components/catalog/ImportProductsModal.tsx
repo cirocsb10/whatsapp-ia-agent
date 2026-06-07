@@ -40,11 +40,11 @@ function downloadTemplate() {
 function previewRowToItem(row: ImportPreviewRow): ImportProductItem {
   return {
     name: row.name,
-    description: row.description,
-    sku: row.sku,
     priceCents: row.priceCents!,
     stockQty: row.stockQty!,
-    tags: row.tags,
+    ...(row.description ? { description: row.description } : {}),
+    ...(row.sku ? { sku: row.sku } : {}),
+    ...(row.tags ? { tags: row.tags } : {}),
   };
 }
 
@@ -55,7 +55,16 @@ function parseSheetPreview(file: File): Promise<ImportPreviewRow[]> {
       try {
         const data = new Uint8Array(e.target!.result as ArrayBuffer);
         const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
+        const firstSheet = wb.SheetNames[0];
+        if (!firstSheet) {
+          reject(new Error("Planilha vazia."));
+          return;
+        }
+        const ws = wb.Sheets[firstSheet];
+        if (!ws) {
+          reject(new Error("Planilha inválida."));
+          return;
+        }
         const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
 
         const preview: ImportPreviewRow[] = [];
@@ -91,13 +100,13 @@ function parseSheetPreview(file: File): Promise<ImportPreviewRow[]> {
           preview.push({
             rowNumber,
             name: name || "—",
-            description: description || undefined,
-            sku: sku || undefined,
             priceCents: isNaN(priceCents) ? null : priceCents,
             stockQty: isNaN(stockQty) ? null : stockQty,
-            tags,
             errors,
             isValid: errors.length === 0,
+            ...(description ? { description } : {}),
+            ...(sku ? { sku } : {}),
+            ...(tags ? { tags } : {}),
           });
         });
 
