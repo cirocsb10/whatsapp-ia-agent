@@ -17,6 +17,57 @@ const STAGES = [
   { key: "payment_confirmed"  as const, label: "Pagamento Confirmado", color: "#22c55e", num: "05" },
 ];
 
+const OVERVIEW_STEPS = [
+  { key: "conversations" as const, label: "Conversas", color: "#6366f1" },
+  { key: "catalog_viewed" as const, label: "Catálogo visto", color: "#8b5cf6" },
+  { key: "cart_started" as const, label: "Carrinho aberto", color: "#a78bfa" },
+  { key: "payment_generated" as const, label: "Pagamento gerado", color: "#22c55e" },
+  { key: "payment_confirmed" as const, label: "Pagamento confirmado", color: "#16a34a" },
+];
+
+export function FunnelChart({ data }: { data: FunnelData | null }) {
+  const top = data?.conversations ?? 0;
+
+  return (
+    <div className="chart-panel">
+      <div className="mb-4">
+        <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Funil de Conversão</p>
+        <p className="text-[11px] text-[#64748b] mt-1">Conversas → pagamentos confirmados</p>
+      </div>
+
+      {!data || top === 0 ? (
+        <div className="flex items-center justify-center h-32 text-[12px] text-[#475569]">
+          Nenhum dado ainda
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {OVERVIEW_STEPS.map(({ key, label, color }) => {
+            const value = data[key] ?? 0;
+            const pct = top > 0 ? Math.round((value / top) * 100) : 0;
+            return (
+              <div key={key}>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span style={{ color: "#94a3b8" }}>{label}</span>
+                  <span style={{ color: "#e2e8f0", fontVariantNumeric: "tabular-nums" }}>
+                    {value.toLocaleString("pt-BR")}
+                    <span style={{ color: "#475569" }}> ({pct}%)</span>
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-slate-800">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{ width: `${pct}%`, background: color, opacity: 0.75 }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ConversionFunnel({ data }: { data: FunnelData }) {
   const isEmpty = data.conversations === 0;
   const max = data.conversations || 1;
