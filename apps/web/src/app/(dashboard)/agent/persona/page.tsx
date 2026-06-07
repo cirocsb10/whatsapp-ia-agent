@@ -1,9 +1,11 @@
 "use client";
 
+import { DecimalInput } from "@/components/ui/DecimalInput";
 import { Header } from "@/components/layout/Header";
 import { NumericInput } from "@/components/ui/NumericInput";
 import { TimeInput } from "@/components/ui/TimeInput";
 import { useApi } from "@/lib/hooks/useApi";
+import { centsToMaskedPrice, maskedPriceToCents } from "@/lib/decimal-mask";
 import {
   DAYS,
   DEFAULT_BUSINESS_HOURS,
@@ -106,7 +108,7 @@ export default function PersonaPage() {
             ...data,
             llmModel: FIXED_LLM_MODEL.value,
             handoffOrderValueBrl: data.handoffOrderValueBrl != null
-              ? String(data.handoffOrderValueBrl)
+              ? centsToMaskedPrice(Math.round(Number(data.handoffOrderValueBrl) * 100))
               : "",
             businessHours: normalizeBusinessHours(data.businessHours),
           }));
@@ -141,7 +143,10 @@ export default function PersonaPage() {
         outOfHoursMessage: form.outOfHoursMessage,
         handoffMessage: form.handoffMessage,
         autoHandoffThreshold: form.autoHandoffThreshold,
-        handoffOrderValueBrl: form.handoffOrderValueBrl === "" ? null : Number(form.handoffOrderValueBrl),
+        handoffOrderValueBrl: (() => {
+          const cents = maskedPriceToCents(form.handoffOrderValueBrl);
+          return cents === null ? null : cents / 100;
+        })(),
         inactivityTimeoutMin: form.inactivityTimeoutMin,
         sessionTtlHours: form.sessionTtlHours,
         maxConversationLength: form.maxConversationLength,
@@ -442,14 +447,10 @@ export default function PersonaPage() {
                     Valor mínimo para handoff (R$)
                     <span className="form-label-hint"> — deixe vazio para desativar</span>
                   </span>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.01}
+                  <DecimalInput
                     value={form.handoffOrderValueBrl}
-                    onChange={(e) => patch("handoffOrderValueBrl", e.target.value)}
-                    placeholder="Ex: 500,00"
-                    className="form-input"
+                    onChange={(v) => patch("handoffOrderValueBrl", v)}
+                    placeholder="0,00"
                     disabled={loading}
                   />
                 </label>
@@ -462,7 +463,7 @@ export default function PersonaPage() {
                   <textarea
                     value={form.handoffMessage}
                     onChange={(e) => patch("handoffMessage", e.target.value)}
-                    rows={2}
+                    rows={5}
                     className="form-input"
                     disabled={loading}
                   />
@@ -476,7 +477,7 @@ export default function PersonaPage() {
                   <textarea
                     value={form.outOfHoursMessage}
                     onChange={(e) => patch("outOfHoursMessage", e.target.value)}
-                    rows={2}
+                    rows={5}
                     className="form-input"
                     disabled={loading}
                   />
@@ -615,14 +616,11 @@ export default function PersonaPage() {
                     Tamanho máximo da resposta
                     <span className="form-label-hint"> — caracteres</span>
                   </span>
-                  <input
-                    type="number"
-                    min={100}
-                    max={4000}
-                    step={50}
-                    value={form.maxResponseLength}
-                    onChange={(e) => patch("maxResponseLength", Number(e.target.value))}
-                    className="form-input"
+                  <NumericInput
+                    value={String(form.maxResponseLength)}
+                    onChange={(v) => {
+                      if (v !== "") patch("maxResponseLength", Number(v));
+                    }}
                     disabled={loading}
                   />
                 </label>
@@ -635,7 +633,7 @@ export default function PersonaPage() {
                   <textarea
                     value={form.systemPromptBase ?? ""}
                     onChange={(e) => patch("systemPromptBase", e.target.value)}
-                    rows={5}
+                    rows={10}
                     placeholder="Ex: Você é um assistente de vendas da loja X. Seja sempre cordial…"
                     className="form-input form-input-mono"
                     disabled={loading}
