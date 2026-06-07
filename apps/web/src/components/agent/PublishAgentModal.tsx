@@ -1,19 +1,51 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Rocket, AlertTriangle, Loader2 } from "lucide-react";
+import {
+  Rocket,
+  AlertTriangle,
+  Loader2,
+  Bot,
+  Database,
+  Shield,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
+
+export interface PublishChecklistItem {
+  key: string;
+  label: string;
+  done: boolean;
+}
 
 interface Props {
   open: boolean;
   publishing: boolean;
+  readiness: number;
+  checklist: PublishChecklistItem[];
   error?: string | null;
   onConfirm: () => void;
   onClose: () => void;
 }
 
-export function PublishAgentModal({ open, publishing, error, onConfirm, onClose }: Props) {
+const CHECKLIST_ICONS: Record<string, typeof Bot> = {
+  persona: Bot,
+  knowledge: Database,
+  rules: Shield,
+};
+
+export function PublishAgentModal({
+  open,
+  publishing,
+  readiness,
+  checklist,
+  error,
+  onConfirm,
+  onClose,
+}: Props) {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const allReady = checklist.every((item) => item.done);
 
   useEffect(() => {
     if (!open) return;
@@ -49,42 +81,83 @@ export function PublishAgentModal({ open, publishing, error, onConfirm, onClose 
             type="button"
             onClick={onConfirm}
             disabled={publishing}
-            className="rules-add-btn"
+            className="catalog-add-btn publish-modal-confirm"
           >
             {publishing ? (
               <>
-                <span className="rules-add-btn-icon" aria-hidden="true">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                </span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Publicando…
               </>
             ) : (
-              <>
-                <span className="rules-add-btn-icon" aria-hidden="true">
-                  <Rocket className="w-4 h-4" strokeWidth={2} />
-                </span>
-                Publicar agente
-              </>
+              "Publicar agente"
             )}
           </button>
         </>
       }
     >
       <div className="publish-modal-body">
+        <div className="publish-modal-readiness">
+          <div className="publish-modal-readiness-head">
+            <span className="publish-modal-readiness-label">Prontidão do agente</span>
+            <span className="publish-modal-readiness-pct">{readiness}%</span>
+          </div>
+          <div className="publish-modal-readiness-track">
+            <div
+              className="publish-modal-readiness-fill"
+              style={{ width: `${readiness}%` }}
+            />
+          </div>
+        </div>
+
         <p className="publish-modal-desc">
-          A partir de agora o agente passará a responder mensagens reais no WhatsApp.
-          Certifique-se de que persona, base de conhecimento e guard rails estão configurados.
+          A partir de agora o agente responderá mensagens reais no WhatsApp.
+          Revise os itens abaixo antes de confirmar.
         </p>
 
-        <div className="publish-modal-warning">
-          <div className="publish-modal-warning-icon">
-            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" strokeWidth={2} />
+        <ul className="publish-modal-checklist">
+          {checklist.map((item) => {
+            const Icon = CHECKLIST_ICONS[item.key] ?? Bot;
+            return (
+              <li
+                key={item.key}
+                className={`publish-modal-check-item${item.done ? " is-done" : ""}`}
+              >
+                <span className="publish-modal-check-icon">
+                  <Icon className="w-3.5 h-3.5" strokeWidth={1.8} />
+                </span>
+                <span className="publish-modal-check-label">{item.label}</span>
+                <span className="publish-modal-check-status">
+                  {item.done ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
+                      OK
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-3.5 h-3.5" strokeWidth={2} />
+                      Pendente
+                    </>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        {!allReady && (
+          <div className="publish-modal-hint">
+            Você pode publicar mesmo com itens pendentes, mas recomendamos completar a
+            configuração primeiro.
           </div>
+        )}
+
+        <div className="publish-modal-warning">
+          <AlertTriangle className="publish-modal-warning-icon" strokeWidth={2} />
           <div>
-            <p className="publish-modal-warning-title">Atenção</p>
+            <p className="publish-modal-warning-title">Respostas imediatas</p>
             <p className="publish-modal-warning-desc">
-              Clientes que enviarem mensagens enquanto o agente está ativo receberão respostas
-              automáticas imediatamente.
+              Clientes que enviarem mensagens receberão respostas automáticas assim que
+              o agente estiver ativo.
             </p>
           </div>
         </div>

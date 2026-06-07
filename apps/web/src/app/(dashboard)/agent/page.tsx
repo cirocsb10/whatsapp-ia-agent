@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bot, Shield, Database, ChevronRight,
   Sparkles, BookOpen, Cpu, Sliders,
-  Rocket,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -203,15 +202,9 @@ export default function AgentPage() {
               <button
                 type="button"
                 onClick={() => setShowPublishModal(true)}
-                className="agent-publish-cta"
+                className="catalog-add-btn agent-publish-btn"
               >
-                <span className="agent-publish-cta-main">
-                  <span className="agent-publish-cta-icon">
-                    <Rocket className="w-3.5 h-3.5" strokeWidth={1.8} />
-                  </span>
-                  <span className="agent-publish-cta-label">Publicar agente</span>
-                </span>
-                <ChevronRight className="agent-publish-chevron" strokeWidth={1.5} />
+                Publicar agente
               </button>
             )}
           </div>
@@ -281,6 +274,12 @@ export default function AgentPage() {
       <PublishAgentModal
         open={showPublishModal}
         publishing={publishing}
+        readiness={readiness}
+        checklist={[
+          { key: "persona", label: "Persona", done: setupDone.persona },
+          { key: "knowledge", label: "Base de conhecimento", done: setupDone.knowledge },
+          { key: "rules", label: "Guard rails", done: setupDone.rules },
+        ]}
         error={publishError}
         onConfirm={handlePublish}
         onClose={() => { setShowPublishModal(false); setPublishError(null); }}
