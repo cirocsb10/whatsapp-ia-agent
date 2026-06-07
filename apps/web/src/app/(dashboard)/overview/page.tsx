@@ -4,36 +4,47 @@ import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversationsChart } from "@/components/analytics/ConversationsChart";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
-import { HandoffReasonsChart } from "@/components/analytics/HandoffReasonsChart";
+import { HandoffReasons } from "@/components/analytics/HandoffReasons";
+import { DashboardSetupBanner } from "@/components/analytics/DashboardSetupBanner";
 import Link from "next/link";
 import { useApi } from "@/lib/hooks/useApi";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MessageSquare, Zap, DollarSign, PhoneCall,
   Users, ShoppingCart, TrendingUp, Clock,
-  CheckCircle2, Star, ArrowRight, Bot, Sparkles, Cpu,
-  AlertTriangle,
+  CheckCircle2, Star, Bot, Cpu,
+  Settings, BarChart3, RefreshCw,
 } from "lucide-react";
 
 const CARDS = [
   { key: "conversations_today", title: "Conversas Hoje", icon: MessageSquare, iconColor: "text-indigo-400", accent: "#6366f1" },
-  { key: "ai_resolution_rate", title: "Resolucao por IA", icon: Zap, iconColor: "text-green-400", accent: "#22c55e", suffix: "%" },
+  { key: "ai_resolution_rate", title: "Resolução por IA", icon: Zap, iconColor: "text-green-400", accent: "#22c55e", suffix: "%" },
   { key: "revenue_today", title: "Receita do Dia", icon: DollarSign, iconColor: "text-yellow-400", accent: "#fbbf24", money: true },
   { key: "pending_handoffs", title: "Handoffs Pendentes", icon: PhoneCall, iconColor: "text-red-400", accent: "#ef4444" },
-  { key: "avg_response_time_sec", title: "Tempo Medio Resp.", icon: Clock, iconColor: "text-cyan-400", accent: "#06b6d4", suffix: "s" },
+  { key: "avg_response_time_sec", title: "Tempo Médio Resp.", icon: Clock, iconColor: "text-cyan-400", accent: "#06b6d4", suffix: "s" },
   { key: "new_contacts_today", title: "Novos Contatos", icon: Users, iconColor: "text-violet-400", accent: "#8b5cf6" },
   { key: "orders_today", title: "Pedidos Hoje", icon: ShoppingCart, iconColor: "text-orange-400", accent: "#f97316" },
-  { key: "conversion_rate", title: "Taxa Conversao", icon: TrendingUp, iconColor: "text-emerald-400", accent: "#10b981", suffix: "%" },
+  { key: "conversion_rate", title: "Taxa Conversão", icon: TrendingUp, iconColor: "text-emerald-400", accent: "#10b981", suffix: "%" },
   { key: "avg_csat_score", title: "CSAT (7 dias)", icon: Star, iconColor: "text-yellow-400", accent: "#fbbf24", csat: true },
   { key: "ai_tokens_today", title: "Tokens hoje", icon: Cpu, iconColor: "text-indigo-400", accent: "#6366f1", tokens: true },
 ];
 
 const AGENT_STATUS = [
-  { label: "Resolucao IA", icon: CheckCircle2, color: "#6366f1", key: "ai_resolution_rate" },
-  { label: "Satisfacao CSAT", icon: Star, color: "#22c55e", key: "avg_csat_score", csat: true },
+  { label: "Resolução IA", icon: CheckCircle2, color: "#6366f1", key: "ai_resolution_rate" },
+  { label: "Satisfação CSAT", icon: Star, color: "#22c55e", key: "avg_csat_score", csat: true },
 ];
 
-const SETUP_STEPS = ["Meta Business", "Agente IA", "Webhook"];
+const QUICK_ACTIONS = [
+  { href: "/agent", label: "Agente IA", icon: Bot, color: "#6366f1" },
+  { href: "/inbox", label: "Conversas", icon: MessageSquare, color: "#06b6d4" },
+  { href: "/settings", label: "Configurações", icon: Settings, color: "#94a3b8" },
+];
+
+interface SetupStatus {
+  whatsappConnected: boolean;
+  agentConfigured: boolean;
+  setupComplete: boolean;
+}
 
 interface FunnelData {
   conversations: number;
@@ -48,7 +59,7 @@ export default function OverviewPage() {
   const [kpis, setKpis] = useState<Record<string, number | null>>({});
   const [chart, setChart] = useState<any[]>([]);
   const [trends, setTrends] = useState<Record<string, { change: number; trend: "up" | "down" | "neutral" }>>({});
-  const [setupComplete, setSetupComplete] = useState(false);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [chartDays, setChartDays] = useState(30);
   const [funnel, setFunnel] = useState<FunnelData | null>(null);
@@ -69,10 +80,7 @@ export default function OverviewPage() {
         if (kpiRes.ok) setKpis(await kpiRes.json());
         if (chartRes.ok) setChart(await chartRes.json());
         if (trendsRes.ok) setTrends(await trendsRes.json());
-        if (setupRes.ok) {
-          const s = await setupRes.json();
-          setSetupComplete(s.setupComplete);
-        }
+        if (setupRes.ok) setSetupStatus(await setupRes.json());
         if (funnelRes.ok) setFunnel(await funnelRes.json());
         if (handoffRes.ok) setHandoffReasons(await handoffRes.json());
         setLastUpdated(new Date());
@@ -90,6 +98,14 @@ export default function OverviewPage() {
     weekday: "long", day: "numeric", month: "long",
   });
   const isActive = (kpis.conversations_today ?? 0) > 0;
+
+  const isDashboardEmpty = useMemo(() => {
+    if (loading) return false;
+    const noConversations = (kpis.conversations_today ?? 0) === 0;
+    const noChart = chart.length === 0;
+    const noFunnel = !funnel || funnel.conversations === 0;
+    return noConversations && noChart && noFunnel;
+  }, [loading, kpis, chart, funnel]);
 
   function formatCard(card: (typeof CARDS)[number]) {
     const raw = kpis[card.key];
@@ -114,79 +130,101 @@ export default function OverviewPage() {
     return (raw ?? 0) === 0;
   }
 
+  const showSetupBanner = setupStatus && (
+    !setupStatus.setupComplete || isDashboardEmpty
+  );
+
   return (
-    <div className="fade-up">
+    <div className="fade-up overview-page">
+      <div className="overview-ambient" aria-hidden="true">
+        <div className="overview-orb overview-orb-green" />
+        <div className="overview-orb overview-orb-indigo" />
+      </div>
+
       <Header title="Overview" />
 
       <div className="dashboard-page">
-        <div className="dashboard-greeting">
-          <div>
-            <p className="dashboard-greeting-title">Painel operacional</p>
-            <p className="dashboard-greeting-sub">
-              {date} - Acompanhe conversas, vendas e performance do seu agente IA.
+        {/* Hero */}
+        <header className="dashboard-hero">
+          <div className="dashboard-hero-content">
+            <p className="dashboard-hero-eyebrow">
+              <BarChart3 className="w-3.5 h-3.5" strokeWidth={2} />
+              Painel operacional
             </p>
-          </div>
-          <div className="dashboard-status-pill">
-            <span className="dashboard-status-dot" />
-            {isActive ? "Agente ativo" : "Agente inativo"}
-          </div>
-        </div>
+            <h1 className="dashboard-hero-title">
+              {isActive ? (
+                <>Seu agente está <span className="dashboard-hero-accent">ativo</span></>
+              ) : (
+                <>Pronto para <span className="dashboard-hero-accent">escalar</span> atendimento</>
+              )}
+            </h1>
+            <p className="dashboard-hero-sub">
+              {date.charAt(0).toUpperCase() + date.slice(1)} — conversas, vendas e performance do agente IA.
+            </p>
 
-        {!setupComplete && (
-          <div className="dashboard-setup-banner">
-            <div className="dashboard-setup-icon">
-              <AlertTriangle className="w-5 h-5 text-amber-400" />
+            <div className="dashboard-quick-actions">
+              {QUICK_ACTIONS.map(({ href, label, icon: Icon, color }) => (
+                <Link key={label} href={href} className="dashboard-quick-action">
+                  <span className="dashboard-quick-action-icon" style={{ ["--qa-color" as string]: color }}>
+                    <Icon className="w-3.5 h-3.5" strokeWidth={1.8} />
+                  </span>
+                  {label}
+                </Link>
+              ))}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-[#e2e8f0] leading-tight">
-                Configure o WhatsApp para ver dados reais
-              </p>
-              <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">
-                Complete o setup para ativar metricas, graficos e automacoes.
-              </p>
-              <div className="dashboard-setup-steps">
-                {SETUP_STEPS.map((step) => (
-                  <span key={step} className="dashboard-setup-step">{step}</span>
-                ))}
-              </div>
-            </div>
-            <Link href="/setup" className="dashboard-setup-cta">
-              <Sparkles className="w-3.5 h-3.5" />
-              Comecar setup
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
+
+          <div className="dashboard-hero-aside">
+            <div className={`dashboard-status-pill ${isActive ? "is-active" : ""}`}>
+              <span className="dashboard-status-dot" />
+              {isActive ? "Agente ativo" : "Agente inativo"}
+            </div>
+            {lastUpdated && (
+              <span className="dashboard-live-badge">
+                <RefreshCw className="w-3 h-3" strokeWidth={2} />
+                {lastUpdated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+          </div>
+        </header>
+
+        {showSetupBanner && (
+          <DashboardSetupBanner setup={setupStatus} isEmpty={isDashboardEmpty} />
         )}
 
         <section>
           <div className="dashboard-section-head">
-            <p className="section-title">Metricas de hoje</p>
-            <span className="text-[10px] text-[#475569]">
-              {lastUpdated
-                ? `Atualizado ${lastUpdated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
-                : "Atualizando..."}
+            <p className="section-title">Métricas de hoje</p>
+            <span className="dashboard-section-meta">
+              {loading ? "Atualizando…" : "Atualização automática a cada 30s"}
             </span>
           </div>
           <div className="dashboard-kpi-grid">
-            {CARDS.map((card) => {
+            {CARDS.map((card, i) => {
               const { key: metricKey, ...cardProps } = card;
               return (
-                <KpiCard
-                  key={card.title}
-                  {...cardProps}
-                  value={formatCard(card)}
-                  loading={loading}
-                  empty={!loading && isCardEmpty(card)}
-                  change={trends[card.key]?.change}
-                  trend={trends[card.key]?.trend}
-                />
+                <div key={card.title} className="overview-kpi-wrap" style={{ animationDelay: `${i * 40}ms` }}>
+                  <KpiCard
+                    {...cardProps}
+                    value={formatCard(card)}
+                    loading={loading}
+                    empty={!loading && isCardEmpty(card)}
+                    change={trends[card.key]?.change}
+                    trend={trends[card.key]?.trend}
+                  />
+                </div>
               );
             })}
           </div>
         </section>
 
         <div className="dashboard-bento">
-          <ConversationsChart data={chart} days={chartDays} onDaysChange={setChartDays} />
+          <ConversationsChart
+            data={chart}
+            days={chartDays}
+            onDaysChange={setChartDays}
+            whatsappConnected={setupStatus?.whatsappConnected}
+          />
 
           <aside className="dashboard-agent-panel">
             <div className="dashboard-agent-header">
@@ -223,7 +261,10 @@ export default function OverviewPage() {
                       <span className="dashboard-agent-metric-value">{display}</span>
                     </div>
                     <div className="prog-track">
-                      <div className="prog-fill" style={{ width: `${barWidth}%`, background: color, opacity: 0.55 }} />
+                      <div
+                        className="prog-fill"
+                        style={{ width: `${barWidth}%`, background: color, opacity: 0.55 }}
+                      />
                     </div>
                   </div>
                 );
@@ -232,15 +273,23 @@ export default function OverviewPage() {
 
             <Link href="/agent" className="dashboard-agent-link">
               Configurar agente
-              <ArrowRight className="w-3 h-3" strokeWidth={1.8} />
             </Link>
           </aside>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <FunnelChart data={funnel} />
-          <HandoffReasonsChart data={handoffReasons} />
-        </div>
+        <section>
+          <div className="dashboard-section-head overview-insight-head">
+            <div className="overview-insight-head-left">
+              <span className="overview-insight-accent" />
+              <p className="section-title">Jornada &amp; Handoffs</p>
+            </div>
+            <span className="dashboard-section-meta">Últimos 30 dias</span>
+          </div>
+          <div className="dashboard-secondary-grid">
+            <FunnelChart data={funnel} />
+            <HandoffReasons data={handoffReasons} />
+          </div>
+        </section>
       </div>
     </div>
   );

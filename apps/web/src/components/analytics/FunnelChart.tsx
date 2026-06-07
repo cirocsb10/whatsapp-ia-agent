@@ -17,84 +17,54 @@ const STAGES = [
   { key: "payment_confirmed"  as const, label: "Pagamento Confirmado", color: "#22c55e", num: "05" },
 ];
 
-const OVERVIEW_STEPS = [
-  { key: "conversations" as const, label: "Conversas", color: "#6366f1" },
-  { key: "catalog_viewed" as const, label: "Catálogo visto", color: "#8b5cf6" },
-  { key: "cart_started" as const, label: "Carrinho aberto", color: "#a78bfa" },
-  { key: "payment_generated" as const, label: "Pagamento gerado", color: "#22c55e" },
-  { key: "payment_confirmed" as const, label: "Pagamento confirmado", color: "#16a34a" },
-];
+const EMPTY_FUNNEL: FunnelData = {
+  conversations: 0,
+  catalog_viewed: 0,
+  cart_started: 0,
+  payment_generated: 0,
+  payment_confirmed: 0,
+};
 
 export function FunnelChart({ data }: { data: FunnelData | null }) {
-  const top = data?.conversations ?? 0;
-
-  return (
-    <div className="chart-panel">
-      <div className="mb-4">
-        <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Funil de Conversão</p>
-        <p className="text-[11px] text-[#64748b] mt-1">Conversas → pagamentos confirmados</p>
-      </div>
-
-      {!data || top === 0 ? (
-        <div className="flex items-center justify-center h-32 text-[12px] text-[#475569]">
-          Nenhum dado ainda
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {OVERVIEW_STEPS.map(({ key, label, color }) => {
-            const value = data[key] ?? 0;
-            const pct = top > 0 ? Math.round((value / top) * 100) : 0;
-            return (
-              <div key={key}>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span style={{ color: "#94a3b8" }}>{label}</span>
-                  <span style={{ color: "#e2e8f0", fontVariantNumeric: "tabular-nums" }}>
-                    {value.toLocaleString("pt-BR")}
-                    <span style={{ color: "#475569" }}> ({pct}%)</span>
-                  </span>
-                </div>
-                <div className="h-2 rounded-full bg-slate-800">
-                  <div
-                    className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: color, opacity: 0.75 }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
+  return <ConversionFunnel data={data ?? EMPTY_FUNNEL} />;
 }
 
 export function ConversionFunnel({ data }: { data: FunnelData }) {
   const isEmpty = data.conversations === 0;
   const max = data.conversations || 1;
+  const finalRate = isEmpty ? 0 : Math.round((data.payment_confirmed / data.conversations) * 100);
 
   return (
-    <div className="analytics-panel">
+    <div className="analytics-panel overview-insight-panel">
       <div className="analytics-panel-header">
-        <div className="flex items-center gap-2.5">
-          <div className="analytics-panel-icon" style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}>
+        <div className="analytics-panel-header-start">
+          <div
+            className="analytics-panel-icon"
+            style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}
+          >
             <TrendingDown className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
           </div>
-          <div>
+          <div className="analytics-panel-header-text">
             <p className="text-[13px] font-semibold text-[#e2e8f0]">Funil de Conversão</p>
-            <p className="text-[11px] text-[#475569] mt-0.5">Jornada do contato à compra confirmada</p>
+            <p className="text-[11px] text-[#475569] mt-0.5">Conversas → pagamentos confirmados</p>
           </div>
         </div>
         {!isEmpty && (
-          <span className="tag tag-green">
-            {Math.round((data.payment_confirmed / data.conversations) * 100)}% taxa final
+          <span className={`tag ${finalRate > 0 ? "tag-green" : "tag-slate"}`}>
+            {finalRate}% taxa final
           </span>
         )}
       </div>
 
       {isEmpty ? (
         <div className="analytics-empty-inner">
-          <TrendingDown className="w-5 h-5 text-slate-700" strokeWidth={1.5} />
-          <p className="text-[12px] text-[#475569]">Sem conversas no período</p>
+          <div className="overview-insight-empty-icon">
+            <TrendingDown className="w-5 h-5 text-indigo-400/40" strokeWidth={1.5} />
+          </div>
+          <p className="text-[13px] font-medium text-[#94a3b8]">Funil aguardando dados</p>
+          <p className="text-[11px] text-[#475569] max-w-[220px] text-center leading-relaxed">
+            Conversas e conversões aparecerão após as primeiras interações
+          </p>
         </div>
       ) : (
         <div className="analytics-funnel-list">
@@ -106,47 +76,38 @@ export function ConversionFunnel({ data }: { data: FunnelData }) {
 
             return (
               <div key={s.key} className="analytics-funnel-row">
-                {/* Label row */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="text-[9px] font-mono font-bold flex-shrink-0"
-                      style={{ color: s.color, opacity: 0.6 }}
-                    >
+                <div className="analytics-funnel-row-head">
+                  <div className="analytics-funnel-row-label">
+                    <span className="analytics-funnel-row-num" style={{ color: s.color }}>
                       {s.num}
                     </span>
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{ background: s.color, boxShadow: `0 0 5px ${s.color}80` }}
-                    />
-                    <span className="text-[11px] font-medium text-[#94a3b8] truncate">{s.label}</span>
+                    <span className="analytics-funnel-row-name">{s.label}</span>
                   </div>
 
-                  <div className="flex items-center gap-4 flex-shrink-0 ml-3">
+                  <div className="analytics-funnel-row-values">
                     {i > 0 && drop > 0 && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-red-400/70 tabular-nums font-medium">
+                      <span className="analytics-funnel-row-drop">
                         <ChevronDown className="w-3 h-3" strokeWidth={2.5} />
-                        {drop}%
+                        −{drop}%
                       </span>
                     )}
-                    <span className="text-[13px] font-semibold text-[#e2e8f0] tabular-nums w-8 text-right">
+                    <span className="analytics-funnel-row-count">
                       {value.toLocaleString("pt-BR")}
                     </span>
                   </div>
                 </div>
 
-                {/* Bar track */}
                 <div className="analytics-funnel-track">
                   {pct > 0 ? (
                     <div
                       className="analytics-funnel-fill"
                       style={{
-                        width: `${pct}%`,
-                        background: `linear-gradient(90deg, ${s.color}50, ${s.color}16)`,
+                        width: `${Math.max(pct, 8)}%`,
+                        background: `linear-gradient(90deg, ${s.color}55, ${s.color}18)`,
                         borderColor: s.color,
                       }}
                     >
-                      <span className="text-[10px] font-bold px-2" style={{ color: s.color }}>
+                      <span className="analytics-funnel-fill-pct" style={{ color: s.color }}>
                         {pct}%
                       </span>
                     </div>

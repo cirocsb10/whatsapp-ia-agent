@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, LogOut, User, Menu, ChevronDown } from "lucide-react";
+import { Bell, LogOut, User, Menu, ChevronDown } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
 import { useSidebarStore } from "@/lib/store/sidebar.store";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -85,11 +85,6 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
         </div>
       </div>
       <div className="header-actions">
-        <button type="button" className="header-search-btn">
-          <Search {...ICON} />
-          <span>Buscar</span>
-          <kbd className="header-search-kbd">⌘K</kbd>
-        </button>
         <button type="button" aria-label="Notificações" className="header-icon-btn relative">
           <Bell {...ICON} />
           {unread > 0 && (

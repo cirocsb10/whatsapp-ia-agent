@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
-import { BarChart3, ArrowRight } from "lucide-react";
+import { BarChart3, ChevronRight } from "lucide-react";
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -66,41 +66,54 @@ export function ConversationsChart({
   data,
   days = 30,
   onDaysChange,
+  whatsappConnected,
 }: {
   data: any[];
   days?: number;
   onDaysChange?: (d: number) => void;
+  whatsappConnected?: boolean;
 }) {
   const empty = !data || data.length === 0;
 
   return (
     <div className="chart-panel">
-      <div className="flex items-start justify-between mb-4 relative z-10">
-        <div>
-          <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Conversas</p>
-          <p className="text-[11px] text-[#64748b] mt-1">Volume e resolução por IA</p>
+      <div className="chart-panel-header">
+        <div className="analytics-panel-header-start">
+          <div
+            className="analytics-panel-icon"
+            style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+          </div>
+          <div className="analytics-panel-header-text">
+            <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Conversas</p>
+            <p className="text-[11px] text-[#64748b] mt-1">Volume e resolução por IA</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {[7, 30, 90].map((d) => (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onDaysChange?.(d)}
-              className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors ${
-                days === d
-                  ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
-                  : "text-[#475569] hover:text-[#94a3b8]"
-              }`}
-            >
-              {d}d
-            </button>
-          ))}
-          {SERIES.map((s) => (
-            <div key={s.key} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color }} />
-              <span className="text-[11px] text-[#64748b]">{s.name}</span>
-            </div>
-          ))}
+
+        <div className="chart-panel-toolbar">
+          <div className="analytics-period-pills" role="group" aria-label="Período do gráfico">
+            {[7, 30, 90].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => onDaysChange?.(d)}
+                aria-pressed={days === d}
+                className={`analytics-period-pill ${days === d ? "analytics-period-pill-active" : ""}`}
+              >
+                {d}d
+              </button>
+            ))}
+          </div>
+
+          <div className="chart-series-legend" aria-hidden="true">
+            {SERIES.map((s) => (
+              <div key={s.key} className="chart-series-legend-item">
+                <span className="chart-series-dot" style={{ background: s.color }} />
+                <span className="chart-series-label">{s.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -115,9 +128,12 @@ export function ConversationsChart({
             <p className="text-[13px] font-medium text-[#94a3b8]">Nenhuma conversa ainda</p>
             <p className="text-[11px] text-[#475569] mt-1">Conecte seu WhatsApp para começar</p>
           </div>
-          <Link href="/setup" className="dashboard-agent-link relative z-10">
-            Configurar WhatsApp
-            <ArrowRight className="w-3 h-3" />
+          <Link
+            href={whatsappConnected ? "/agent" : "/settings?tab=integracoes"}
+            className="dashboard-agent-link relative z-10"
+          >
+            {whatsappConnected ? "Testar agente" : "Configurar WhatsApp"}
+            <ChevronRight className="w-3 h-3" strokeWidth={1.8} />
           </Link>
         </div>
       ) : (
@@ -134,7 +150,7 @@ export function ConversationsChart({
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#111e32" vertical={false} />
             <XAxis dataKey="date" tick={{ fill:"#334155", fontSize:10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fill:"#334155", fontSize:10 }} tickLine={false} axisLine={false} />
+            <YAxis allowDecimals={false} tick={{ fill:"#334155", fontSize:10 }} tickLine={false} axisLine={false} width={28} />
             <Tooltip content={<CustomTooltip />} cursor={{ stroke:"#1a2d47", strokeWidth:1 }} />
             {SERIES.map((s) => {
               const dashed = s.key === "handoffs";

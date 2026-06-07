@@ -11,8 +11,15 @@ import {
 import { useApi } from "@/lib/hooks/useApi";
 import { useClerk, UserProfile } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
+
+const VALID_TABS = new Set<Tab>(["conta", "notificacoes", "seguranca", "integracoes", "plano"]);
+
+function parseTab(value: string | null): Tab {
+  return value && VALID_TABS.has(value as Tab) ? (value as Tab) : "conta";
+}
 
 const TABS: {
   key: Tab;
@@ -774,7 +781,13 @@ function TabPlano() {
 /* ── Main page ────────────────────────────────────────────── */
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<Tab>("conta");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = useState<Tab>(() => parseTab(tabParam));
+
+  useEffect(() => {
+    setTab(parseTab(tabParam));
+  }, [tabParam]);
   const activeTab = TABS.find((t) => t.key === tab)!;
   const ActiveIcon = activeTab.icon;
 

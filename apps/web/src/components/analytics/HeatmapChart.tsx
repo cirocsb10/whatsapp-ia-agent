@@ -26,11 +26,11 @@ export function ActivityHeatmap({ data }: { data: Array<{ hour: number; day: num
   return (
     <div className="analytics-panel">
       <div className="analytics-panel-header">
-        <div className="flex items-center gap-2.5">
+        <div className="analytics-panel-header-start">
           <div className="analytics-panel-icon" style={{ background: "rgba(6,182,212,0.12)", borderColor: "rgba(6,182,212,0.25)" }}>
             <Activity className="w-3.5 h-3.5 text-cyan-400" strokeWidth={1.8} />
           </div>
-          <div>
+          <div className="analytics-panel-header-text">
             <p className="text-[13px] font-semibold text-[#e2e8f0]">Heatmap de Atividade</p>
             <p className="text-[11px] text-[#475569] mt-0.5">Volume de mensagens por hora e dia da semana</p>
           </div>
