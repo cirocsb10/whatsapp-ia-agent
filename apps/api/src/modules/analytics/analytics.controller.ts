@@ -13,6 +13,16 @@ export class AnalyticsController {
     return this.service.getKpis(tenantId);
   }
 
+  @Get("kpi-trends")
+  getKpiTrends(@CurrentTenantId() tenantId: string) {
+    return this.service.getKpiTrends(tenantId);
+  }
+
+  @Get("setup-status")
+  getSetupStatus(@CurrentTenantId() tenantId: string) {
+    return this.service.getSetupStatus(tenantId);
+  }
+
   @Get("conversations-chart")
   getConversationsChart(
     @CurrentTenantId() tenantId: string,

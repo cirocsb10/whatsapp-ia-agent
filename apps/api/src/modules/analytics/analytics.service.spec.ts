@@ -3,6 +3,7 @@ import { PrismaService } from "../../common/prisma/prisma.service";
 import { AnalyticsService } from "./analytics.service";
 
 const mockPrisma = {
+  $queryRaw: jest.fn(),
   conversation: {
     count: jest.fn(),
     aggregate: jest.fn(),
@@ -14,6 +15,8 @@ const mockPrisma = {
   message: { aggregate: jest.fn(), findMany: jest.fn() },
   analyticsEvent: { count: jest.fn() },
   handoffEvent: { groupBy: jest.fn() },
+  tenant: { findUnique: jest.fn() },
+  agentConfig: { findUnique: jest.fn() },
 };
 
 describe("AnalyticsService", () => {
@@ -76,10 +79,10 @@ describe("AnalyticsService", () => {
   });
 
   describe("getConversationsChart", () => {
-    it("mapeia dados de groupBy para o formato de grafico", async () => {
+    it("mapeia dados agrupados por dia para o formato de grafico", async () => {
       const date = new Date("2024-01-15");
-      mockPrisma.conversation.groupBy.mockResolvedValue([
-        { startedAt: date, _count: { id: 20 } },
+      mockPrisma.$queryRaw.mockResolvedValue([
+        { day: date, total: BigInt(20), ai_resolved: BigInt(17), handoffs: BigInt(3) },
       ]);
 
       const result = await service.getConversationsChart("t-1", 30);
@@ -88,6 +91,37 @@ describe("AnalyticsService", () => {
       expect(result[0]!.total).toBe(20);
       expect(result[0]!.ai_resolved).toBe(17);
       expect(result[0]!.handoffs).toBe(3);
+    });
+  });
+
+  describe("getSetupStatus", () => {
+    it("retorna setupComplete quando whatsapp e agente estao configurados", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        whatsappStatus: "CONNECTED",
+        whatsappPhoneId: "phone-1",
+      });
+      mockPrisma.agentConfig.findUnique.mockResolvedValue({ id: "ac-1" });
+
+      const status = await service.getSetupStatus("t-1");
+
+      expect(status).toEqual({
+        whatsappConnected: true,
+        agentConfigured: true,
+        setupComplete: true,
+      });
+    });
+
+    it("retorna setupComplete=false quando whatsapp desconectado", async () => {
+      mockPrisma.tenant.findUnique.mockResolvedValue({
+        whatsappStatus: "DISCONNECTED",
+        whatsappPhoneId: null,
+      });
+      mockPrisma.agentConfig.findUnique.mockResolvedValue({ id: "ac-1" });
+
+      const status = await service.getSetupStatus("t-1");
+
+      expect(status.setupComplete).toBe(false);
+      expect(status.whatsappConnected).toBe(false);
     });
   });
 

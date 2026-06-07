@@ -100,17 +100,169 @@ export class AnalyticsService {
 
   async getConversationsChart(tenantId: string, days = 30) {
     const since = new Date(Date.now() - days * 86400000);
-    const data = await this.prisma.conversation.groupBy({
-      by: ["startedAt"],
-      where: { tenantId, startedAt: { gte: since } },
-      _count: { id: true },
-    });
-    return data.map((r) => ({
-      date: new Date(r.startedAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      total: r._count.id,
-      ai_resolved: Math.round(r._count.id * 0.85),
-      handoffs: Math.round(r._count.id * 0.15),
+
+    type Row = { day: Date; total: bigint; ai_resolved: bigint; handoffs: bigint };
+    const rows = await this.prisma.$queryRaw<Row[]>`
+      SELECT
+        DATE_TRUNC('day', c."startedAt") AS day,
+        COUNT(c.id)                       AS total,
+        COUNT(CASE
+          WHEN c.status = 'CLOSED'
+           AND NOT EXISTS (
+             SELECT 1 FROM "HandoffEvent" h WHERE h."conversationId" = c.id
+           )
+          THEN 1
+        END)                              AS ai_resolved,
+        COUNT(CASE
+          WHEN EXISTS (
+            SELECT 1 FROM "HandoffEvent" h WHERE h."conversationId" = c.id
+          )
+          THEN 1
+        END)                              AS handoffs
+      FROM "Conversation" c
+      WHERE c."tenantId" = ${tenantId}
+        AND c."startedAt" >= ${since}
+      GROUP BY DATE_TRUNC('day', c."startedAt")
+      ORDER BY day ASC
+    `;
+
+    return rows.map((r) => ({
+      date: new Date(r.day).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+      total: Number(r.total),
+      ai_resolved: Number(r.ai_resolved),
+      handoffs: Number(r.handoffs),
     }));
+  }
+
+  async getKpiTrends(tenantId: string): Promise<Record<string, { change: number; trend: "up" | "down" | "neutral" }>> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    const [todayKpis, yesterdayKpis] = await Promise.all([
+      this.getKpis(tenantId),
+      this._getKpisForRange(tenantId, yesterdayStart, todayStart),
+    ]);
+
+    const result: Record<string, { change: number; trend: "up" | "down" | "neutral" }> = {};
+    for (const key of Object.keys(todayKpis)) {
+      const today = todayKpis[key] ?? 0;
+      const yesterday = yesterdayKpis[key] ?? 0;
+      if (yesterday === 0) {
+        result[key] = { change: 0, trend: "neutral" };
+      } else {
+        const pct = Math.round(((today - yesterday) / yesterday) * 100);
+        result[key] = {
+          change: pct,
+          trend: pct > 0 ? "up" : pct < 0 ? "down" : "neutral",
+        };
+      }
+    }
+    return result;
+  }
+
+  private async _getKpisForRange(
+    tenantId: string,
+    from: Date,
+    to: Date,
+  ): Promise<Record<string, number | null>> {
+    const sevenDaysAgo = new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      conversationsToday,
+      ordersToday,
+      revenueToday,
+      pendingHandoffs,
+      newContactsToday,
+      closedToday,
+      closedByAiToday,
+      latencyResult,
+      csatResult,
+      tokensResult,
+    ] = await Promise.all([
+      this.prisma.conversation.count({ where: { tenantId, startedAt: { gte: from, lt: to } } }),
+      this.prisma.order.count({ where: { tenantId, createdAt: { gte: from, lt: to } } }),
+      this.prisma.payment.aggregate({
+        where: { tenantId, status: "APPROVED", paidAt: { gte: from, lt: to } },
+        _sum: { amountCents: true },
+      }),
+      this.prisma.conversation.count({ where: { tenantId, status: "HUMAN_HANDOFF" } }),
+      this.prisma.contact.count({ where: { tenantId, firstSeenAt: { gte: from, lt: to } } }),
+      this.prisma.conversation.count({
+        where: { tenantId, status: "CLOSED", closedAt: { gte: from, lt: to } },
+      }),
+      this.prisma.conversation.count({
+        where: {
+          tenantId,
+          status: "CLOSED",
+          closedAt: { gte: from, lt: to },
+          messages: { some: { isFromAi: true } },
+          handoffEvents: { none: {} },
+        },
+      }),
+      this.prisma.message.aggregate({
+        where: { tenantId, isFromAi: true, aiLatencyMs: { not: null }, sentAt: { gte: from, lt: to } },
+        _avg: { aiLatencyMs: true },
+      }),
+      this.prisma.conversation.aggregate({
+        where: { tenantId, csatScore: { not: null }, closedAt: { gte: sevenDaysAgo, lt: to } },
+        _avg: { csatScore: true },
+      }),
+      this.prisma.message.aggregate({
+        where: { tenantId, isFromAi: true, aiTokensUsed: { not: null }, sentAt: { gte: from, lt: to } },
+        _sum: { aiTokensUsed: true },
+      }),
+    ]);
+
+    const ai_resolution_rate = closedToday > 0 ? Math.round((closedByAiToday / closedToday) * 100) : 0;
+    const avg_response_time_sec = latencyResult._avg.aiLatencyMs
+      ? Math.round(latencyResult._avg.aiLatencyMs / 1000)
+      : 0;
+    const avg_csat_score = csatResult._avg.csatScore
+      ? Number(csatResult._avg.csatScore.toFixed(1))
+      : null;
+
+    return {
+      conversations_today: conversationsToday,
+      ai_resolution_rate,
+      revenue_today: revenueToday._sum.amountCents ?? 0,
+      pending_handoffs: pendingHandoffs,
+      avg_response_time_sec,
+      new_contacts_today: newContactsToday,
+      orders_today: ordersToday,
+      conversion_rate: conversationsToday > 0 ? Math.round((ordersToday / conversationsToday) * 100) : 0,
+      avg_csat_score,
+      ai_tokens_today: tokensResult._sum.aiTokensUsed ?? 0,
+    };
+  }
+
+  async getSetupStatus(tenantId: string): Promise<{
+    whatsappConnected: boolean;
+    agentConfigured: boolean;
+    setupComplete: boolean;
+  }> {
+    const [tenant, agentConfig] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { whatsappStatus: true, whatsappPhoneId: true },
+      }),
+      this.prisma.agentConfig.findUnique({
+        where: { tenantId },
+        select: { id: true },
+      }),
+    ]);
+
+    const whatsappConnected =
+      tenant?.whatsappStatus !== "DISCONNECTED" && tenant?.whatsappPhoneId != null;
+    const agentConfigured = agentConfig != null;
+
+    return {
+      whatsappConnected,
+      agentConfigured,
+      setupComplete: whatsappConnected && agentConfigured,
+    };
   }
 
   async getFunnel(tenantId: string, days = 30) {
