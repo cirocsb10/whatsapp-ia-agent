@@ -62,17 +62,39 @@ function ChartEmptyGhost() {
   );
 }
 
-export function ConversationsChart({ data }: { data: any[] }) {
+export function ConversationsChart({
+  data,
+  days = 30,
+  onDaysChange,
+}: {
+  data: any[];
+  days?: number;
+  onDaysChange?: (d: number) => void;
+}) {
   const empty = !data || data.length === 0;
 
   return (
     <div className="chart-panel">
       <div className="flex items-start justify-between mb-4 relative z-10">
         <div>
-          <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Conversas — 30 dias</p>
+          <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Conversas</p>
           <p className="text-[11px] text-[#64748b] mt-1">Volume e resolução por IA</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
+          {[7, 30, 90].map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => onDaysChange?.(d)}
+              className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors ${
+                days === d
+                  ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                  : "text-[#475569] hover:text-[#94a3b8]"
+              }`}
+            >
+              {d}d
+            </button>
+          ))}
           {SERIES.map((s) => (
             <div key={s.key} className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color }} />
