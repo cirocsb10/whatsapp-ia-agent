@@ -30,7 +30,18 @@ export class ProductsService {
   }
 
   async findAll(tenantId: string, query: ListProductsDto) {
-    const { page = 1, limit = 20, search, status, categoryId } = query;
+    const {
+      page = 1,
+      limit = 20,
+      search,
+      status,
+      categoryId,
+      minPriceCents,
+      maxPriceCents,
+      minStock,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {
@@ -44,6 +55,13 @@ export class ProductsService {
           { sku: { contains: search, mode: "insensitive" } },
         ],
       }),
+      ...((minPriceCents !== undefined || maxPriceCents !== undefined) && {
+        priceCents: {
+          ...(minPriceCents !== undefined && { gte: minPriceCents }),
+          ...(maxPriceCents !== undefined && { lte: maxPriceCents }),
+        },
+      }),
+      ...(minStock !== undefined && { stockQty: { gte: minStock } }),
     };
 
     const [items, total] = await Promise.all([
@@ -51,7 +69,7 @@ export class ProductsService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { [sortBy]: sortOrder },
       }),
       this.prisma.product.count({ where }),
     ]);
