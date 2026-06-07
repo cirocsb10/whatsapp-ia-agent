@@ -87,4 +87,24 @@ export class ListProductsDto {
   @IsOptional()
   @IsString()
   categoryId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  minPriceCents?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  maxPriceCents?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  minStock?: number;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: "name" | "priceCents" | "stockQty" | "createdAt";
+
+  @IsOptional()
+  @IsString()
+  sortOrder?: "asc" | "desc";
 }
