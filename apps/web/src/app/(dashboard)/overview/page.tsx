@@ -3,14 +3,16 @@
 import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversationsChart } from "@/components/analytics/ConversationsChart";
+import { FunnelChart } from "@/components/analytics/FunnelChart";
+import { HandoffReasonsChart } from "@/components/analytics/HandoffReasonsChart";
 import Link from "next/link";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useState } from "react";
 import {
   MessageSquare, Zap, DollarSign, PhoneCall,
   Users, ShoppingCart, TrendingUp, Clock,
-  CheckCircle2, Star, Database, Wifi,
-  AlertTriangle, ArrowRight, Bot, Sparkles, Cpu,
+  CheckCircle2, Star, ArrowRight, Bot, Sparkles, Cpu,
+  AlertTriangle,
 } from "lucide-react";
 
 const CARDS = [
@@ -29,33 +31,60 @@ const CARDS = [
 const AGENT_STATUS = [
   { label: "Resolucao IA", icon: CheckCircle2, color: "#6366f1", key: "ai_resolution_rate" },
   { label: "Satisfacao CSAT", icon: Star, color: "#22c55e", key: "avg_csat_score", csat: true },
-  { label: "Precisao NLP", icon: Database, color: "#06b6d4" },
-  { label: "Uptime API", icon: Wifi, color: "#f59e0b" },
 ];
 
 const SETUP_STEPS = ["Meta Business", "Agente IA", "Webhook"];
+
+interface FunnelData {
+  conversations: number;
+  catalog_viewed: number;
+  cart_started: number;
+  payment_generated: number;
+  payment_confirmed: number;
+}
 
 export default function OverviewPage() {
   const { apiFetch } = useApi();
   const [kpis, setKpis] = useState<Record<string, number | null>>({});
   const [chart, setChart] = useState<any[]>([]);
+  const [trends, setTrends] = useState<Record<string, { change: number; trend: "up" | "down" | "neutral" }>>({});
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [chartDays, setChartDays] = useState(30);
+  const [funnel, setFunnel] = useState<FunnelData | null>(null);
+  const [handoffReasons, setHandoffReasons] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [kpiRes, chartRes] = await Promise.all([
+        const [kpiRes, chartRes, trendsRes, setupRes, funnelRes, handoffRes] = await Promise.all([
           apiFetch("/analytics/kpis"),
-          apiFetch("/analytics/conversations-chart?days=30"),
+          apiFetch(`/analytics/conversations-chart?days=${chartDays}`),
+          apiFetch("/analytics/kpi-trends"),
+          apiFetch("/analytics/setup-status"),
+          apiFetch("/analytics/funnel?days=30"),
+          apiFetch("/analytics/handoff-reasons?days=30"),
         ]);
         if (kpiRes.ok) setKpis(await kpiRes.json());
         if (chartRes.ok) setChart(await chartRes.json());
+        if (trendsRes.ok) setTrends(await trendsRes.json());
+        if (setupRes.ok) {
+          const s = await setupRes.json();
+          setSetupComplete(s.setupComplete);
+        }
+        if (funnelRes.ok) setFunnel(await funnelRes.json());
+        if (handoffRes.ok) setHandoffReasons(await handoffRes.json());
+        setLastUpdated(new Date());
       } finally {
         setLoading(false);
       }
     }
+
     void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const id = setInterval(() => void load(), 30_000);
+    return () => clearInterval(id);
+  }, [chartDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const date = new Date().toLocaleDateString("pt-BR", {
     weekday: "long", day: "numeric", month: "long",
@@ -103,34 +132,40 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="dashboard-setup-banner">
-          <div className="dashboard-setup-icon">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-[#e2e8f0] leading-tight">
-              Configure o WhatsApp para ver dados reais
-            </p>
-            <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">
-              Complete o setup para ativar metricas, graficos e automacoes.
-            </p>
-            <div className="dashboard-setup-steps">
-              {SETUP_STEPS.map((step) => (
-                <span key={step} className="dashboard-setup-step">{step}</span>
-              ))}
+        {!setupComplete && (
+          <div className="dashboard-setup-banner">
+            <div className="dashboard-setup-icon">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-[#e2e8f0] leading-tight">
+                Configure o WhatsApp para ver dados reais
+              </p>
+              <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">
+                Complete o setup para ativar metricas, graficos e automacoes.
+              </p>
+              <div className="dashboard-setup-steps">
+                {SETUP_STEPS.map((step) => (
+                  <span key={step} className="dashboard-setup-step">{step}</span>
+                ))}
+              </div>
+            </div>
+            <Link href="/setup" className="dashboard-setup-cta">
+              <Sparkles className="w-3.5 h-3.5" />
+              Comecar setup
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-          <Link href="/setup" className="dashboard-setup-cta">
-            <Sparkles className="w-3.5 h-3.5" />
-            Comecar setup
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
+        )}
 
         <section>
           <div className="dashboard-section-head">
             <p className="section-title">Metricas de hoje</p>
-            <span className="text-[10px] text-[#475569]">Atualizado em tempo real</span>
+            <span className="text-[10px] text-[#475569]">
+              {lastUpdated
+                ? `Atualizado ${lastUpdated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+                : "Atualizando..."}
+            </span>
           </div>
           <div className="dashboard-kpi-grid">
             {CARDS.map((card) => {
@@ -142,6 +177,8 @@ export default function OverviewPage() {
                   value={formatCard(card)}
                   loading={loading}
                   empty={!loading && isCardEmpty(card)}
+                  change={trends[card.key]?.change}
+                  trend={trends[card.key]?.trend}
                 />
               );
             })}
@@ -149,7 +186,7 @@ export default function OverviewPage() {
         </section>
 
         <div className="dashboard-bento">
-          <ConversationsChart data={chart} />
+          <ConversationsChart data={chart} days={chartDays} onDaysChange={setChartDays} />
 
           <aside className="dashboard-agent-panel">
             <div className="dashboard-agent-header">
@@ -198,6 +235,11 @@ export default function OverviewPage() {
               <ArrowRight className="w-3 h-3" strokeWidth={1.8} />
             </Link>
           </aside>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <FunnelChart data={funnel} />
+          <HandoffReasonsChart data={handoffReasons} />
         </div>
       </div>
     </div>
