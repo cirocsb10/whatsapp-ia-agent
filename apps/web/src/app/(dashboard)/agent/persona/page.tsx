@@ -633,7 +633,7 @@ export default function PersonaPage() {
                   <textarea
                     value={form.systemPromptBase ?? ""}
                     onChange={(e) => patch("systemPromptBase", e.target.value)}
-                    rows={10}
+                    rows={30}
                     placeholder="Ex: Você é um assistente de vendas da loja X. Seja sempre cordial…"
                     className="form-input form-input-mono"
                     disabled={loading}
