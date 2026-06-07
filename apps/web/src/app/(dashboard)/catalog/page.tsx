@@ -188,7 +188,7 @@ export default function CatalogPage() {
 
   function onImported() {
     void loadStats();
-    void loadProducts(1, "", "all");
+    void loadProducts(1, "", "all", DEFAULT_ADVANCED_FILTERS);
     setSearch("");
     setFilterTab("all");
     setPage(1);

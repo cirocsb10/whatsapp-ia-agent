@@ -47,6 +47,101 @@ describe("ProductsService", () => {
     }));
   });
 
+  describe("findAll — filtros avançados", () => {
+    beforeEach(() => {
+      mockPrisma.product.findMany.mockResolvedValue([]);
+      mockPrisma.product.count.mockResolvedValue(0);
+    });
+
+    it("deve aplicar filtro de preço mínimo", async () => {
+      await service.findAll("t1", { minPriceCents: 1000 });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ priceCents: { gte: 1000 } }),
+      }));
+    });
+
+    it("deve aplicar filtro de preço máximo", async () => {
+      await service.findAll("t1", { maxPriceCents: 5000 });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ priceCents: { lte: 5000 } }),
+      }));
+    });
+
+    it("deve aplicar faixa de preço com min e max simultâneos", async () => {
+      await service.findAll("t1", { minPriceCents: 1000, maxPriceCents: 5000 });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ priceCents: { gte: 1000, lte: 5000 } }),
+      }));
+    });
+
+    it("não deve incluir filtro priceCents quando ambos estão ausentes", async () => {
+      await service.findAll("t1", {});
+      const call = mockPrisma.product.findMany.mock.calls[0][0];
+      expect(call.where.priceCents).toBeUndefined();
+    });
+
+    it("deve aplicar filtro de estoque mínimo", async () => {
+      await service.findAll("t1", { minStock: 5 });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ stockQty: { gte: 5 } }),
+      }));
+    });
+
+    it("não deve incluir filtro stockQty quando minStock ausente", async () => {
+      await service.findAll("t1", {});
+      const call = mockPrisma.product.findMany.mock.calls[0][0];
+      expect(call.where.stockQty).toBeUndefined();
+    });
+
+    it("deve ordenar por nome ascendente", async () => {
+      await service.findAll("t1", { sortBy: "name", sortOrder: "asc" });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        orderBy: { name: "asc" },
+      }));
+    });
+
+    it("deve ordenar por priceCents descendente", async () => {
+      await service.findAll("t1", { sortBy: "priceCents", sortOrder: "desc" });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        orderBy: { priceCents: "desc" },
+      }));
+    });
+
+    it("deve usar ordenação padrão createdAt desc quando omitida", async () => {
+      await service.findAll("t1", {});
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        orderBy: { createdAt: "desc" },
+      }));
+    });
+
+    it("deve combinar filtros de status, preço e estoque", async () => {
+      await service.findAll("t1", {
+        status: "ACTIVE",
+        minPriceCents: 500,
+        maxPriceCents: 9900,
+        minStock: 1,
+        sortBy: "stockQty",
+        sortOrder: "asc",
+      });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: "t1",
+          status: "ACTIVE",
+          priceCents: { gte: 500, lte: 9900 },
+          stockQty: { gte: 1 },
+        }),
+        orderBy: { stockQty: "asc" },
+      }));
+    });
+
+    it("deve aceitar minStock=0 como filtro válido", async () => {
+      await service.findAll("t1", { minStock: 0 });
+      expect(mockPrisma.product.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ stockQty: { gte: 0 } }),
+      }));
+    });
+  });
+
   it("deve rejeitar acesso a produto de outro tenant", async () => {
     mockPrisma.product.findFirst.mockResolvedValue(null);
     await expect(service.findOne("tenant-123", "prod-de-outro-tenant")).rejects.toThrow(NotFoundException);
