@@ -166,6 +166,8 @@ model Tenant {
   analyticsEvents   AnalyticsEvent[]
   auditLogs         AuditLog[]
   billing           PlatformBilling?
+  funnelStages      FunnelStage[]
+  deals             Deal[]
 
   @@index([slug])
   @@index([status])
@@ -345,6 +347,7 @@ model Contact {
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   conversations Conversation[]
   orders        Order[]
+  deals         Deal[]
 
   @@unique([tenantId, phone])
   @@index([tenantId])
@@ -550,4 +553,38 @@ model PlatformBilling {
   updatedAt               DateTime  @updatedAt
 
   tenant                  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model FunnelStage {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  color     String   @default("#6366F1")
+  position  Int
+  isWon     Boolean  @default(false)
+  isLost    Boolean  @default(false)
+  deals     Deal[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model Deal {
+  id         String      @id @default(uuid())
+  tenantId   String
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stageId    String
+  stage      FunnelStage @relation(fields: [stageId], references: [id])
+  contactId  String?
+  contact    Contact?    @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  title      String
+  valueCents Int         @default(0)
+  notes      String?
+  closedAt   DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([tenantId, stageId])
 }
