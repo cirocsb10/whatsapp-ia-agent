@@ -6971,6 +6971,126 @@
     flex-shrink: 0;
   }
 
+  /* ── Custom time input ─────────────────────────────────────── */
+  .form-time {
+    position: relative;
+    width: 96px;
+    flex-shrink: 0;
+  }
+  .form-time-trigger {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: #e2e8f0;
+    background: rgba(17, 30, 50, 0.85);
+    border: 1px solid var(--c-border);
+    cursor: pointer;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease, opacity 160ms ease;
+  }
+  .form-time-trigger:hover:not(:disabled) {
+    border-color: rgba(6, 182, 212, 0.35);
+    background: rgba(20, 34, 56, 0.95);
+  }
+  .form-time--open .form-time-trigger,
+  .form-time-trigger:focus-visible {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.12);
+    outline: none;
+  }
+  .form-time-trigger:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .form-time-icon {
+    width: 13px;
+    height: 13px;
+    color: #22d3ee;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+  .form-time-value { line-height: 1; }
+  .form-time-menu-anchor {
+    position: fixed;
+    z-index: 9999;
+  }
+  .form-time-menu {
+    min-width: 148px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(10, 18, 34, 0.98);
+    border: 1px solid rgba(6, 182, 212, 0.22);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    backdrop-filter: blur(12px);
+    animation: form-time-in 140ms ease-out;
+  }
+  @keyframes form-time-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .form-time-columns {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .form-time-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 64px;
+    max-height: 168px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(6, 182, 212, 0.25) transparent;
+  }
+  .form-time-col-label {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 2px 0 6px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #64748b;
+    background: rgba(10, 18, 34, 0.98);
+  }
+  .form-time-col-divider {
+    width: 1px;
+    margin: 0 6px;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
+  .form-time-option {
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .form-time-option:hover {
+    background: rgba(6, 182, 212, 0.1);
+    color: #e2e8f0;
+  }
+  .form-time-option--active {
+    background: rgba(6, 182, 212, 0.16);
+    color: #67e8f9;
+    box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.28);
+  }
+
   .form-hint { font-size: 10px; color: #475569; }
   .form-grid-2 {
     display: grid;
@@ -9174,56 +9294,25 @@
     border-top: 1px solid var(--c-border);
   }
   .persona-save-hint {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     font-size: 12px;
     color: #64748b;
     font-weight: 500;
   }
-  .persona-save-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 18px 9px 10px;
-    border-radius: 10px;
-    font-size: 13px;
+  .persona-save-hint--dirty {
+    color: #fbbf24;
     font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, #15803d 0%, #22c55e 55%, #4ade80 100%);
-    border: 1px solid rgba(134, 239, 172, 0.35);
-    cursor: pointer;
-    transition: background 180ms ease, transform 120ms ease, box-shadow 180ms ease, border-color 180ms ease;
-    box-shadow:
-      0 2px 12px rgba(34, 197, 94, 0.28),
-      0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  }
+  .persona-save-hint--dirty::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #fbbf24;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.55);
     flex-shrink: 0;
-  }
-  .persona-save-btn-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.14);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-  }
-  .persona-save-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #86efac 100%);
-    border-color: rgba(134, 239, 172, 0.5);
-    box-shadow:
-      0 4px 22px rgba(34, 197, 94, 0.38),
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  }
-  .persona-save-btn:active:not(:disabled) { transform: scale(0.98); }
-  .persona-save-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-  .persona-save-btn:focus-visible {
-    outline: 2px solid rgba(34,197,94,0.5);
-    outline-offset: 2px;
   }
 
   .persona-toast {
@@ -9253,50 +9342,111 @@
   }
 
   /* ── Persona — Business Hours ─────────────────────────── */
+  .persona-hours-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .persona-hours-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 180ms ease, border-color 180ms ease, opacity 180ms ease;
   }
-  .persona-hours-row:last-child { border-bottom: none; }
-  .persona-hours-toggle {
+  .persona-hours-row--on {
+    background: rgba(6, 182, 212, 0.04);
+    border-color: rgba(6, 182, 212, 0.12);
+  }
+  .persona-hours-row:not(.persona-hours-row--on) {
+    opacity: 0.72;
+  }
+  .persona-hours-day-col {
     display: flex;
     align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    min-width: 100px;
+    gap: 10px;
+    min-width: 118px;
     flex-shrink: 0;
   }
-  .persona-hours-toggle input[type="checkbox"] {
+  .persona-hours-switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 99px;
+    background: #1a2d47;
+    border: 1px solid var(--c-border);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .persona-hours-switch--on {
+    background: rgba(6, 182, 212, 0.22);
+    border-color: rgba(6, 182, 212, 0.42);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.12);
+  }
+  .persona-hours-switch-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
     width: 14px;
     height: 14px;
-    accent-color: #6366f1;
-    cursor: pointer;
+    border-radius: 99px;
+    background: #64748b;
+    transition: transform 200ms ease, background 200ms ease;
+  }
+  .persona-hours-switch--on .persona-hours-switch-thumb {
+    transform: translateX(16px);
+    background: #22d3ee;
+  }
+  .persona-hours-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .persona-hours-switch:focus-visible {
+    outline: 2px solid rgba(6, 182, 212, 0.45);
+    outline-offset: 2px;
   }
   .persona-hours-day {
     font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+    letter-spacing: -0.01em;
+  }
+  .persona-hours-day--off {
+    color: #64748b;
     font-weight: 500;
-    color: #cbd5e1;
   }
   .persona-hours-times {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
-    transition: opacity 0.15s;
+    justify-content: flex-end;
+    min-width: 0;
   }
   .persona-hours-sep {
-    font-size: 11px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
     color: #475569;
     flex-shrink: 0;
   }
-  .persona-time-input {
-    width: 100px !important;
-    flex-shrink: 0;
-    font-size: 12px !important;
-    padding: 5px 8px !important;
+  .persona-hours-row:not(.persona-hours-row--on) .persona-hours-times {
+    pointer-events: none;
+  }
+
+  @media (max-width: 640px) {
+    .persona-hours-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .persona-hours-day-col { min-width: 0; }
+    .persona-hours-times { justify-content: flex-start; }
   }
 
   @media (prefers-reduced-motion: reduce) {

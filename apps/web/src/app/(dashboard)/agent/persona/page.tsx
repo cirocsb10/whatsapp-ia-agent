@@ -1,6 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
+import { TimeInput } from "@/components/ui/TimeInput";
 import { useApi } from "@/lib/hooks/useApi";
 import {
   DAYS,
@@ -22,7 +23,6 @@ import {
   ChevronLeft,
   CheckCircle2,
   AlertCircle,
-  Check,
   UserCheck,
   Zap,
 } from "lucide-react";
@@ -492,57 +492,64 @@ export default function PersonaPage() {
               </div>
 
               <div className="persona-card-body persona-card-body--stack">
+                <div className="persona-hours-list">
                 {DAYS.map(({ key, label }) => {
                   const day = form.businessHours[key] ?? { enabled: false, start: "09:00", end: "18:00" };
                   return (
-                    <div key={key} className="persona-hours-row">
-                      <label className="persona-hours-toggle">
-                        <input
-                          type="checkbox"
-                          checked={day.enabled}
-                          onChange={(e) =>
-                            patch("businessHours", {
-                              ...form.businessHours,
-                              [key]: { ...day, enabled: e.target.checked },
-                            })
-                          }
+                    <div
+                      key={key}
+                      className={`persona-hours-row${day.enabled ? " persona-hours-row--on" : ""}`}
+                    >
+                      <div className="persona-hours-day-col">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={day.enabled}
+                          aria-label={`${day.enabled ? "Desativar" : "Ativar"} ${label}`}
                           disabled={loading}
-                        />
-                        <span className="persona-hours-day">{label}</span>
-                      </label>
-                      <div
-                        className="persona-hours-times"
-                        style={{ opacity: day.enabled ? 1 : 0.35, pointerEvents: day.enabled ? "auto" : "none" }}
-                      >
-                        <input
-                          type="time"
-                          value={day.start}
-                          onChange={(e) =>
+                          className={`persona-hours-switch${day.enabled ? " persona-hours-switch--on" : ""}`}
+                          onClick={() =>
                             patch("businessHours", {
                               ...form.businessHours,
-                              [key]: { ...day, start: e.target.value },
+                              [key]: { ...day, enabled: !day.enabled },
                             })
                           }
-                          className="form-input persona-time-input"
+                        >
+                          <span className="persona-hours-switch-thumb" />
+                        </button>
+                        <span className={`persona-hours-day${day.enabled ? "" : " persona-hours-day--off"}`}>
+                          {label}
+                        </span>
+                      </div>
+                      <div className="persona-hours-times">
+                        <TimeInput
+                          value={day.start}
+                          onChange={(start) =>
+                            patch("businessHours", {
+                              ...form.businessHours,
+                              [key]: { ...day, start },
+                            })
+                          }
                           disabled={loading || !day.enabled}
                         />
-                        <span className="persona-hours-sep">até</span>
-                        <input
-                          type="time"
+                        <span className="persona-hours-sep" aria-hidden>
+                          até
+                        </span>
+                        <TimeInput
                           value={day.end}
-                          onChange={(e) =>
+                          onChange={(end) =>
                             patch("businessHours", {
                               ...form.businessHours,
-                              [key]: { ...day, end: e.target.value },
+                              [key]: { ...day, end },
                             })
                           }
-                          className="form-input persona-time-input"
                           disabled={loading || !day.enabled}
                         />
                       </div>
                     </div>
                   );
                 })}
+                </div>
               </div>
             </section>
 
@@ -706,18 +713,16 @@ export default function PersonaPage() {
       </div>
 
       <div className="persona-save-bar">
-        <p className="persona-save-hint">
+        <p className={`persona-save-hint${dirty ? " persona-save-hint--dirty" : ""}`}>
           {dirty ? "Alterações não salvas" : "Nenhuma alteração pendente"}
         </p>
         <button
           type="button"
           onClick={() => void handleSave()}
           disabled={saving || loading || !dirty}
-          className="persona-save-btn"
+          className="catalog-add-btn"
+          style={{ minWidth: 120 }}
         >
-          <span className="persona-save-btn-icon" aria-hidden="true">
-            <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-          </span>
           {saving ? "Salvando…" : "Salvar persona"}
         </button>
       </div>
