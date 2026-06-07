@@ -28,6 +28,7 @@ SAMPLE_EVENT = {
     "type": "text",
     "text": "Quero ver o cardapio",
     "conversationId": "conv-001",
+    "contactId": "contact-001",
     "waMessageId": "wamid-001",
 }
 
@@ -63,7 +64,7 @@ async def test_process_inbound_message_happy_path():
             make_mock_message(SAMPLE_EVENT), mock_session_svc, mock_publisher
         )
 
-    mock_session_svc.get_or_create.assert_called_once_with("tenant-001", "5511999990000")
+    mock_session_svc.get_or_create.assert_called_once_with("tenant-001", "5511999990000", "conv-001")
     initial_state = mock_graph.ainvoke.call_args[0][0]
     assert initial_state["current_message"] == "Quero ver o cardapio"
     assert initial_state["tenant_id"] == "tenant-001"
@@ -74,6 +75,8 @@ async def test_process_inbound_message_happy_path():
     assert published["waPhoneId"] == "phone-001"
     assert published["messages"] == [{"type": "text", "text": "Aqui esta nosso cardapio!"}]
     assert published["triggerHandoff"] is False
+    assert published["currentStage"] == "CATALOG"
+    assert published["contactId"] == "contact-001"
 
 
 @pytest.mark.asyncio

@@ -67,6 +67,21 @@ export class OutboundConsumer implements OnModuleInit {
     }
   }
 
+  private resolveCrmPosition(aiStage: string): number | null {
+    switch (aiStage) {
+      case "greeting":
+      case "discovery":
+        return 1;
+      case "catalog":
+      case "negotiation":
+        return 2;
+      case "payment":
+        return 3;
+      default:
+        return null;
+    }
+  }
+
   async onModuleInit(): Promise<void> {
     const url = this.config.get<string>("rabbitmq.url") as string;
 
@@ -88,9 +103,23 @@ export class OutboundConsumer implements OnModuleInit {
             waPhoneId: string;
             toPhone: string;
             messages: Array<{ type: string; text?: string; imageUrl?: string }>;
+            currentStage?: string;
+            contactId?: string;
           };
 
           await this.handleOutboundMessage(event);
+
+          if (event.tenantId && event.contactId && event.currentStage) {
+            const targetPosition = this.resolveCrmPosition(event.currentStage);
+            if (targetPosition !== null) {
+              await this.inbound.publishCrmAdvance({
+                tenantId: event.tenantId,
+                contactId: event.contactId,
+                targetPosition,
+              }).catch((err) => this.logger.warn("crm.advance publish failed", err));
+            }
+          }
+
           channel.ack(msg);
         } catch (err) {
           this.logger.error("Outbound error:", err);

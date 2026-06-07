@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { CrmProgressionService } from "../crm/crm-progression.service";
 import { randomUUID } from "crypto";
 
 @Injectable()
@@ -17,6 +18,7 @@ export class PaymentsService {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly crmProgression: CrmProgressionService,
   ) {}
 
   private getMpClient() {
@@ -142,10 +144,12 @@ export class PaymentsService {
     });
 
     if (mpPayment.status === "approved") {
-      await this.prisma.order.update({
+      const order = await this.prisma.order.update({
         where: { id: orderId },
         data: { status: "PAYMENT_CONFIRMED", confirmedAt: new Date() },
+        select: { tenantId: true, contactId: true },
       });
+      await this.crmProgression.advanceToWon(order.tenantId, order.contactId);
       this.logger.log(`Payment confirmed for order: ${orderId}`);
     }
   }

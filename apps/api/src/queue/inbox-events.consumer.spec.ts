@@ -2,9 +2,11 @@ import { Test } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
 import { EventsGateway } from "../gateways/events.gateway";
 import { InboxEventsConsumer } from "./inbox-events.consumer";
+import { CrmProgressionService } from "../modules/crm/crm-progression.service";
 
 const mockConfig = { get: jest.fn().mockReturnValue("amqp://localhost") };
 const mockGateway = { emitToTenant: jest.fn() };
+const mockCrmProgression = { advanceToPosition: jest.fn().mockResolvedValue(undefined) };
 
 function makeMsg(payload: Record<string, unknown>) {
   return {
@@ -21,6 +23,7 @@ describe("InboxEventsConsumer", () => {
         InboxEventsConsumer,
         { provide: ConfigService, useValue: mockConfig },
         { provide: EventsGateway, useValue: mockGateway },
+        { provide: CrmProgressionService, useValue: mockCrmProgression },
       ],
     }).compile();
     consumer = module.get(InboxEventsConsumer);

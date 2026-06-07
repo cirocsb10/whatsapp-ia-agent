@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from "@nestjs/common";
 import { OrderStatus } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
+import { CrmProgressionService } from "../crm/crm-progression.service";
 
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly crmProgression: CrmProgressionService,
+  ) {}
 
   async createInternal(body: {
     tenantId: string;
@@ -44,7 +48,7 @@ export class OrdersService {
 
     const orderNumber = `ORD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
-    return this.prisma.order.create({
+    const order = await this.prisma.order.create({
       data: {
         tenantId: body.tenantId,
         contactId: contact.id,
@@ -64,6 +68,9 @@ export class OrdersService {
         },
       },
     });
+
+    await this.crmProgression.advanceToPosition(body.tenantId, contact.id, 3);
+    return order;
   }
 
   async findAll(tenantId: string, page = 1, limit = 20) {
@@ -142,7 +149,7 @@ export class OrdersService {
       update: {},
     });
     const orderNumber = `ORD-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-    return this.prisma.order.create({
+    const order = await this.prisma.order.create({
       data: {
         tenantId,
         contactId: contact.id,
@@ -154,5 +161,8 @@ export class OrdersService {
         items: { create: resolvedItems },
       },
     });
+
+    await this.crmProgression.advanceToPosition(tenantId, contact.id, 3);
+    return order;
   }
 }

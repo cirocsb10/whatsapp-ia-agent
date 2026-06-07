@@ -3,6 +3,9 @@ import { Test } from "@nestjs/testing";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { EventsGateway } from "../../gateways/events.gateway";
 import { ConversationsService } from "./conversations.service";
+import { CrmProgressionService } from "../crm/crm-progression.service";
+
+const mockCrmProgression = { advanceToPosition: jest.fn().mockResolvedValue(undefined), advanceToWon: jest.fn() };
 
 const mockPrisma = {
   conversation: { findMany: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
@@ -22,6 +25,7 @@ describe("ConversationsService", () => {
         ConversationsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: EventsGateway, useValue: mockGateway },
+        { provide: CrmProgressionService, useValue: mockCrmProgression },
       ],
     }).compile();
     service = module.get(ConversationsService);

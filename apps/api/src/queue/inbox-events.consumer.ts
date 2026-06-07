@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import * as amqplib from "amqplib";
 import { EventsGateway } from "../gateways/events.gateway";
+import { CrmProgressionService } from "../modules/crm/crm-progression.service";
 
 @Injectable()
 export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
@@ -12,6 +13,7 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     private readonly gateway: EventsGateway,
+    private readonly crmProgression: CrmProgressionService,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -26,6 +28,7 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
 
         await this.channel.assertExchange("messages", "topic", { durable: true });
         await this.channel.assertExchange("ai", "topic", { durable: true });
+        await this.channel.assertExchange("crm", "topic", { durable: true });
 
         // Queue for inbound messages → emit to frontend
         const inboundQ = await this.channel.assertQueue("api.inbox.inbound", { durable: true });
@@ -39,11 +42,15 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         const statusQ = await this.channel.assertQueue("api.inbox.status", { durable: true });
         await this.channel.bindQueue(statusQ.queue, "messages", "msg.status");
 
+        const crmQ = await this.channel.assertQueue("api.crm.advance", { durable: true });
+        await this.channel.bindQueue(crmQ.queue, "crm", "crm.advance");
+
         this.channel.consume(inboundQ.queue, (msg: amqplib.Message | null) => this.handleInbound(msg));
         this.channel.consume(outboundQ.queue, (msg: amqplib.Message | null) => this.handleOutbound(msg));
         this.channel.consume(statusQ.queue, (msg: amqplib.Message | null) => this.handleStatus(msg));
+        this.channel.consume(crmQ.queue, (msg: amqplib.Message | null) => void this.handleCrmAdvance(msg));
 
-        this.logger.log("✅ InboxEventsConsumer listening (inbound + outbound)");
+        this.logger.log("✅ InboxEventsConsumer listening (inbound + outbound + crm)");
         return;
       } catch {
         retries--;
@@ -120,6 +127,22 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
     } catch (err) {
       this.logger.error("handleStatus error:", err);
       this.channel?.nack(msg, false, false);
+    }
+  }
+
+  private async handleCrmAdvance(msg: amqplib.Message | null): Promise<void> {
+    if (!msg || !this.channel) return;
+    try {
+      const { tenantId, contactId, targetPosition } = JSON.parse(msg.content.toString()) as {
+        tenantId: string;
+        contactId: string;
+        targetPosition: number;
+      };
+      await this.crmProgression.advanceToPosition(tenantId, contactId, targetPosition);
+      this.channel.ack(msg);
+    } catch (err) {
+      this.logger.error("handleCrmAdvance error:", err);
+      this.channel.nack(msg, false, false);
     }
   }
 

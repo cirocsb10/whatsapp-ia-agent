@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/commo
 import { ConfigService } from "@nestjs/config";
 import * as amqplib from "amqplib";
 
-const EXCHANGES = { MESSAGES: "messages", AI: "ai" } as const;
+const EXCHANGES = { MESSAGES: "messages", AI: "ai", CRM: "crm" } as const;
 const ROUTING_KEYS = { MSG_INBOUND: "msg.inbound", MSG_STATUS: "msg.status", MSG_OUTBOUND: "msg.outbound" } as const;
 
 @Injectable()
@@ -22,6 +22,7 @@ export class InboundProducer implements OnModuleInit, OnModuleDestroy {
         this.channel = await this.connection.createChannel();
         await this.channel.assertExchange(EXCHANGES.MESSAGES, "topic", { durable: true });
         await this.channel.assertExchange(EXCHANGES.AI, "topic", { durable: true });
+        await this.channel.assertExchange(EXCHANGES.CRM, "topic", { durable: true });
         this.logger.log("✅ RabbitMQ producer connected");
         return;
       } catch {
@@ -59,6 +60,19 @@ export class InboundProducer implements OnModuleInit, OnModuleDestroy {
       persistent: true,
       contentType: "application/json",
     });
+  }
+
+  async publishCrmAdvance(payload: {
+    tenantId: string;
+    contactId: string;
+    targetPosition: number;
+  }): Promise<void> {
+    await this.channel.publish(
+      EXCHANGES.CRM,
+      "crm.advance",
+      Buffer.from(JSON.stringify(payload)),
+      { persistent: true },
+    );
   }
 
   async onModuleDestroy(): Promise<void> {

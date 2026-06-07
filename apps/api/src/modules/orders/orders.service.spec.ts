@@ -2,6 +2,9 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { OrdersService } from "./orders.service";
+import { CrmProgressionService } from "../crm/crm-progression.service";
+
+const mockCrmProgression = { advanceToPosition: jest.fn().mockResolvedValue(undefined), advanceToWon: jest.fn() };
 
 const mockContact = { id: "contact-1", phone: "5511999990000" };
 const mockOrder = {
@@ -38,7 +41,11 @@ describe("OrdersService", () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [OrdersService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        OrdersService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: CrmProgressionService, useValue: mockCrmProgression },
+      ],
     }).compile();
     service = module.get(OrdersService);
     jest.clearAllMocks();

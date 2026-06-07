@@ -5,8 +5,13 @@ import { SessionService } from "../session/session.service";
 import { AudioService } from "../audio/audio.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
+import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
 
 const mockProducer = { publishInbound: jest.fn() };
+const mockCrmAutoLead = {
+  maybeCreateLead: jest.fn().mockResolvedValue(undefined),
+  advanceToLost: jest.fn().mockResolvedValue(undefined),
+};
 const mockSession = {
   isDuplicate: jest.fn().mockResolvedValue(false),
   get: jest.fn().mockResolvedValue(null),
@@ -23,7 +28,8 @@ const mockPrisma: Record<string, any> = {
     findFirst: jest.fn().mockResolvedValue({ id: "tenant-uuid-123" }),
   },
   contact: {
-    upsert: jest.fn().mockResolvedValue(mockContact),
+    findUnique: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockResolvedValue(mockContact),
     update: jest.fn().mockResolvedValue({ ...mockContact, isOptedOut: true }),
   },
   conversation: {
@@ -72,6 +78,7 @@ describe("WebhookService", () => {
         { provide: AudioService, useValue: mockAudio },
         { provide: ConfigService, useValue: mockConfig },
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: CrmAutoLeadService, useValue: mockCrmAutoLead },
       ],
     }).compile();
     service = module.get(WebhookService);
@@ -80,7 +87,8 @@ describe("WebhookService", () => {
     mockSession.isDuplicate.mockResolvedValue(false);
     mockSession.get.mockResolvedValue(null);
     mockPrisma.tenant.findFirst.mockResolvedValue({ id: "tenant-uuid-123" });
-    mockPrisma.contact.upsert.mockResolvedValue(mockContact);
+    mockPrisma.contact.findUnique.mockResolvedValue(null);
+    mockPrisma.contact.create.mockResolvedValue(mockContact);
     mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
     mockPrisma.conversation.create.mockResolvedValue(mockConversation);
     mockPrisma.message.updateMany.mockResolvedValue({ count: 1 });
@@ -124,13 +132,14 @@ describe("WebhookService", () => {
     );
   });
 
-  it("faz upsert de Contact antes de publicar", async () => {
+  it("cria Contact quando não existe antes de publicar", async () => {
     await service.processWebhook(makeTextPayload("Olá"));
-    expect(mockPrisma.contact.upsert).toHaveBeenCalledWith(
+    expect(mockPrisma.contact.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId_phone: { tenantId: "tenant-uuid-123", phone: "5511999" } },
       }),
     );
+    expect(mockPrisma.contact.create).toHaveBeenCalled();
   });
 
   it("cria Conversation se nao existe", async () => {
@@ -176,7 +185,7 @@ describe("WebhookService", () => {
   });
 
   it("bloqueia contato com isOptedOut=true e nao publica", async () => {
-    mockPrisma.contact.upsert.mockResolvedValue({ ...mockContact, isOptedOut: true });
+    mockPrisma.contact.findUnique.mockResolvedValue({ ...mockContact, isOptedOut: true });
     await service.processWebhook(makeTextPayload("Olá"));
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
     expect(mockPrisma.message.create).not.toHaveBeenCalled();
@@ -228,6 +237,42 @@ describe("WebhookService", () => {
     expect(mockSession.set).toHaveBeenCalledWith(
       expect.stringContaining("agent:published:"), "false", 60
     );
+  });
+
+  it("chama maybeCreateLead quando contato é novo", async () => {
+    mockPrisma.contact.findUnique.mockResolvedValue(null);
+    mockPrisma.contact.create.mockResolvedValue(mockContact);
+    mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
+    mockPrisma.message.create.mockResolvedValue({});
+    mockPrisma.conversation.update.mockResolvedValue(mockConversation);
+    mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: true });
+
+    await service.processWebhook(makeTextPayload("olá"));
+
+    expect(mockCrmAutoLead.maybeCreateLead).toHaveBeenCalledWith(
+      "tenant-uuid-123", "contact-1", "5511999", undefined,
+    );
+  });
+
+  it("não chama maybeCreateLead quando contato já existe", async () => {
+    mockPrisma.contact.findUnique.mockResolvedValue(mockContact);
+    mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
+    mockPrisma.message.create.mockResolvedValue({});
+    mockPrisma.conversation.update.mockResolvedValue(mockConversation);
+    mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: true });
+
+    await service.processWebhook(makeTextPayload("olá"));
+
+    expect(mockCrmAutoLead.maybeCreateLead).not.toHaveBeenCalled();
+  });
+
+  it("chama advanceToLost quando contato faz opt-out", async () => {
+    mockPrisma.contact.findUnique.mockResolvedValue(mockContact);
+    mockPrisma.contact.update.mockResolvedValue({ ...mockContact, isOptedOut: true });
+
+    await service.processWebhook(makeTextPayload("parar"));
+
+    expect(mockCrmAutoLead.advanceToLost).toHaveBeenCalledWith("tenant-uuid-123", "contact-1");
   });
 
   it("usa cache Redis para isPublished e não bate no banco na segunda chamada", async () => {

@@ -148,6 +148,8 @@ async def process_inbound_message(
                 "messages": final_state["final_messages"],
                 "triggerHandoff": final_state.get("should_handoff", False),
                 "handoffReason": final_state.get("handoff_reason"),
+                "currentStage": final_state.get("current_stage"),
+                "contactId": event.contact_id,
             }
 
             await publisher.publish_response(response_event)

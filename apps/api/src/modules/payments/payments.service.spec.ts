@@ -2,8 +2,12 @@ import { Test } from "@nestjs/testing";
 import { PaymentsService } from "./payments.service";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
+import { CrmProgressionService } from "../crm/crm-progression.service";
+
+const mockCrmProgression = { advanceToPosition: jest.fn(), advanceToWon: jest.fn().mockResolvedValue(undefined) };
 
 const mockPrisma = {
+  $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   payment: { create: jest.fn(), update: jest.fn(), findFirst: jest.fn() },
   order: { update: jest.fn(), findFirst: jest.fn() },
 };
@@ -30,6 +34,7 @@ describe("PaymentsService", () => {
         PaymentsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ConfigService, useValue: mockConfig },
+        { provide: CrmProgressionService, useValue: mockCrmProgression },
       ],
     }).compile();
     service = module.get<PaymentsService>(PaymentsService);
@@ -56,7 +61,7 @@ describe("PaymentsService", () => {
   it("deve processar webhook de confirmação e atualizar pedido", async () => {
     mockPrisma.payment.findFirst.mockResolvedValue({ id: "pay-uuid", orderId: "order-uuid", tenantId: "tenant-123" });
     mockPrisma.payment.update.mockResolvedValue({ id: "pay-uuid" });
-    mockPrisma.order.update.mockResolvedValue({ id: "order-uuid", status: "PAYMENT_CONFIRMED" });
+    mockPrisma.order.update.mockResolvedValue({ tenantId: "tenant-123", contactId: "contact-1" });
 
     await service.handleWebhook({ type: "payment", data: { id: "mp_payment_id_123" } });
 

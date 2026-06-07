@@ -4,6 +4,7 @@ import { InboundProducer } from "../queue/inbound.producer";
 import { SessionService } from "../session/session.service";
 import { AudioService } from "../audio/audio.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
 import { MetaWebhookBody, MetaMessage } from "./dto/meta-webhook.dto";
 
 @Injectable()
@@ -17,6 +18,7 @@ export class WebhookService {
     private readonly session: SessionService,
     private readonly audio: AudioService,
     private readonly prisma: PrismaService,
+    private readonly crmAutoLead: CrmAutoLeadService,
   ) {}
 
   async processWebhook(body: MetaWebhookBody): Promise<void> {
@@ -82,17 +84,27 @@ export class WebhookService {
       return;
     }
 
-    const { contact, conversation } = await this.prisma.$transaction(async (tx) => {
-      const contact = await tx.contact.upsert({
+    const { contact, conversation, isNewContact, justOptedOut } = await this.prisma.$transaction(async (tx) => {
+      let isNewContact = false;
+      let contact = await tx.contact.findUnique({
         where: { tenantId_phone: { tenantId, phone: msg.from } },
-        update: { lastSeenAt: new Date() },
-        create: { tenantId, phone: msg.from, firstSeenAt: new Date(), lastSeenAt: new Date() },
       });
+      if (!contact) {
+        isNewContact = true;
+        contact = await tx.contact.create({
+          data: { tenantId, phone: msg.from, firstSeenAt: new Date(), lastSeenAt: new Date() },
+        });
+      } else {
+        await tx.contact.update({
+          where: { id: contact.id },
+          data: { lastSeenAt: new Date() },
+        });
+      }
 
       // Block opted-out contacts — do not process any further
       if (contact.isOptedOut) {
         this.logger.warn(`Blocked opted-out contact: ${msg.from}`);
-        return { contact, conversation: null };
+        return { contact, conversation: null, isNewContact: false, justOptedOut: false };
       }
 
       // Opt-out keyword detection
@@ -102,7 +114,7 @@ export class WebhookService {
           where: { id: contact.id },
           data: { isOptedOut: true, optOutAt: new Date() },
         });
-        return { contact, conversation: null };
+        return { contact, conversation: null, isNewContact, justOptedOut: true };
       }
 
       let conversation = await tx.conversation.findFirst({
@@ -134,7 +146,7 @@ export class WebhookService {
         // P2002 = unique constraint — waMessageId already processed (Redis TTL expired but DB has it)
         if ((e as { code?: string })?.code === "P2002") {
           this.logger.warn(`Already processed waMessageId: ${msg.id}`);
-          return { contact, conversation: null };
+          return { contact, conversation: null, isNewContact: false, justOptedOut: false };
         }
         throw e;
       }
@@ -144,10 +156,18 @@ export class WebhookService {
         data: { lastMessageAt: new Date() },
       });
 
-      return { contact, conversation };
+      return { contact, conversation, isNewContact, justOptedOut: false };
     });
 
-    // After transaction — if opt-out or blocked, return early
+    if (isNewContact) {
+      await this.crmAutoLead.maybeCreateLead(tenantId, contact.id, contact.phone, contact.name ?? undefined);
+    }
+
+    if (justOptedOut) {
+      await this.crmAutoLead.advanceToLost(tenantId, contact.id);
+      return;
+    }
+
     if (!conversation) return;
 
     // Gate: só rotear para IA se o agente estiver publicado

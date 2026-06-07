@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { EventsGateway } from "../../gateways/events.gateway";
+import { CrmProgressionService } from "../crm/crm-progression.service";
 
 const META_GRAPH_API = "https://graph.facebook.com/v21.0";
 
@@ -9,6 +10,7 @@ export class ConversationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: EventsGateway,
+    private readonly crmProgression: CrmProgressionService,
   ) {}
 
   async findAll(tenantId: string) {
@@ -89,7 +91,7 @@ export class ConversationsService {
   async assumeConversation(tenantId: string, conversationId: string, userId: string) {
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
-      select: { id: true },
+      select: { id: true, contactId: true },
     });
     if (!conversation) throw new NotFoundException("Conversation not found");
 
@@ -113,6 +115,8 @@ export class ConversationsService {
         },
       }),
     ]);
+
+    await this.crmProgression.advanceToPosition(tenantId, conversation.contactId, 4);
 
     this.gateway.emitToTenant(tenantId, {
       type: "conversation_status_changed",

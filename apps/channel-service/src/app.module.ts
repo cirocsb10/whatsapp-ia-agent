@@ -13,6 +13,7 @@ import { InboundProducer } from "./queue/inbound.producer";
 import { OutboundConsumer } from "./queue/outbound.consumer";
 import { HmacGuard } from "./common/guards/hmac.guard";
 import { PrismaModule } from "./prisma/prisma.module";
+import { CrmAutoLeadService } from "./crm/crm-auto-lead.service";
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { PrismaModule } from "./prisma/prisma.module";
   providers: [
     WebhookService, SessionService, AudioService, WhisperClient,
     MetaApiClient, MessagingService, InboundProducer, OutboundConsumer, HmacGuard,
-    ConfigService,
+    ConfigService, CrmAutoLeadService,
   ],
 })
 export class AppModule {}
