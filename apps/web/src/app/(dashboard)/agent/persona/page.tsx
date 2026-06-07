@@ -1,6 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
+import { NumericInput } from "@/components/ui/NumericInput";
 import { TimeInput } from "@/components/ui/TimeInput";
 import { useApi } from "@/lib/hooks/useApi";
 import {
@@ -131,12 +132,25 @@ export default function PersonaPage() {
   async function handleSave() {
     setSaving(true);
     try {
-      const payload = {
-        ...form,
+      const payload: Record<string, unknown> = {
+        agentName: form.agentName,
+        tone: form.tone,
+        greetingMessage: form.greetingMessage,
+        inactivityMessage: form.inactivityMessage,
+        closingMessage: form.closingMessage,
+        outOfHoursMessage: form.outOfHoursMessage,
+        handoffMessage: form.handoffMessage,
+        autoHandoffThreshold: form.autoHandoffThreshold,
+        handoffOrderValueBrl: form.handoffOrderValueBrl === "" ? null : Number(form.handoffOrderValueBrl),
+        inactivityTimeoutMin: form.inactivityTimeoutMin,
+        sessionTtlHours: form.sessionTtlHours,
+        maxConversationLength: form.maxConversationLength,
+        businessHours: form.businessHours,
         llmModel: FIXED_LLM_MODEL.value,
-        handoffOrderValueBrl: form.handoffOrderValueBrl === ""
-          ? null
-          : Number(form.handoffOrderValueBrl),
+        llmTemperature: form.llmTemperature,
+        maxResponseLength: form.maxResponseLength,
+        systemPromptBase: form.systemPromptBase,
+        isPublished: form.isPublished,
       };
       const res = await apiFetch("/agent/config", {
         method: "PATCH",
@@ -309,19 +323,19 @@ export default function PersonaPage() {
                       key: "greetingMessage" as const,
                       label: "Boas-vindas",
                       hint: "Primeira mensagem ao iniciar conversa",
-                      rows: 2,
+                      rows: 7,
                     },
                     {
                       key: "inactivityMessage" as const,
                       label: "Inatividade",
                       hint: "Quando o cliente para de responder",
-                      rows: 2,
+                      rows: 5,
                     },
                     {
                       key: "closingMessage" as const,
                       label: "Encerramento",
                       hint: "Ao finalizar o atendimento",
-                      rows: 2,
+                      rows: 5,
                     },
                   ] as const
                 ).map(({ key, label, hint, rows }) => (
@@ -361,14 +375,11 @@ export default function PersonaPage() {
                       Inatividade
                       <span className="form-label-hint"> — min</span>
                     </span>
-                    <input
-                      type="number"
-                      min={5}
-                      max={1440}
-                      step={5}
-                      value={form.inactivityTimeoutMin}
-                      onChange={(e) => patch("inactivityTimeoutMin", Number(e.target.value))}
-                      className="form-input"
+                    <NumericInput
+                      value={String(form.inactivityTimeoutMin)}
+                      onChange={(v) => {
+                        if (v !== "") patch("inactivityTimeoutMin", Number(v));
+                      }}
                       disabled={loading}
                     />
                   </label>
@@ -377,27 +388,21 @@ export default function PersonaPage() {
                       Sessão
                       <span className="form-label-hint"> — horas</span>
                     </span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={720}
-                      step={1}
-                      value={form.sessionTtlHours}
-                      onChange={(e) => patch("sessionTtlHours", Number(e.target.value))}
-                      className="form-input"
+                    <NumericInput
+                      value={String(form.sessionTtlHours)}
+                      onChange={(v) => {
+                        if (v !== "") patch("sessionTtlHours", Number(v));
+                      }}
                       disabled={loading}
                     />
                   </label>
                   <label className="form-field">
                     <span className="form-label">Max. turnos</span>
-                    <input
-                      type="number"
-                      min={5}
-                      max={500}
-                      step={5}
-                      value={form.maxConversationLength}
-                      onChange={(e) => patch("maxConversationLength", Number(e.target.value))}
-                      className="form-input"
+                    <NumericInput
+                      value={String(form.maxConversationLength)}
+                      onChange={(v) => {
+                        if (v !== "") patch("maxConversationLength", Number(v));
+                      }}
                       disabled={loading}
                     />
                   </label>
