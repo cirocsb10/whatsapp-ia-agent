@@ -15,6 +15,7 @@ import { ClerkWebhookModule } from "./modules/clerk/clerk-webhook.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { AgentModule } from "./modules/agent/agent.module";
+import { CategoriesModule } from "./modules/categories/categories.module";
 import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
 
 @Module({
@@ -45,6 +46,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     PrismaModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
+    CategoriesModule,
   ],
   providers: [
     InboxEventsConsumer,
