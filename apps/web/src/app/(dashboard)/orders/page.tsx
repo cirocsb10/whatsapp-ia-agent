@@ -3,6 +3,7 @@
 import { Header } from "@/components/layout/Header";
 import { OrderDetailModal } from "@/components/orders/OrderDetailModal";
 import { UpdateStatusModal } from "@/components/orders/UpdateStatusModal";
+import { CancelOrderModal } from "@/components/orders/CancelOrderModal";
 import { CreateOrderModal } from "@/components/orders/CreateOrderModal";
 import { useApi } from "@/lib/hooks/useApi";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import {
   ShoppingCart, Search, SlidersHorizontal,
   TrendingUp, DollarSign, Clock,
   CheckCircle2, XCircle, Loader2, Download,
-  ArrowRight, MoreHorizontal, Truck,
+  MoreHorizontal, Truck,
 } from "lucide-react";
 
 type StatusFilter = "all" | "pending" | "processing" | "delivered" | "cancelled";
@@ -66,6 +67,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
   const [updateOrder, setUpdateOrder] = useState<{ id: string; status: string } | null>(null);
+  const [cancelOrder, setCancelOrder] = useState<{ id: string; orderNumber: string } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -232,16 +234,11 @@ export default function OrdersPage() {
             <div>
               {filtered.map((order) => {
                 const cfg = STATUS_CONFIG[normalizeStatus(order.status)] ?? STATUS_CONFIG.pending!;
-                const StatusIcon = cfg.icon;
                 return (
                   <div
                     key={order.id}
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1.1fr 1.2fr 1.4fr .8fr 1fr .9fr 40px",
-                      alignItems: "center",
-                      borderTop: "1px solid rgba(26,45,71,.7)",
-                    }}
+                    className="orders-tr"
+                    onClick={() => setDetailOrderId(order.id)}
                   >
                     <div className="orders-td font-mono">{order.orderNumber}</div>
                     <div className="orders-td">{order.contact?.name ?? order.contact?.phone ?? "-"}</div>
@@ -251,17 +248,16 @@ export default function OrdersPage() {
                     <div className="orders-td">{money(order.totalCents)}</div>
                     <div className="orders-td">
                       <span className="orders-flow-step" style={{ color: cfg.color, background: cfg.bg, borderColor: cfg.border }}>
-                        <StatusIcon className="w-3 h-3" strokeWidth={2} />
                         {cfg.label}
                       </span>
                     </div>
                     <div className="orders-td">
                       {new Date(order.createdAt).toLocaleDateString("pt-BR")}
                     </div>
-                    <div className="orders-td" style={{ position: "relative" }}>
+                    <div className="orders-td" style={{ position: "relative", overflow: "visible" }}>
                       <button
                         type="button"
-                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === order.id ? null : order.id); }}
+                        onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); setOpenMenuId(openMenuId === order.id ? null : order.id); }}
                         style={{ background: "none", border: "none", cursor: "pointer", padding: 4, borderRadius: 6, display: "flex", alignItems: "center", color: "#64748b" }}
                       >
                         <MoreHorizontal className="w-4 h-4" />
@@ -274,7 +270,7 @@ export default function OrdersPage() {
                           {[
                             { label: "Ver detalhes", action: () => { setDetailOrderId(order.id); setOpenMenuId(null); }, danger: false },
                             { label: "Atualizar status", action: () => { setUpdateOrder({ id: order.id, status: order.status }); setOpenMenuId(null); }, danger: false },
-                            { label: "Cancelar pedido", action: async () => { setOpenMenuId(null); if (!confirm(`Cancelar ${order.orderNumber}?`)) return; await apiFetch(`/orders/${order.id}/cancel`, { method: "PATCH" }); void loadOrders(); }, danger: true },
+                            { label: "Cancelar pedido", action: () => { setOpenMenuId(null); setCancelOrder({ id: order.id, orderNumber: order.orderNumber }); }, danger: true },
                           ].map(({ label, action, danger }) => (
                             <button
                               key={label}
@@ -350,6 +346,12 @@ export default function OrdersPage() {
         onUpdated={() => void loadOrders()}
         orderId={updateOrder?.id ?? null}
         currentStatus={updateOrder?.status ?? "DRAFT"}
+      />
+      <CancelOrderModal
+        open={!!cancelOrder}
+        onClose={() => setCancelOrder(null)}
+        onCancelled={() => void loadOrders()}
+        order={cancelOrder}
       />
     </div>
   );

@@ -5225,7 +5225,7 @@
     background: var(--c-s1);
     border: 1px solid var(--c-border);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     min-height: 360px;
     display: flex;
     flex-direction: column;

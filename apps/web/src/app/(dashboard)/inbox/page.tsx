@@ -315,7 +315,7 @@ function InboxContent() {
                           {conv.isHandoff ? (
                             <span className="inbox-handoff-hint">
                               <Phone className="w-3 h-3 flex-shrink-0" />
-                              Aguardando atendente
+                              {conv.isAssumed ? "Atendente humano ativo" : "Aguardando atendente"}
                             </span>
                           ) : (
                             conv.lastMessage ?? "Sem mensagens"
