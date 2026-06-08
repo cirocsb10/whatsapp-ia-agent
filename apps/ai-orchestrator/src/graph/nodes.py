@@ -54,6 +54,8 @@ async def entry_node(state: ConversationState) -> dict:
         agent_name=state.get("agent_name", "Assistente"),
         tone=state.get("agent_tone", "FRIENDLY"),
         business_hours_open=state.get("business_hours_open", True),
+        contact_name=state.get("contact_name"),
+        contact_phone=state.get("contact_phone"),
     )
 
     return {
@@ -122,11 +124,13 @@ async def reasoning_node(state: ConversationState) -> dict:
 
     chat_messages = [SystemMessage(content=state["system_prompt"])]
 
-    for msg in state.get("messages", [])[-10:]:
+    for msg in state.get("messages", [])[-12:]:
         content = msg["content"] if isinstance(msg, dict) else msg.content
         role = msg["role"] if isinstance(msg, dict) else msg.role
         if role == "user":
             chat_messages.append(HumanMessage(content=content))
+        elif role == "tool_context":
+            chat_messages.append(SystemMessage(content=f"Contexto de ferramentas do turno anterior (use os IDs para chamar ferramentas sem buscar novamente):\n{content}"))
         else:
             chat_messages.append(AIMessage(content=content))
 
@@ -150,7 +154,12 @@ async def reasoning_node(state: ConversationState) -> dict:
             if tool:
                 try:
                     result = await tool.ainvoke(
-                        {**tc["args"], "tenant_id": state["tenant_id"]}
+                        {
+                            **tc["args"],
+                            "tenant_id": state["tenant_id"],
+                            "contact_id": state.get("contact_id") or "",
+                            "contact_phone": state.get("contact_phone") or "",
+                        }
                     )
                     tool_calls.append({
                         "tool_name": tc["name"],
@@ -271,11 +280,28 @@ async def output_node(state: ConversationState) -> dict:
         "timestamp": int(time.time()),
     }
 
+    messages_to_append = [new_message]
+
+    # Persist tool results so next turn's LLM has product IDs and other context
+    tool_calls = state.get("llm_tool_calls", [])
+    relevant_tools = {"catalog_search_tool", "get_stock_tool", "knowledge_search_tool"}
+    tool_context_parts = [
+        f"[{tc['tool_name']}]: {tc['result']}"
+        for tc in tool_calls
+        if isinstance(tc, dict) and tc.get("tool_name") in relevant_tools and tc.get("result")
+    ]
+    if tool_context_parts:
+        messages_to_append.append({
+            "role": "tool_context",
+            "content": "\n".join(tool_context_parts),
+            "timestamp": int(time.time()),
+        })
+
     return {
         "final_messages": final_messages,
         "should_handoff": should_handoff,
         "handoff_reason": handoff_reason,
-        "messages": [new_message],
+        "messages": messages_to_append,
         "debug_trace": state.get("debug_trace", []) + [
             f"output_node:messages={len(final_messages)},handoff={should_handoff}"
         ],

@@ -78,14 +78,11 @@ async def catalog_search_tool(query: str, tenant_id: str) -> str:
 
         lines = ["Encontrei estes produtos para você:\n"]
         for i, p in enumerate(products, 1):
-            available = p.stock_qty - p.reserved_qty
             price_brl = f"{p.price_cents / 100:.2f}".replace(".", ",")
-            stock_status = f"✅ {available} em estoque" if available > 0 else "❌ Esgotado"
             lines.append(
-                f"{i}. *{p.name}*\n"
+                f"{i}. {p.name}\n"
                 f"   {p.description or ''}\n"
                 f"   💰 R$ {price_brl}\n"
-                f"   {stock_status}\n"
                 f"   ID: {p.id}"
             )
 
@@ -387,6 +384,41 @@ async def get_conversation_history_tool(
 
 
 @tool
+async def update_contact_name_tool(name: str, tenant_id: str, contact_id: str) -> str:
+    """
+    Salva o nome do cliente no sistema quando ele mencionar o nome durante a conversa.
+    Use esta ferramenta APENAS quando o cliente revelar o próprio nome naturalmente.
+    Não pergunte o nome diretamente — capture quando ele aparecer na conversa.
+
+    Args:
+        name: Nome do cliente conforme mencionado por ele
+        tenant_id: ID do tenant atual (injetado automaticamente)
+        contact_id: ID do contato (injetado automaticamente)
+
+    Returns:
+        Confirmação do registro
+    """
+    if not contact_id:
+        return "Não foi possível salvar o nome: contato não identificado."
+    try:
+        from src.db.postgres import get_async_session
+        from sqlalchemy import text
+
+        async with get_async_session() as session:
+            await session.execute(
+                text('UPDATE "Contact" SET name = :name WHERE id = :contact_id AND "tenantId" = :tenant_id'),
+                {"name": name.strip(), "contact_id": contact_id, "tenant_id": tenant_id},
+            )
+            await session.commit()
+
+        log.info("contact_name_updated", contact_id=contact_id, name=name)
+        return f"Nome '{name}' registrado com sucesso."
+    except Exception as e:
+        log.error("update_contact_name_tool failed", error=str(e))
+        return "Erro ao registrar o nome. Continuando normalmente."
+
+
+@tool
 async def knowledge_search_tool(query: str, tenant_id: str, limit: int = 4) -> str:
     """
     Search the tenant's knowledge base for information relevant to the query.
@@ -444,4 +476,5 @@ ALL_TOOLS = [
     transfer_to_human_tool,
     get_conversation_history_tool,
     knowledge_search_tool,
+    update_contact_name_tool,
 ]

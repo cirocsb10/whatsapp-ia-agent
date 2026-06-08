@@ -34,6 +34,8 @@ class ConversationState(TypedDict):
     tenant_id: str
     conversation_id: str
     contact_phone: str
+    contact_id: Optional[str]
+    contact_name: Optional[str]
 
     # Current message being processed
     current_message: str

@@ -44,6 +44,8 @@ class EmbeddingsService:
                     WHERE "tenantId" = :tenant_id
                       AND status = 'ACTIVE'
                       AND "stockQty" > "reservedQty"
+                      AND embedding IS NOT NULL
+                      AND 1 - (embedding <=> CAST(:embedding AS vector)) > 0.3
                     ORDER BY embedding <=> CAST(:embedding AS vector)
                     LIMIT :limit
                 """),
@@ -54,6 +56,31 @@ class EmbeddingsService:
                 },
             )
             rows = result.fetchall()
+
+            # Fallback: text search for products without embeddings or below threshold
+            if not rows:
+                result = await session.execute(
+                    text("""
+                        SELECT id, name, description, "priceCents",
+                               "stockQty", "reservedQty",
+                               0.5 AS similarity
+                        FROM "Product"
+                        WHERE "tenantId" = :tenant_id
+                          AND status = 'ACTIVE'
+                          AND "stockQty" > "reservedQty"
+                          AND (
+                            name ILIKE :query_like
+                            OR description ILIKE :query_like
+                          )
+                        LIMIT :limit
+                    """),
+                    {
+                        "tenant_id": tenant_id,
+                        "query_like": f"%{query}%",
+                        "limit": limit,
+                    },
+                )
+                rows = result.fetchall()
 
         class ProductRow:
             def __init__(self, row):

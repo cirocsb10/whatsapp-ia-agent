@@ -60,6 +60,8 @@ class PromptBuilderService:
         agent_name: str = "Assistente",
         tone: str = "FRIENDLY",
         business_hours_open: bool = True,
+        contact_name: str | None = None,
+        contact_phone: str | None = None,
     ) -> str:
         config = await self.get_agent_config(tenant_id)
 
@@ -99,8 +101,21 @@ class PromptBuilderService:
             "- Se não souber a resposta, use as ferramentas disponíveis antes de responder",
             "- Sempre use a ferramenta catalog_search para buscar produtos",
             "- Sempre confirme o carrinho antes de gerar link de pagamento",
+            "- Use formatação WhatsApp: *texto* para negrito (um asterisco), _texto_ para itálico. NUNCA use **duplo asterisco**.",
+            f"- O telefone do cliente já é conhecido ({contact_phone or 'disponível via ferramenta'}). NUNCA peça o número de telefone ao cliente.",
             "",
-        ]
+            "## Identificação do Cliente",
+        ] + (
+            [f"- O cliente se chama {contact_name}. Use o nome dele para personalizar o atendimento.", ""]
+            if contact_name else
+            [
+                "- O nome do cliente ainda não foi registrado.",
+                "- Em um momento natural da conversa (ex: ao confirmar um pedido, personalizar uma recomendação ou encaminhar para pagamento), pergunte o nome do cliente de forma leve e contextual. Exemplo: 'Para eu te atender melhor, qual é o seu nome?' ou 'Com quem eu tenho o prazer de falar?'.",
+                "- Pergunte UMA VEZ apenas. Não insista se o cliente não responder.",
+                "- Assim que o cliente revelar o nome — seja ao responder diretamente ou ao mencioná-lo em qualquer contexto — use IMEDIATAMENTE a ferramenta `update_contact_name_tool` para registrá-lo.",
+                "",
+            ]
+        )
 
         if not business_hours_open:
             out_of_hours_msg = (
@@ -138,7 +153,8 @@ class PromptBuilderService:
             "## Ferramentas Disponíveis",
             "Use as ferramentas quando necessário. Não responda sobre produtos sem consultá-las.",
             "Ferramentas: catalog_search, get_stock, add_to_cart, generate_payment_link,",
-            "             verify_business_hours, transfer_to_human, get_conversation_history",
+            "             verify_business_hours, transfer_to_human, get_conversation_history,",
+            "             update_contact_name, knowledge_search",
         ])
 
         return "\n".join(prompt_parts)

@@ -59,6 +59,24 @@ class InboundMessageEvent(BaseModel):
         return normalized
 
 
+async def _fetch_contact_name(contact_id: str | None, tenant_id: str) -> str | None:
+    if not contact_id:
+        return None
+    try:
+        from src.db.postgres import get_async_session
+        from sqlalchemy import text
+
+        async with get_async_session() as session:
+            result = await session.execute(
+                text('SELECT name FROM "Contact" WHERE id = :cid AND "tenantId" = :tid'),
+                {"cid": contact_id, "tid": tenant_id},
+            )
+            row = result.fetchone()
+            return row[0] if row and row[0] else None
+    except Exception:
+        return None
+
+
 async def process_inbound_message(
     message: AbstractIncomingMessage,
     session_svc: SessionService,
@@ -89,7 +107,10 @@ async def process_inbound_message(
             session = await session_svc.get_or_create(tenant_id, contact_phone, event.conversation_id)
 
             pb = PromptBuilderService()
-            agent_config = await pb.get_agent_config(tenant_id)
+            agent_config, contact_name = await asyncio.gather(
+                pb.get_agent_config(tenant_id),
+                _fetch_contact_name(event.contact_id, tenant_id),
+            )
 
             if event.message_type == "image":
                 current_text = event.text or "[O usuário enviou uma imagem]"
@@ -100,6 +121,8 @@ async def process_inbound_message(
                 "tenant_id": tenant_id,
                 "conversation_id": session.conversation_id,
                 "contact_phone": contact_phone,
+                "contact_id": event.contact_id,
+                "contact_name": contact_name,
                 "current_message": current_text,
                 "current_message_type": event.message_type,
                 "audio_transcript": event.audio_transcript,
