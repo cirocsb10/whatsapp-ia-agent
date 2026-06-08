@@ -17,6 +17,7 @@ class Session:
     current_stage: str = "greeting"
     messages: list[dict] = field(default_factory=list)
     cart: list[dict] = field(default_factory=list)
+    order_id: str | None = None
 
 
 class SessionService:
@@ -93,6 +94,7 @@ class SessionService:
             "current_stage": session.current_stage,
             "messages": session.messages,
             "cart": session.cart,
+            "order_id": session.order_id,
         }
         await self._client.setex(
             key,

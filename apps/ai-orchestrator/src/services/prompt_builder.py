@@ -101,6 +101,7 @@ class PromptBuilderService:
             "- Se não souber a resposta, use as ferramentas disponíveis antes de responder",
             "- Sempre use a ferramenta catalog_search para buscar produtos",
             "- Sempre confirme o carrinho antes de gerar link de pagamento",
+            "- SEMPRE pergunte a forma de pagamento (Pix, cartão de crédito ou boleto) antes de chamar generate_payment_link_tool. Nunca assuma a forma de pagamento.",
             "- Use formatação WhatsApp: *texto* para negrito (um asterisco), _texto_ para itálico. NUNCA use **duplo asterisco**.",
             f"- O telefone do cliente já é conhecido ({contact_phone or 'disponível via ferramenta'}). NUNCA peça o número de telefone ao cliente.",
             "",

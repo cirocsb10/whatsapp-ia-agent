@@ -122,145 +122,201 @@ async def get_stock_tool(product_id: str, tenant_id: str) -> str:
 @tool
 async def add_to_cart_tool(
     product_id: str,
-    product_name: str,
-    price_cents: int,
     quantity: int,
     tenant_id: str,
+    contact_id: str,
+    contact_phone: str,
     variation_selected: Optional[str] = None,
 ) -> str:
     """
-    Adiciona produto ao carrinho da sessão atual.
-    Use quando o cliente confirmar que quer comprar um produto.
+    Adiciona produto ao pedido do cliente. Cria um pedido DRAFT se não existir um aberto,
+    ou adiciona ao pedido existente. Use quando o cliente confirmar que quer comprar um produto.
 
     Args:
-        product_id: ID do produto
-        product_name: Nome do produto (usado apenas como fallback de display)
-        price_cents: Preço em centavos (será validado contra o banco de dados)
+        product_id: ID do produto (obtido do catalog_search)
         quantity: Quantidade desejada
-        tenant_id: ID do tenant
-        variation_selected: JSON string com variações selecionadas (ex: '{"Cor": "Preto", "Tamanho": "M"}')
+        tenant_id: ID do tenant (injetado automaticamente)
+        contact_id: ID do contato (injetado automaticamente)
+        contact_phone: Telefone do contato (injetado automaticamente)
+        variation_selected: JSON string com variações selecionadas
 
     Returns:
-        Confirmação com resumo do carrinho atualizado
+        Confirmação com resumo do pedido atualizado e [ORDER_ID:xxx]
     """
+    from src.db.postgres import get_async_session
+    from sqlalchemy import text
+    import random, string
+    from datetime import datetime
+
     try:
-        # Always fetch authoritative price from DB — never trust LLM-supplied price
         db_product = await _get_authoritative_price(product_id, tenant_id)
         if not db_product:
-            return f"Produto não encontrado no catálogo. Por favor, busque o produto novamente."
-
+            return "Produto não encontrado no catálogo. Por favor, busque o produto novamente."
         if quantity > db_product["available_qty"]:
             return f"Desculpe, temos apenas {db_product['available_qty']} unidades disponíveis deste produto."
 
         authoritative_price = db_product["price_cents"]
         authoritative_name = db_product["name"]
         variation = json.loads(variation_selected) if variation_selected else {}
-        subtotal = authoritative_price * quantity / 100
 
-        return (
-            f"✅ Adicionado ao carrinho!\n"
-            f"   Produto: {authoritative_name}\n"
-            f"   Quantidade: {quantity}\n"
-            f"   Valor: R$ {subtotal:.2f}".replace(".", ",")
-            + (f"\n   Variação: {json.dumps(variation, ensure_ascii=False)}" if variation else "")
-        )
+        async with get_async_session() as session:
+            # Find existing DRAFT order for this contact
+            existing = await session.execute(
+                text("""
+                    SELECT id FROM "Order"
+                    WHERE "tenantId" = :tid AND "contactId" = :cid AND status = 'DRAFT'
+                    ORDER BY "createdAt" DESC LIMIT 1
+                """),
+                {"tid": tenant_id, "cid": contact_id},
+            )
+            order_row = existing.fetchone()
+            order_id = order_row[0] if order_row else None
+
+            if not order_id:
+                # Create new DRAFT order
+                suffix = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+                order_number = f"ORD-{datetime.now().strftime('%y%m%d')}-{suffix}"
+                result = await session.execute(
+                    text("""
+                        INSERT INTO "Order" ("id", "tenantId", "contactId", "orderNumber",
+                            "subtotalCents", "totalCents", "status", "createdAt", "updatedAt")
+                        VALUES (gen_random_uuid(), :tid, :cid, :num, 0, 0, 'DRAFT', now(), now())
+                        RETURNING id
+                    """),
+                    {"tid": tenant_id, "cid": contact_id, "num": order_number},
+                )
+                order_id = result.fetchone()[0]
+
+            # Check if this product already in the order
+            item_row = await session.execute(
+                text("""
+                    SELECT id, quantity FROM "OrderItem"
+                    WHERE "orderId" = :oid AND "productId" = :pid
+                    LIMIT 1
+                """),
+                {"oid": order_id, "pid": product_id},
+            )
+            existing_item = item_row.fetchone()
+
+            if existing_item:
+                new_qty = existing_item[1] + quantity
+                new_subtotal = authoritative_price * new_qty
+                await session.execute(
+                    text("""
+                        UPDATE "OrderItem"
+                        SET quantity = :qty, "subtotalCents" = :sub
+                        WHERE id = :iid
+                    """),
+                    {"qty": new_qty, "sub": new_subtotal, "iid": existing_item[0]},
+                )
+            else:
+                item_subtotal = authoritative_price * quantity
+                await session.execute(
+                    text("""
+                        INSERT INTO "OrderItem" ("id", "orderId", "productId", "productName",
+                            "priceCents", quantity, "subtotalCents", "variationSelected")
+                        VALUES (gen_random_uuid(), :oid, :pid, :name, :price, :qty, :sub, CAST(:var AS jsonb))
+                    """),
+                    {
+                        "oid": order_id, "pid": product_id, "name": authoritative_name,
+                        "price": authoritative_price, "qty": quantity,
+                        "sub": authoritative_price * quantity,
+                        "var": json.dumps(variation),
+                    },
+                )
+
+            # Recalculate order total
+            total_row = await session.execute(
+                text('SELECT COALESCE(SUM("subtotalCents"), 0) FROM "OrderItem" WHERE "orderId" = :oid'),
+                {"oid": order_id},
+            )
+            total_cents = total_row.fetchone()[0]
+            await session.execute(
+                text('UPDATE "Order" SET "subtotalCents" = :t, "totalCents" = :t, "updatedAt" = now() WHERE id = :oid'),
+                {"t": total_cents, "oid": order_id},
+            )
+
+            # Fetch all items for summary
+            items_result = await session.execute(
+                text('SELECT "productName", quantity, "subtotalCents" FROM "OrderItem" WHERE "orderId" = :oid'),
+                {"oid": order_id},
+            )
+            items = items_result.fetchall()
+            await session.commit()
+
+        total_brl = f"{total_cents / 100:.2f}".replace(".", ",")
+        lines = [f"✅ Adicionado ao pedido!\n"]
+        for item in items:
+            item_brl = f"{item[2] / 100:.2f}".replace(".", ",")
+            lines.append(f"   • {item[0]} x{item[1]} — R$ {item_brl}")
+        lines.append(f"\n   *Total: R$ {total_brl}*")
+        lines.append(f"[ORDER_ID:{order_id}]")
+
+        log.info("add_to_cart_tool", order_id=order_id, total_cents=total_cents)
+        return "\n".join(lines)
     except Exception as e:
         log.error("add_to_cart_tool failed", error=str(e))
-        return "Erro ao adicionar produto ao carrinho. Por favor, tente novamente."
+        return "Erro ao adicionar produto ao pedido. Por favor, tente novamente."
 
 
 @tool
 async def generate_payment_link_tool(
+    payment_method: str,
     tenant_id: str,
     contact_phone: str,
-    items_json: str,
-    payment_method: str = "pix",
+    order_id: str,
 ) -> str:
     """
-    Gera link de pagamento via Mercado Pago para fechar o pedido.
-    Use APENAS quando o cliente confirmar todos os itens e querer pagar.
+    Gera link de pagamento para o pedido aberto do cliente.
+    Use APENAS quando o cliente informar a forma de pagamento desejada.
+    O pedido já foi criado pelo add_to_cart_tool — não é necessário informar os itens.
 
     Args:
-        tenant_id: ID do tenant
-        contact_phone: Telefone do cliente
-        items_json: JSON string com lista de itens
         payment_method: "pix" | "credit_card" | "boleto"
+        tenant_id: ID do tenant (injetado automaticamente)
+        contact_phone: Telefone do cliente (injetado automaticamente)
+        order_id: ID do pedido aberto (injetado automaticamente)
 
     Returns:
-        QR Code Pix + código para cópia e cola
+        QR Code Pix + código para cópia e cola, ou link de pagamento
     """
+    import os, httpx
+
+    if not order_id:
+        return "Nenhum pedido aberto encontrado. Por favor, adicione produtos ao carrinho primeiro."
+
     try:
-        import os
-        items = json.loads(items_json)
-
-        # Re-validate all prices against DB — never trust LLM-supplied price_cents
-        validated_items = []
-        for item in items:
-            product_id = item.get("product_id") or item.get("productId")
-            quantity = int(item.get("quantity", 1))
-
-            if not product_id:
-                return "Erro: item sem product_id no carrinho. Por favor, adicione os produtos novamente."
-
-            db_product = await _get_authoritative_price(product_id, tenant_id)
-            if not db_product:
-                return f"Produto '{item.get('name', product_id)}' não encontrado ou indisponível. Por favor, verifique o carrinho."
-
-            validated_items.append({
-                "product_id": product_id,
-                "name": db_product["name"],
-                "price_cents": db_product["price_cents"],  # authoritative price from DB
-                "quantity": quantity,
-            })
-
-        total_cents = sum(i["price_cents"] * i["quantity"] for i in validated_items)
-        total_brl = total_cents / 100
-
-        import httpx
         api_base = os.environ.get("BACKOFFICE_API_URL", "http://api:3002")
         internal_token = os.environ.get("INTERNAL_API_TOKEN")
         if not internal_token:
             raise RuntimeError("INTERNAL_API_TOKEN must be set")
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            order_resp = await client.post(
-                f"{api_base}/orders/internal",
-                json={
-                    "tenantId": tenant_id,
-                    "contactPhone": contact_phone,
-                    "items": validated_items,
-                },
-                headers={"X-Internal-Token": internal_token},
-            )
-            order_resp.raise_for_status()
-            order_id = order_resp.json()["id"]
-
             pay_resp = await client.post(
                 f"{api_base}/payments/generate-internal",
-                json={
-                    "orderId": order_id,
-                    "paymentMethod": payment_method.upper(),
-                },
+                json={"orderId": order_id, "tenantId": tenant_id, "paymentMethod": payment_method.upper()},
                 headers={"X-Internal-Token": internal_token},
             )
             pay_resp.raise_for_status()
             data = pay_resp.json()
 
-        if payment_method == "pix":
+        total_brl = f"{data['totalCents'] / 100:.2f}".replace(".", ",")
+
+        if payment_method.lower() == "pix":
             return (
                 f"💳 *Pagamento Pix gerado!*\n\n"
-                f"💰 Total: R$ {total_brl:.2f}\n\n"
+                f"💰 Total: R$ {total_brl}\n\n"
                 f"*Copia e cola o código Pix:*\n"
-                f"`{data['pixCopyPaste']}`\n\n"
+                f"{data['pixCopyPaste']}\n\n"
                 f"⏰ Expira em 30 minutos\n\n"
                 f"Após o pagamento confirmado, te aviso aqui mesmo! 😊"
             )
         else:
-            return f"🔗 Link de pagamento: {data['paymentUrl']}\n💰 Total: R$ {total_brl:.2f}"
+            return f"🔗 Link de pagamento: {data.get('paymentUrl', '')}\n💰 Total: R$ {total_brl}"
 
     except Exception as e:
         log.error("generate_payment_link_tool failed", error=str(e))
-        return "Não consegui gerar o link de pagamento agora. Vou transferir para um atendente."
+        return "__HANDOFF_REQUESTED__"
 
 
 @tool

@@ -59,6 +59,28 @@ class InboundMessageEvent(BaseModel):
         return normalized
 
 
+async def _fetch_draft_order_id(contact_id: str | None, tenant_id: str) -> str | None:
+    if not contact_id:
+        return None
+    try:
+        from src.db.postgres import get_async_session
+        from sqlalchemy import text
+
+        async with get_async_session() as session:
+            result = await session.execute(
+                text("""
+                    SELECT id FROM "Order"
+                    WHERE "contactId" = :cid AND "tenantId" = :tid AND status = 'DRAFT'
+                    ORDER BY "createdAt" DESC LIMIT 1
+                """),
+                {"cid": contact_id, "tid": tenant_id},
+            )
+            row = result.fetchone()
+            return str(row[0]) if row else None
+    except Exception:
+        return None
+
+
 async def _fetch_contact_name(contact_id: str | None, tenant_id: str) -> str | None:
     if not contact_id:
         return None
@@ -107,10 +129,14 @@ async def process_inbound_message(
             session = await session_svc.get_or_create(tenant_id, contact_phone, event.conversation_id)
 
             pb = PromptBuilderService()
-            agent_config, contact_name = await asyncio.gather(
+            agent_config, contact_name, draft_order_id = await asyncio.gather(
                 pb.get_agent_config(tenant_id),
                 _fetch_contact_name(event.contact_id, tenant_id),
+                _fetch_draft_order_id(event.contact_id, tenant_id),
             )
+            # Session order_id takes precedence over DB (already set in current session)
+            session_order_id = getattr(session, "order_id", None)
+            active_order_id = session_order_id or draft_order_id
 
             if event.message_type == "image":
                 current_text = event.text or "[O usuário enviou uma imagem]"
@@ -123,6 +149,7 @@ async def process_inbound_message(
                 "contact_phone": contact_phone,
                 "contact_id": event.contact_id,
                 "contact_name": contact_name,
+                "order_id": active_order_id,
                 "current_message": current_text,
                 "current_message_type": event.message_type,
                 "audio_transcript": event.audio_transcript,
@@ -168,6 +195,7 @@ async def process_inbound_message(
                     c if isinstance(c, dict) else c.__dict__
                     for c in final_state["cart"]
                 ],
+                "order_id": final_state.get("order_id"),
             }, ttl_seconds=session_ttl_hours * 3600)
 
             response_event = {

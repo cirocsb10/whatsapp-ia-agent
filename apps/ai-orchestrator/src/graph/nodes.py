@@ -159,6 +159,7 @@ async def reasoning_node(state: ConversationState) -> dict:
                             "tenant_id": state["tenant_id"],
                             "contact_id": state.get("contact_id") or "",
                             "contact_phone": state.get("contact_phone") or "",
+                            "order_id": state.get("order_id") or "",
                         }
                     )
                     tool_calls.append({
@@ -284,7 +285,7 @@ async def output_node(state: ConversationState) -> dict:
 
     # Persist tool results so next turn's LLM has product IDs and other context
     tool_calls = state.get("llm_tool_calls", [])
-    relevant_tools = {"catalog_search_tool", "get_stock_tool", "knowledge_search_tool"}
+    relevant_tools = {"catalog_search_tool", "get_stock_tool", "knowledge_search_tool", "add_to_cart_tool"}
     tool_context_parts = [
         f"[{tc['tool_name']}]: {tc['result']}"
         for tc in tool_calls
@@ -297,9 +298,20 @@ async def output_node(state: ConversationState) -> dict:
             "timestamp": int(time.time()),
         })
 
+    # Extract order_id from add_to_cart_tool result (tagged as [ORDER_ID:xxx])
+    import re
+    new_order_id = state.get("order_id")
+    for tc in tool_calls:
+        if isinstance(tc, dict) and tc.get("tool_name") == "add_to_cart_tool" and tc.get("result"):
+            match = re.search(r"\[ORDER_ID:([^\]]+)\]", tc["result"])
+            if match:
+                new_order_id = match.group(1)
+                break
+
     return {
         "final_messages": final_messages,
         "should_handoff": should_handoff,
+        "order_id": new_order_id,
         "handoff_reason": handoff_reason,
         "messages": messages_to_append,
         "debug_trace": state.get("debug_trace", []) + [

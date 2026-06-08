@@ -51,6 +51,7 @@ class ConversationState(TypedDict):
 
     # Shopping cart
     cart: list[CartItem]
+    order_id: Optional[str]
 
     # Tenant context
     agent_name: str
