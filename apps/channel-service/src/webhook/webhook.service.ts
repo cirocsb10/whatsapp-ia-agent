@@ -86,7 +86,7 @@ export class WebhookService {
       return;
     }
 
-    const { contact, conversation, isNewContact, justOptedOut } = await this.prisma.$transaction(async (tx) => {
+    const { contact, conversation, justOptedOut } = await this.prisma.$transaction(async (tx) => {
       let isNewContact = false;
       let contact = await tx.contact.findUnique({
         where: { tenantId_phone: { tenantId, phone: msg.from } },
@@ -161,9 +161,7 @@ export class WebhookService {
       return { contact, conversation, isNewContact, justOptedOut: false };
     });
 
-    if (isNewContact) {
-      await this.crmAutoLead.maybeCreateLead(tenantId, contact.id, contact.phone, contact.name ?? undefined);
-    }
+    await this.crmAutoLead.maybeCreateLead(tenantId, contact.id, contact.phone, contact.name ?? undefined);
 
     if (justOptedOut) {
       await this.crmAutoLead.advanceToLost(tenantId, contact.id);
@@ -242,11 +240,8 @@ export class WebhookService {
     this.logger.log(`Published: ${msg.type} from ${msg.from} (conv: ${conversation.id})`);
 
     if (conversation.status === "ACTIVE") {
-      await this.scheduleInactivityTimer(
-        tenantId,
-        conversation.id,
-        msg.from,
-        phoneNumberId,
+      this.scheduleInactivityTimer(tenantId, conversation.id, msg.from, phoneNumberId).catch(
+        (err) => this.logger.error(`Failed to schedule inactivity timer: ${err?.message}`),
       );
     }
   }

@@ -11,7 +11,7 @@ export class InactivitySchedulerService {
   ) {}
 
   private jobId(conversationId: string): string {
-    return `inactivity:${conversationId}`;
+    return `inactivity-${conversationId}`;
   }
 
   async schedule(

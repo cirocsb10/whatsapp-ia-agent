@@ -72,15 +72,17 @@ export class OutboundConsumer implements OnModuleInit {
     if (event.tenantId && event.conversationId && event.inactivityTimeoutMin) {
       const timeoutMin = event.inactivityTimeoutMin;
       if (timeoutMin > 0) {
-        await this.inactivityScheduler.schedule(
-          {
-            conversationId: event.conversationId,
-            tenantId: event.tenantId,
-            contactPhone: event.toPhone,
-            waPhoneId: event.waPhoneId,
-          },
-          timeoutMin * 60_000,
-        );
+        this.inactivityScheduler
+          .schedule(
+            {
+              conversationId: event.conversationId,
+              tenantId: event.tenantId,
+              contactPhone: event.toPhone,
+              waPhoneId: event.waPhoneId,
+            },
+            timeoutMin * 60_000,
+          )
+          .catch((err) => this.logger.error(`Failed to schedule inactivity timer: ${err?.message}`));
       }
     }
   }
@@ -124,9 +126,26 @@ export class OutboundConsumer implements OnModuleInit {
             messages: Array<{ type: string; text?: string; imageUrl?: string }>;
             currentStage?: string;
             contactId?: string;
+            triggerHandoff?: boolean;
+            handoffReason?: string;
           };
 
           await this.handleOutboundMessage(event);
+
+          if (event.triggerHandoff && event.tenantId && event.conversationId) {
+            await this.prisma.conversation.updateMany({
+              where: { id: event.conversationId, tenantId: event.tenantId },
+              data: { status: "HUMAN_HANDOFF" },
+            });
+            await this.inbound.publishOutbound({
+              tenantId: event.tenantId,
+              conversationId: event.conversationId,
+              type: "handoff",
+              handoffReason: event.handoffReason ?? "Solicitado pelo agente IA",
+              sentAt: new Date().toISOString(),
+            });
+            this.logger.log(`Conversation ${event.conversationId} → HUMAN_HANDOFF`);
+          }
 
           if (event.tenantId && event.contactId && event.currentStage) {
             const targetPosition = this.resolveCrmPosition(event.currentStage);
