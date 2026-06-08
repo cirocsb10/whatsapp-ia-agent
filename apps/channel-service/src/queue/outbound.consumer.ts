@@ -4,6 +4,7 @@ import * as amqplib from "amqplib";
 import { MessagingService } from "../messaging/messaging.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { InboundProducer } from "./inbound.producer";
+import { InactivitySchedulerService } from "./inactivity-scheduler.service";
 
 @Injectable()
 export class OutboundConsumer implements OnModuleInit {
@@ -14,6 +15,7 @@ export class OutboundConsumer implements OnModuleInit {
     private readonly messaging: MessagingService,
     private readonly prisma: PrismaService,
     private readonly inbound: InboundProducer,
+    private readonly inactivityScheduler: InactivitySchedulerService,
   ) {}
 
   async handleOutboundMessage(event: {
@@ -21,6 +23,7 @@ export class OutboundConsumer implements OnModuleInit {
     conversationId?: string;
     waPhoneId: string;
     toPhone: string;
+    inactivityTimeoutMin?: number;
     messages: Array<{ type: string; text?: string; imageUrl?: string }>;
   }): Promise<void> {
     for (const m of event.messages) {
@@ -65,6 +68,21 @@ export class OutboundConsumer implements OnModuleInit {
 
       await new Promise((r) => setTimeout(r, 400));
     }
+
+    if (event.tenantId && event.conversationId && event.inactivityTimeoutMin) {
+      const timeoutMin = event.inactivityTimeoutMin;
+      if (timeoutMin > 0) {
+        await this.inactivityScheduler.schedule(
+          {
+            conversationId: event.conversationId,
+            tenantId: event.tenantId,
+            contactPhone: event.toPhone,
+            waPhoneId: event.waPhoneId,
+          },
+          timeoutMin * 60_000,
+        );
+      }
+    }
   }
 
   private resolveCrmPosition(aiStage: string): number | null {
@@ -102,6 +120,7 @@ export class OutboundConsumer implements OnModuleInit {
             conversationId?: string;
             waPhoneId: string;
             toPhone: string;
+            inactivityTimeoutMin?: number;
             messages: Array<{ type: string; text?: string; imageUrl?: string }>;
             currentStage?: string;
             contactId?: string;

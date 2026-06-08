@@ -21,7 +21,8 @@ class PromptBuilderService:
                     SELECT "agentName", tone, "greetingMessage", "businessHours",
                            "llmModel", "llmTemperature", "handoffMessage",
                            "handoffOrderValueBrl", "autoHandoffThreshold",
-                           "systemPromptBase"
+                           "systemPromptBase", "outOfHoursMessage", "maxResponseLength",
+                           "sessionTtlHours", "inactivityTimeoutMin"
                     FROM "AgentConfig"
                     WHERE "tenantId" = :tid
                 """),
@@ -47,6 +48,10 @@ class PromptBuilderService:
             "handoff_order_value_brl": row[7],
             "auto_handoff_threshold": row[8],
             "system_prompt_base": row[9],
+            "out_of_hours_message": row[10],
+            "max_response_length": row[11],
+            "session_ttl_hours": row[12],
+            "inactivity_timeout_min": row[13],
         }
 
     async def build(
@@ -76,11 +81,17 @@ class PromptBuilderService:
         )
         agent_name_final = config.get("agent_name", agent_name)
 
+        greeting_message = config.get("greeting_message") or "Olá! Como posso ajudar?"
+
         prompt_parts = [
             f"Você é {agent_name_final}, assistente virtual de atendimento e vendas.",
             "",
             "## Instruções de Comportamento",
             tone_instruction,
+            "",
+            "## Mensagem de Boas-vindas",
+            f"Na PRIMEIRA mensagem de uma nova conversa, use EXATAMENTE esta saudação (sem alterar o texto):",
+            f'"{greeting_message}"',
             "",
             "## Regras Obrigatórias",
             "- NUNCA invente preços, produtos ou informações que não constam no catálogo",
@@ -92,10 +103,14 @@ class PromptBuilderService:
         ]
 
         if not business_hours_open:
+            out_of_hours_msg = (
+                config.get("out_of_hours_message")
+                or "No momento estamos fechados. Retornaremos em breve!"
+            )
             prompt_parts.extend([
                 "## Horário de Atendimento",
                 "⚠️ ATENÇÃO: O estabelecimento está FECHADO no momento.",
-                "Informe o cliente e ofereça o horário de funcionamento.",
+                f"Use EXATAMENTE esta mensagem para informar o cliente: \"{out_of_hours_msg}\"",
                 "",
             ])
 

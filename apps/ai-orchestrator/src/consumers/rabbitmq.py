@@ -5,6 +5,7 @@ from aio_pika.abc import AbstractIncomingMessage
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from src.config import settings
 from src.graph.agent import get_agent_graph
+from src.services.business_hours import is_business_open
 from src.services.session import SessionService
 from src.services.prompt_builder import PromptBuilderService
 from src.publishers.rabbitmq import RabbitMQPublisher
@@ -108,8 +109,13 @@ async def process_inbound_message(
                 "cart": session.cart,
                 "agent_name": agent_config.get("agent_name", "Assistente"),
                 "agent_tone": agent_config.get("tone", "FRIENDLY"),
+                "greeting_message": agent_config.get("greeting_message") or "Olá! Como posso ajudar?",
+                "llm_model": agent_config.get("llm_model") or "gpt-4o-mini",
+                "llm_temperature": agent_config.get("llm_temperature") if agent_config.get("llm_temperature") is not None else 0.3,
+                "max_response_length": agent_config.get("max_response_length") or 500,
+                "session_ttl_hours": agent_config.get("session_ttl_hours") or 24,
                 "system_prompt": "",
-                "business_hours_open": True,
+                "business_hours_open": is_business_open(agent_config.get("business_hours")),
                 "llm_response": None,
                 "llm_tool_calls": [],
                 "guard_rail_triggered": False,
@@ -128,6 +134,7 @@ async def process_inbound_message(
                 config={"recursion_limit": settings.langgraph_recursion_limit},
             )
 
+            session_ttl_hours = final_state.get("session_ttl_hours") or 24
             await session_svc.update(tenant_id, contact_phone, {
                 "messages": [
                     m if isinstance(m, dict) else m.__dict__
@@ -138,7 +145,7 @@ async def process_inbound_message(
                     c if isinstance(c, dict) else c.__dict__
                     for c in final_state["cart"]
                 ],
-            })
+            }, ttl_seconds=session_ttl_hours * 3600)
 
             response_event = {
                 "tenantId": tenant_id,
@@ -150,6 +157,7 @@ async def process_inbound_message(
                 "handoffReason": final_state.get("handoff_reason"),
                 "currentStage": final_state.get("current_stage"),
                 "contactId": event.contact_id,
+                "inactivityTimeoutMin": agent_config.get("inactivity_timeout_min") or 30,
             }
 
             await publisher.publish_response(response_event)
@@ -166,7 +174,7 @@ async def start_consumer(
 
     while True:
         try:
-            connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+            connection = await aio_pika.connect_robust(settings.rabbitmq_url, heartbeat=60)
             channel = await connection.channel()
             await channel.set_qos(prefetch_count=5)
 

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { InboundProducer } from "../queue/inbound.producer";
+import { InactivitySchedulerService } from "../queue/inactivity-scheduler.service";
 import { SessionService } from "../session/session.service";
 import { AudioService } from "../audio/audio.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -19,6 +20,7 @@ export class WebhookService {
     private readonly audio: AudioService,
     private readonly prisma: PrismaService,
     private readonly crmAutoLead: CrmAutoLeadService,
+    private readonly inactivityScheduler: InactivitySchedulerService,
   ) {}
 
   async processWebhook(body: MetaWebhookBody): Promise<void> {
@@ -238,6 +240,34 @@ export class WebhookService {
 
     await this.inbound.publishInbound(event);
     this.logger.log(`Published: ${msg.type} from ${msg.from} (conv: ${conversation.id})`);
+
+    if (conversation.status === "ACTIVE") {
+      await this.scheduleInactivityTimer(
+        tenantId,
+        conversation.id,
+        msg.from,
+        phoneNumberId,
+      );
+    }
+  }
+
+  private async scheduleInactivityTimer(
+    tenantId: string,
+    conversationId: string,
+    contactPhone: string,
+    waPhoneId: string,
+  ): Promise<void> {
+    const config = await this.prisma.agentConfig.findUnique({
+      where: { tenantId },
+      select: { inactivityTimeoutMin: true },
+    });
+    const timeoutMin = config?.inactivityTimeoutMin ?? 30;
+    if (timeoutMin <= 0) return;
+
+    await this.inactivityScheduler.schedule(
+      { conversationId, tenantId, contactPhone, waPhoneId },
+      timeoutMin * 60_000,
+    );
   }
 
   private resolveMessageType(type: string): "TEXT" | "AUDIO" | "IMAGE" | "DOCUMENT" | "STICKER" | "LOCATION" | "INTERACTIVE" {

@@ -6,8 +6,10 @@ import { AudioService } from "../audio/audio.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
+import { InactivitySchedulerService } from "../queue/inactivity-scheduler.service";
 
 const mockProducer = { publishInbound: jest.fn() };
+const mockInactivityScheduler = { schedule: jest.fn().mockResolvedValue(undefined) };
 const mockCrmAutoLead = {
   maybeCreateLead: jest.fn().mockResolvedValue(undefined),
   advanceToLost: jest.fn().mockResolvedValue(undefined),
@@ -43,6 +45,7 @@ const mockPrisma: Record<string, any> = {
   },
   agentConfig: {
     findFirst: jest.fn().mockResolvedValue({ isPublished: true }),
+    findUnique: jest.fn().mockResolvedValue({ inactivityTimeoutMin: 30 }),
   },
 };
 
@@ -79,6 +82,7 @@ describe("WebhookService", () => {
         { provide: ConfigService, useValue: mockConfig },
         { provide: PrismaService, useValue: mockPrisma },
         { provide: CrmAutoLeadService, useValue: mockCrmAutoLead },
+        { provide: InactivitySchedulerService, useValue: mockInactivityScheduler },
       ],
     }).compile();
     service = module.get(WebhookService);
@@ -93,6 +97,7 @@ describe("WebhookService", () => {
     mockPrisma.conversation.create.mockResolvedValue(mockConversation);
     mockPrisma.message.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: true });
+    mockPrisma.agentConfig.findUnique.mockResolvedValue({ inactivityTimeoutMin: 30 });
   });
 
   it("publishes inbound event for text message", async () => {

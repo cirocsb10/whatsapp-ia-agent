@@ -35,4 +35,9 @@ export class SessionService implements OnModuleInit, OnModuleDestroy {
   async set(key: string, value: string, ttlSeconds: number): Promise<void> {
     await this.client.set(key, value, { EX: ttlSeconds });
   }
+
+  async deleteSession(tenantId: string, contactPhone: string): Promise<void> {
+    const key = `session:${tenantId}:${contactPhone}`;
+    await this.client.del(key);
+  }
 }

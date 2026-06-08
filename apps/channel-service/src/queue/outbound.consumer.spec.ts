@@ -4,11 +4,13 @@ import { OutboundConsumer } from "./outbound.consumer";
 import { MessagingService } from "../messaging/messaging.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { InboundProducer } from "./inbound.producer";
+import { InactivitySchedulerService } from "./inactivity-scheduler.service";
 
 const mockMessaging = { sendMessage: jest.fn().mockResolvedValue("wa-msg-id") };
 const mockConfig = { get: jest.fn().mockReturnValue("amqp://localhost") };
 const mockPrisma = { message: { create: jest.fn().mockResolvedValue({ id: "msg-1" }) } };
 const mockInbound = { publishOutbound: jest.fn().mockResolvedValue(undefined) };
+const mockInactivityScheduler = { schedule: jest.fn().mockResolvedValue(undefined) };
 
 describe("OutboundConsumer.handleOutboundMessage", () => {
   let consumer: OutboundConsumer;
@@ -21,6 +23,7 @@ describe("OutboundConsumer.handleOutboundMessage", () => {
         { provide: ConfigService, useValue: mockConfig },
         { provide: PrismaService, useValue: mockPrisma },
         { provide: InboundProducer, useValue: mockInbound },
+        { provide: InactivitySchedulerService, useValue: mockInactivityScheduler },
       ],
     }).compile();
     consumer = module.get(OutboundConsumer);
