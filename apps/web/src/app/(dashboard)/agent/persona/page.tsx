@@ -111,6 +111,10 @@ export default function PersonaPage() {
               ? centsToMaskedPrice(Math.round(Number(data.handoffOrderValueBrl) * 100))
               : "",
             businessHours: normalizeBusinessHours(data.businessHours),
+            inactivityTimeoutMin: data.inactivityTimeoutMin ?? DEFAULT_FORM.inactivityTimeoutMin,
+            sessionTtlHours: data.sessionTtlHours ?? DEFAULT_FORM.sessionTtlHours,
+            maxConversationLength: data.maxConversationLength ?? DEFAULT_FORM.maxConversationLength,
+            maxResponseLength: data.maxResponseLength ?? DEFAULT_FORM.maxResponseLength,
           }));
         }
       } finally {
@@ -147,9 +151,9 @@ export default function PersonaPage() {
           const cents = maskedPriceToCents(form.handoffOrderValueBrl);
           return cents === null ? null : cents / 100;
         })(),
-        inactivityTimeoutMin: form.inactivityTimeoutMin,
-        sessionTtlHours: form.sessionTtlHours,
-        maxConversationLength: form.maxConversationLength,
+        inactivityTimeoutMin: form.inactivityTimeoutMin || DEFAULT_FORM.inactivityTimeoutMin,
+        sessionTtlHours: form.sessionTtlHours || DEFAULT_FORM.sessionTtlHours,
+        maxConversationLength: form.maxConversationLength || DEFAULT_FORM.maxConversationLength,
         businessHours: form.businessHours,
         llmModel: FIXED_LLM_MODEL.value,
         llmTemperature: form.llmTemperature,

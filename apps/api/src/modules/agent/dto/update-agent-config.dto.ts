@@ -64,7 +64,7 @@ export class UpdateAgentConfigDto {
 
   @IsOptional()
   @IsInt()
-  @Min(5)
+  @Min(1)
   @Max(1440)
   @Type(() => Number)
   inactivityTimeoutMin?: number;
