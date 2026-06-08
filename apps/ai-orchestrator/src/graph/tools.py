@@ -414,12 +414,12 @@ async def knowledge_search_tool(query: str, tenant_id: str, limit: int = 4) -> s
             text("""
                 SELECT kc.content,
                        kb.name AS source,
-                       1 - (kc.embedding <=> :embedding::vector) AS similarity
+                       1 - (kc.embedding <=> CAST(:embedding AS vector)) AS similarity
                 FROM "KnowledgeChunk" kc
                 JOIN "KnowledgeBase" kb ON kb.id = kc."knowledgeBaseId"
                 WHERE kc."tenantId" = :tenant_id
-                  AND 1 - (kc.embedding <=> :embedding::vector) > 0.6
-                ORDER BY kc.embedding <=> :embedding::vector
+                  AND 1 - (kc.embedding <=> CAST(:embedding AS vector)) > 0.6
+                ORDER BY kc.embedding <=> CAST(:embedding AS vector)
                 LIMIT :limit
             """),
             {"embedding": embedding_str, "tenant_id": tenant_id, "limit": limit},

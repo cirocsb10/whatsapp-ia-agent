@@ -39,12 +39,12 @@ class EmbeddingsService:
                 text("""
                     SELECT id, name, description, "priceCents",
                            "stockQty", "reservedQty",
-                           1 - (embedding <=> :embedding::vector) AS similarity
+                           1 - (embedding <=> CAST(:embedding AS vector)) AS similarity
                     FROM "Product"
                     WHERE "tenantId" = :tenant_id
                       AND status = 'ACTIVE'
                       AND "stockQty" > "reservedQty"
-                    ORDER BY embedding <=> :embedding::vector
+                    ORDER BY embedding <=> CAST(:embedding AS vector)
                     LIMIT :limit
                 """),
                 {
@@ -75,7 +75,7 @@ class EmbeddingsService:
             await session.execute(
                 text("""
                     UPDATE "Product"
-                    SET embedding = :embedding::vector
+                    SET embedding = CAST(:embedding AS vector)
                     WHERE id = :product_id
                 """),
                 {"embedding": embedding_str, "product_id": product_id},

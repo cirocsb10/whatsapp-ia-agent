@@ -65,7 +65,7 @@ class SessionService:
         await self._save(session)
         return session
 
-    async def update(self, tenant_id: str, contact_phone: str, updates: dict[str, Any]) -> None:
+    async def update(self, tenant_id: str, contact_phone: str, updates: dict[str, Any], ttl_seconds: int | None = None) -> None:
         key = self._key(tenant_id, contact_phone)
         data = await self._client.get(key)
         if not data:
@@ -80,7 +80,7 @@ class SessionService:
 
         await self._client.setex(
             key,
-            settings.session_ttl_seconds,
+            ttl_seconds or settings.session_ttl_seconds,
             json.dumps(parsed),
         )
 

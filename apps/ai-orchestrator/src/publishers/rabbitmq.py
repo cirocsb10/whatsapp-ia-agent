@@ -14,7 +14,7 @@ class RabbitMQPublisher:
         self._exchange = None
 
     async def connect(self):
-        self._connection = await aio_pika.connect_robust(self.rabbitmq_url)
+        self._connection = await aio_pika.connect_robust(self.rabbitmq_url, heartbeat=60)
         self._channel = await self._connection.channel()
         self._exchange = await self._channel.declare_exchange(
             settings.rabbitmq_outbound_exchange,

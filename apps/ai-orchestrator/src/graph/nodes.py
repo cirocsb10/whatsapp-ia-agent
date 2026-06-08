@@ -102,13 +102,23 @@ async def _build_image_message(text: str, image_url: str) -> HumanMessage:
 
 
 async def reasoning_node(state: ConversationState) -> dict:
+    if not state.get("messages"):
+        greeting = state.get("greeting_message") or "Olá! Como posso ajudar?"
+        return {
+            "llm_response": greeting,
+            "llm_tool_calls": [],
+            "debug_trace": state.get("debug_trace", []) + ["reasoning_node:greeting_shortcircuit"],
+        }
+
     has_image = bool(state.get("image_url"))
+    tenant_model = state.get("llm_model") or settings.openai_model_simple
+    tenant_temp = state.get("llm_temperature")
 
     if has_image:
         from src.services.llm import get_llm
-        llm = get_llm(settings.openai_model_simple)
+        llm = get_llm(tenant_model)
     else:
-        llm = _get_llm_with_tools()
+        llm = _get_llm_with_tools(model=tenant_model, temperature=tenant_temp)
 
     chat_messages = [SystemMessage(content=state["system_prompt"])]
 
@@ -252,7 +262,8 @@ async def output_node(state: ConversationState) -> dict:
         final_messages = [{"type": "text", "text": response_text}]
 
     else:
-        final_messages = _split_into_messages(llm_response)
+        max_chars = state.get("max_response_length") or 1000
+        final_messages = _split_into_messages(llm_response, max_chars=max_chars)
 
     new_message = {
         "role": "assistant",

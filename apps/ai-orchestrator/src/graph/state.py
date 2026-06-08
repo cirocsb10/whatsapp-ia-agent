@@ -53,6 +53,11 @@ class ConversationState(TypedDict):
     # Tenant context
     agent_name: str
     agent_tone: str
+    greeting_message: str
+    llm_model: str
+    llm_temperature: float
+    max_response_length: int
+    session_ttl_hours: int
     system_prompt: str
     business_hours_open: bool
 
