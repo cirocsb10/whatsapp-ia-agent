@@ -158,6 +158,19 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
+      if ((event["type"] as string) === "handoff") {
+        this.gateway.emitToTenant(tenantId, {
+          type: "handoff_created",
+          payload: { conversationId, handoffReason: event["handoffReason"] ?? null },
+        });
+        this.gateway.emitToTenant(tenantId, {
+          type: "conversation_status_changed",
+          payload: { conversationId, status: "HUMAN_HANDOFF" },
+        });
+        this.channel.ack(msg);
+        return;
+      }
+
       this.gateway.emitToTenant(tenantId, {
         type: "new_message",
         payload: {

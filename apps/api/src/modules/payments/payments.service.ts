@@ -24,7 +24,7 @@ export class PaymentsService {
   private getMpClient() {
     const { MercadoPagoConfig, Payment } = require("mercadopago");
     const mp = new MercadoPagoConfig({
-      accessToken: this.config.get<string>("MERCADO_PAGO_ACCESS_TOKEN") ?? "",
+      accessToken: this.config.get<string>("MERCADOPAGO_ACCESS_TOKEN") ?? "",
     });
     return new Payment(mp);
   }
