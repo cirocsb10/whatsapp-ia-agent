@@ -22,6 +22,7 @@ export class GuardRulesService {
         type: dto.type,
         action: dto.action,
         priority: dto.priority ?? 100,
+        isActive: dto.isActive ?? true,
         config: dto.config as Prisma.InputJsonValue,
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.fallbackMessage !== undefined && { fallbackMessage: dto.fallbackMessage }),

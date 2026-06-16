@@ -1,10 +1,13 @@
 import secrets
+import structlog
 
 from fastapi import APIRouter, HTTPException, Query, Security
 from fastapi.security import APIKeyHeader
 
 from src.config import settings
 from src.services.knowledge_indexing import KnowledgeIndexingService
+
+log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/internal", tags=["internal"])
 _indexing_service = KnowledgeIndexingService()
@@ -32,4 +35,5 @@ async def index_knowledge_base(
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
+        log.exception("knowledge_indexing_error", knowledge_base_id=knowledge_base_id, error=str(e))
         raise HTTPException(status_code=500, detail="Internal error") from e

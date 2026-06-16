@@ -35,7 +35,7 @@ class KnowledgeIndexingService:
                     text("""
                         INSERT INTO "KnowledgeChunk"
                             (id, "knowledgeBaseId", "tenantId", content, embedding, "chunkIndex")
-                        VALUES (gen_random_uuid(), :kb_id, :tenant_id, :content, :embedding::vector, :idx)
+                        VALUES (gen_random_uuid(), :kb_id, :tenant_id, :content, CAST(:embedding AS vector), :idx)
                     """),
                     {
                         "kb_id": knowledge_base_id,

@@ -79,6 +79,13 @@ export default function KnowledgePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    const hasPending = items.some((i) => !i.isIndexed);
+    if (!hasPending) return;
+    const t = setInterval(() => void load(), 3000);
+    return () => clearInterval(t);
+  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);

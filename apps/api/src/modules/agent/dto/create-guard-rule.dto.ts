@@ -23,13 +23,16 @@ class GuardRuleConfigConstraint implements ValidatorConstraintInterface {
     if (entries.length > 20) return false;
 
     return entries.every(([, entryValue]) => {
+      if (Array.isArray(entryValue)) {
+        return entryValue.length <= 200 && entryValue.every((item) => typeof item === "string" || typeof item === "number");
+      }
       const type = typeof entryValue;
       return type === "string" || type === "number" || type === "boolean";
     });
   }
 
   defaultMessage(): string {
-    return "config must contain at most 20 primitive properties (string, number or boolean)";
+    return "config must contain at most 20 properties with primitive or array-of-primitives values";
   }
 }
 
@@ -56,7 +59,11 @@ export class CreateGuardRuleDto {
 
   @IsObject()
   @Validate(GuardRuleConfigConstraint)
-  config!: Record<string, string | number | boolean>;
+  config!: Record<string, string | number | boolean | (string | number)[]>;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @IsOptional()
   @IsString()
@@ -90,7 +97,7 @@ export class UpdateGuardRuleDto {
   @IsOptional()
   @IsObject()
   @Validate(GuardRuleConfigConstraint)
-  config?: Record<string, string | number | boolean>;
+  config?: Record<string, string | number | boolean | (string | number)[]>;
 
   @IsOptional()
   @IsString()
