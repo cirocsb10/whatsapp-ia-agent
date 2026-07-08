@@ -1,10 +1,10 @@
 import { Controller, Get, Query, UseGuards } from "@nestjs/common";
 import { AnalyticsService } from "./analytics.service";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 
 @Controller("analytics")
-@UseGuards(ClerkAuthGuard)
+@UseGuards(JwtAuthGuard)
 export class AnalyticsController {
   constructor(private readonly service: AnalyticsService) {}
 

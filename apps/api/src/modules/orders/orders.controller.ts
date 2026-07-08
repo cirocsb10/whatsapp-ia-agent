@@ -4,7 +4,7 @@ import {
 } from "@nestjs/common";
 import { timingSafeEqual } from "crypto";
 import { OrdersService } from "./orders.service";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 
 @Controller("orders")
@@ -12,7 +12,7 @@ export class OrdersController {
   constructor(private readonly service: OrdersService) {}
 
   @Get()
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   findAll(
     @CurrentTenantId() tenantId: string,
     @Query("page") page?: string,
@@ -22,13 +22,13 @@ export class OrdersController {
   }
 
   @Get(":id")
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   findOne(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
     return this.service.findOne(tenantId, id);
   }
 
   @Patch(":id/status")
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   updateStatus(
     @CurrentTenantId() tenantId: string,
     @Param("id") id: string,
@@ -38,14 +38,14 @@ export class OrdersController {
   }
 
   @Patch(":id/cancel")
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   cancelOrder(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
     return this.service.cancelOrder(tenantId, id);
   }
 
   @Post()
   @HttpCode(201)
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   createFromUi(
     @CurrentTenantId() tenantId: string,
     @Body() body: { contactPhone: string; items: Array<{ productId: string; quantity: number }>; notes?: string },

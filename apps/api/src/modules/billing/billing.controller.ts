@@ -1,6 +1,6 @@
 import { Controller, Get, Post, UseGuards, Body, Headers, HttpCode, Req, Logger } from "@nestjs/common";
 import { BillingService } from "./billing.service";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
@@ -12,21 +12,21 @@ export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   @Get("subscription")
-  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("OWNER", "ADMIN")
   getSubscription(@CurrentTenantId() tenantId: string) {
     return this.billingService.getSubscription(tenantId);
   }
 
   @Get("history")
-  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("OWNER", "ADMIN")
   getBillingHistory(@CurrentTenantId() tenantId: string) {
     return this.billingService.getBillingHistory(tenantId);
   }
 
   @Post("checkout")
-  @UseGuards(ClerkAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("OWNER", "ADMIN")
   createCheckout(@CurrentTenantId() tenantId: string, @Body() body: CreateCheckoutDto) {
     return this.billingService.createCheckoutSession(tenantId, body.plan);

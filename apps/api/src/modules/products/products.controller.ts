@@ -6,13 +6,13 @@ import { ProductsService } from "./products.service";
 import { CreateProductDto, ListProductsDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 import { ImportProductsDto } from "./dto/import-products.dto";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 
 @Controller("products")
-@UseGuards(ClerkAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ProductsController {
   constructor(private readonly service: ProductsService) {}
 

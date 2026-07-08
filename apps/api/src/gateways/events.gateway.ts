@@ -3,12 +3,13 @@ import {
   OnGatewayDisconnect, SubscribeMessage, MessageBody, ConnectedSocket,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { Logger } from "@nestjs/common";
-import { verifyToken } from "@clerk/backend";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Logger } from "@nestjs/common";
+import { Redis } from "ioredis";
 import { PrismaService } from "../common/prisma/prisma.service";
+import { REDIS_CLIENT } from "../common/redis/redis.module";
 
 const tenantSockets = new Map<string, Set<string>>();
+const SOCKET_TICKET_PREFIX = "socket-ticket:";
 
 @WebSocketGateway({
   cors: { origin: process.env.FRONTEND_URL ?? "http://localhost:3000", credentials: true },
@@ -21,29 +22,39 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(EventsGateway.name);
 
   constructor(
-    private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   async handleConnection(client: Socket) {
-    const token = client.handshake.auth["token"] as string | undefined;
+    const ticket = client.handshake.auth["ticket"] as string | undefined;
 
-    if (!token) {
-      this.logger.warn(`Socket ${client.id} rejected: missing token`);
+    if (!ticket) {
+      this.logger.warn(`Socket ${client.id} rejected: missing ticket`);
       client.disconnect();
       return;
     }
 
     try {
-      const secretKey = this.config.get<string>("CLERK_SECRET_KEY") ?? "";
-      const payload = await verifyToken(token, { secretKey });
+      const key = `${SOCKET_TICKET_PREFIX}${ticket}`;
+      const userId = await this.redis.get(key);
+
+      if (!userId) {
+        this.logger.warn(`Socket ${client.id} rejected: invalid or expired ticket`);
+        client.disconnect();
+        return;
+      }
+
+      // Ticket de uso único.
+      await this.redis.del(key);
+
       const user = await this.prisma.user.findUnique({
-        where: { clerkId: payload.sub },
-        select: { tenantId: true },
+        where: { id: userId },
+        select: { tenantId: true, isActive: true },
       });
 
-      if (!user) {
-        this.logger.warn(`Socket ${client.id} rejected: user not found`);
+      if (!user || !user.isActive) {
+        this.logger.warn(`Socket ${client.id} rejected: user not found or inactive`);
         client.disconnect();
         return;
       }
@@ -56,7 +67,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       (client as any).tenantId = tenantId;
       this.logger.log(`Socket ${client.id} authenticated for tenant ${tenantId}`);
     } catch {
-      this.logger.warn(`Socket ${client.id} rejected: invalid token`);
+      this.logger.warn(`Socket ${client.id} rejected: authentication error`);
       client.disconnect();
     }
   }

@@ -12,7 +12,7 @@ import {
 } from "@nestjs/common";
 import { AgentConfigService } from "./agent-config.service";
 import { UpdateAgentConfigDto } from "./dto/update-agent-config.dto";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
@@ -24,7 +24,7 @@ import { ChatSimulatorService } from "./chat-simulator.service";
 import { ChatRequestDto } from "./dto/chat-request.dto";
 
 @Controller("agent")
-@UseGuards(ClerkAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AgentConfigController {
   constructor(
     private readonly config: AgentConfigService,

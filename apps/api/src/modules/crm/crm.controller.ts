@@ -8,13 +8,13 @@ import { UpdateStageDto } from "./dto/update-stage.dto";
 import { CreateDealDto, ListDealsDto } from "./dto/create-deal.dto";
 import { UpdateDealDto } from "./dto/update-deal.dto";
 import { MoveDealDto } from "./dto/move-deal.dto";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 
 @Controller("crm")
-@UseGuards(ClerkAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CrmController {
   constructor(private readonly service: CrmService) {}
 

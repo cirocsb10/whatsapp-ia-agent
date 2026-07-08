@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards, Headers, HttpCode, UnauthorizedExcep
 import { timingSafeEqual } from "crypto";
 import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import { PaymentsService } from "./payments.service";
-import { ClerkAuthGuard } from "../../common/guards/clerk-auth.guard";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 
 @Controller("payments")
@@ -10,7 +10,7 @@ export class PaymentsController {
   constructor(private readonly service: PaymentsService) {}
 
   @Post("generate")
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Throttle({ global: { ttl: 60_000, limit: 5 } })
   generatePix(@CurrentTenantId() tenantId: string, @Body("orderId") orderId: string) {
     return this.service.generatePix(tenantId, orderId);
