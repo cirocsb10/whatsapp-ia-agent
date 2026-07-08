@@ -174,23 +174,23 @@ model Tenant {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  tenantId    String
-  clerkId     String    @unique
-  email       String
-  name        String
-  avatarUrl   String?
-  role        UserRole  @default(AGENT)
-  isSuperAdmin Boolean  @default(false)
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  tenantId     String
+  email        String    @unique
+  name         String
+  passwordHash String?
+  googleId     String?   @unique
+  avatarUrl    String?
+  role         UserRole  @default(AGENT)
+  isSuperAdmin Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   auditLogs   AuditLog[]
 
   @@index([tenantId])
-  @@index([clerkId])
   @@index([tenantId, role])
 }
 
