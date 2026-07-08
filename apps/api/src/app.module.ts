@@ -12,7 +12,7 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { GatewaysModule } from "./gateways/gateways.module";
 import { BillingModule } from "./modules/billing/billing.module";
 import { SuperAdminModule } from "./modules/super-admin/super-admin.module";
-import { ClerkWebhookModule } from "./modules/clerk/clerk-webhook.module";
+import { AuthModule } from "./modules/auth/auth.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { ConversationsModule } from "./modules/conversations/conversations.module";
 import { AgentModule } from "./modules/agent/agent.module";
@@ -47,7 +47,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     }),
     PrismaModule, RedisModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
-    ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
+    AuthModule, SettingsModule, ConversationsModule, AgentModule,
     CrmModule, CategoriesModule,
   ],
   providers: [

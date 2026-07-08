@@ -20,7 +20,7 @@ const SOCKET_TICKET_PREFIX = "socket-ticket:";
 const SOCKET_TICKET_TTL_SECONDS = 30;
 const BCRYPT_ROUNDS = 10;
 
-interface TokenPair {
+export interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
