@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { PrismaModule } from "./common/prisma/prisma.module";
+import { RedisModule } from "./common/redis/redis.module";
 import { ProductsModule } from "./modules/products/products.module";
 import { OrdersModule } from "./modules/orders/orders.module";
 import { PaymentsModule } from "./modules/payments/payments.module";
@@ -44,7 +45,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
         connection: { url: config.get<string>("REDIS_URL") ?? "" },
       }),
     }),
-    PrismaModule, ProductsModule, OrdersModule, PaymentsModule,
+    PrismaModule, RedisModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     ClerkWebhookModule, SettingsModule, ConversationsModule, AgentModule,
     CrmModule, CategoriesModule,

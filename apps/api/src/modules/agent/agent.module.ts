@@ -1,7 +1,6 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigModule } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
-import { Redis } from "ioredis";
 import { PrismaModule } from "../../common/prisma/prisma.module";
 import { AgentConfigController } from "./agent-config.controller";
 import { AgentConfigService } from "./agent-config.service";
@@ -22,12 +21,6 @@ export { KNOWLEDGE_EMBEDDING_QUEUE };
   ],
   controllers: [AgentConfigController],
   providers: [
-    {
-      provide: "REDIS_CLIENT",
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        new Redis(config.get<string>("REDIS_URL") ?? "redis://localhost:6379"),
-    },
     AgentConfigService,
     KnowledgeService,
     GuardRulesService,
