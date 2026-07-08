@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useApi } from "@/lib/hooks/useApi";
 import { useAuthContext } from "@/contexts/auth-context";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
@@ -852,7 +852,7 @@ function TabPlano() {
 
 /* ── Main page ────────────────────────────────────────────── */
 
-export default function SettingsPage() {
+function SettingsPageContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const [tab, setTab] = useState<Tab>(() => parseTab(tabParam));
@@ -924,5 +924,20 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="fade-up flex flex-col h-screen overflow-hidden">
+          <Header title="Configurações" subtitle="Gerencie sua conta, integrações e plano" />
+          <div className="flex flex-1 items-center justify-center text-slate-400">Carregando…</div>
+        </div>
+      }
+    >
+      <SettingsPageContent />
+    </Suspense>
   );
 }

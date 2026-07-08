@@ -49,7 +49,9 @@ async function proxyRequest(
 
   let upstream: Response;
   try {
-    upstream = await fetch(targetUrl, { method: req.method, headers, body });
+    const init: RequestInit = { method: req.method, headers };
+    if (body !== undefined) init.body = body;
+    upstream = await fetch(targetUrl, init);
   } catch {
     return NextResponse.json({ message: "Serviço indisponível" }, { status: 503 });
   }

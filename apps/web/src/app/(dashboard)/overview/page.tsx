@@ -202,6 +202,7 @@ export default function OverviewPage() {
           <div className="dashboard-kpi-grid">
             {CARDS.map((card, i) => {
               const { key: metricKey, ...cardProps } = card;
+              const trend = trends[card.key];
               return (
                 <div key={card.title} className="overview-kpi-wrap" style={{ animationDelay: `${i * 40}ms` }}>
                   <KpiCard
@@ -209,8 +210,7 @@ export default function OverviewPage() {
                     value={formatCard(card)}
                     loading={loading}
                     empty={!loading && isCardEmpty(card)}
-                    change={trends[card.key]?.change}
-                    trend={trends[card.key]?.trend}
+                    {...(trend ? { change: trend.change, trend: trend.trend } : {})}
                   />
                 </div>
               );
@@ -223,7 +223,7 @@ export default function OverviewPage() {
             data={chart}
             days={chartDays}
             onDaysChange={setChartDays}
-            whatsappConnected={setupStatus?.whatsappConnected}
+            {...(setupStatus ? { whatsappConnected: setupStatus.whatsappConnected } : {})}
           />
 
           <aside className="dashboard-agent-panel">
