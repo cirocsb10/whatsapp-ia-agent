@@ -5,6 +5,7 @@ import {
   Injectable,
   Logger,
   UnauthorizedException,
+  BadRequestException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
@@ -233,6 +234,24 @@ export class AuthService {
       SOCKET_TICKET_TTL_SECONDS,
     );
     return ticket;
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.passwordHash) {
+      throw new BadRequestException("Conta sem senha local configurada");
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedException("Senha atual incorreta");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
   }
 
   private async createTenantAndUser(input: CreateTenantUserInput) {

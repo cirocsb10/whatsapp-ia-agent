@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuthContext } from "@/contexts/auth-context";
+import { useApi } from "@/lib/hooks/useApi";
 import {
   Check,
   ArrowRight,
@@ -63,22 +64,24 @@ const PLANS = [
   },
 ] as const;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
 
 export default function PlanPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { isSignedIn } = useAuthContext();
+  const { apiFetch } = useApi();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function selectPlan(planId: string) {
+    if (!isSignedIn) {
+      router.push("/login");
+      return;
+    }
     setLoading(planId);
     setError(null);
     try {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/billing/checkout`, {
+      const res = await apiFetch("/billing/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ plan: planId }),
       });
       if (!res.ok) throw new Error(await res.text());

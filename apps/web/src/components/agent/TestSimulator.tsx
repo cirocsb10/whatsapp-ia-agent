@@ -1,13 +1,12 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
+import { useApi } from "@/lib/hooks/useApi";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
 export function TestSimulator() {
-  const { getToken } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3002";
+  const { apiFetch } = useApi();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,10 +26,8 @@ export function TestSimulator() {
     setLoading(true);
     setMessages((p) => [...p, { role: "user", content: msg }]);
     try {
-      const token = await getToken();
-      const res = await fetch(`${API_URL}/agent/chat`, {
+      const res = await apiFetch("/agent/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ message: msg }),
       });
       const data = res.ok ? await res.json() : null;

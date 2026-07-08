@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useAuth, SignInButton, SignUpButton } from "@clerk/nextjs";
+import Link from "next/link";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import {
   MessageSquare, Zap, BarChart3, ArrowRight, Check,
@@ -11,7 +12,7 @@ import {
 
 /* ─── Redirect if already signed in ─────────────────────────── */
 function useAuthRedirect() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded } = useAuthContext();
   const router = useRouter();
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace("/overview");
@@ -163,14 +164,10 @@ export default function HomePage() {
               <a href="#precos">Preços</a>
             </div>
             <div className="lp-nav-actions">
-              <SignInButton mode="modal">
-                <button type="button" className="lp-btn-ghost">Entrar</button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button type="button" className="lp-btn-primary">
-                  Começar grátis <ArrowRight size={14} strokeWidth={2.5} />
-                </button>
-              </SignUpButton>
+              <Link href="/login" className="lp-btn-ghost">Entrar</Link>
+              <Link href="/register" className="lp-btn-primary">
+                Começar grátis <ArrowRight size={14} strokeWidth={2.5} />
+              </Link>
             </div>
           </div>
         </nav>
@@ -193,12 +190,10 @@ export default function HomePage() {
                 apresentar produtos e fechar vendas com Pix — sem nenhum esforço manual.
               </p>
               <div className="lp-hero-ctas">
-                <SignUpButton mode="modal">
-                  <button type="button" className="lp-btn-primary lp-btn-lg">
-                    Começar 14 dias grátis
-                    <ArrowRight size={16} strokeWidth={2.5} />
-                  </button>
-                </SignUpButton>
+                <Link href="/register" className="lp-btn-primary lp-btn-lg">
+                  Começar 14 dias grátis
+                  <ArrowRight size={16} strokeWidth={2.5} />
+                </Link>
                 <a href="#como-funciona" className="lp-btn-outline">
                   Ver como funciona
                   <ChevronRight size={14} />
@@ -297,11 +292,9 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <SignUpButton mode="modal">
-                    <button type="button" className={`lp-plan-cta ${p.highlight ? "lp-plan-cta-highlight" : ""}`}>
-                      Começar grátis <ArrowRight size={13} strokeWidth={2.5} />
-                    </button>
-                  </SignUpButton>
+                  <Link href="/register" className={`lp-plan-cta ${p.highlight ? "lp-plan-cta-highlight" : ""}`}>
+                    Começar grátis <ArrowRight size={13} strokeWidth={2.5} />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -320,12 +313,10 @@ export default function HomePage() {
               Pronto para automatizar<br />seu atendimento?
             </h2>
             <p className="lp-cta-sub">Configure em minutos. Venda em segundos. Durma tranquilo.</p>
-            <SignUpButton mode="modal">
-              <button type="button" className="lp-btn-primary lp-btn-xl">
-                Começar agora — 14 dias grátis
-                <ArrowRight size={18} strokeWidth={2.5} />
-              </button>
-            </SignUpButton>
+            <Link href="/register" className="lp-btn-primary lp-btn-xl">
+              Começar agora — 14 dias grátis
+              <ArrowRight size={18} strokeWidth={2.5} />
+            </Link>
             <div className="lp-cta-trust">
               <span><Shield size={12} /> Dados protegidos</span>
               <span><Clock size={12} /> Setup em 5 minutos</span>

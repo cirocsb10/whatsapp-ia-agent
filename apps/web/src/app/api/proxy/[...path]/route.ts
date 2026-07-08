@@ -1,0 +1,89 @@
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { API_URL } from "@/lib/auth/api-url";
+import {
+  ACCESS_COOKIE,
+  REFRESH_COOKIE,
+  setAuthCookies,
+} from "@/lib/auth/cookies";
+
+type RouteContext = { params: { path: string[] } };
+
+async function tryRefreshTokens(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+): Promise<{ accessToken: string; refreshToken: string } | null> {
+  const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
+  if (!refreshToken) return null;
+
+  const res = await fetch(`${API_URL}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken }),
+  });
+
+  if (!res.ok) return null;
+  return res.json() as Promise<{ accessToken: string; refreshToken: string }>;
+}
+
+async function proxyRequest(
+  req: NextRequest,
+  params: { path: string[] },
+  accessToken: string,
+  retried = false,
+): Promise<NextResponse> {
+  const path = params.path.join("/");
+  const url = new URL(req.url);
+  const targetUrl = `${API_URL}/${path}${url.search}`;
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  const contentType = req.headers.get("content-type");
+  if (contentType) headers["Content-Type"] = contentType;
+
+  const body =
+    req.method !== "GET" && req.method !== "HEAD"
+      ? await req.text().catch(() => undefined)
+      : undefined;
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(targetUrl, { method: req.method, headers, body });
+  } catch {
+    return NextResponse.json({ message: "Serviço indisponível" }, { status: 503 });
+  }
+
+  if (upstream.status === 401 && !retried) {
+    const cookieStore = await cookies();
+    const refreshed = await tryRefreshTokens(cookieStore);
+    if (refreshed) {
+      const retryResponse = await proxyRequest(req, params, refreshed.accessToken, true);
+      setAuthCookies(retryResponse, refreshed);
+      return retryResponse;
+    }
+  }
+
+  const responseBody = await upstream.text();
+  return new NextResponse(responseBody, {
+    status: upstream.status,
+    headers: {
+      "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+    },
+  });
+}
+
+async function handle(req: NextRequest, context: RouteContext) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ACCESS_COOKIE)?.value;
+  if (!token) {
+    return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
+  }
+  return proxyRequest(req, context.params, token);
+}
+
+export const GET = (req: NextRequest, context: RouteContext) => handle(req, context);
+export const POST = (req: NextRequest, context: RouteContext) => handle(req, context);
+export const PATCH = (req: NextRequest, context: RouteContext) => handle(req, context);
+export const PUT = (req: NextRequest, context: RouteContext) => handle(req, context);
+export const DELETE = (req: NextRequest, context: RouteContext) => handle(req, context);

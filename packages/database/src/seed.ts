@@ -1,9 +1,12 @@
 import { PrismaClient, UserRole, PlanType, AgentTone } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
+const DEV_PASSWORD = "devpassword123";
 
 async function main() {
   console.log("🌱 Seeding database...");
+  console.log(`   Dev login: owner@dev-tenant.com / ${DEV_PASSWORD}`);
 
   const devTenant = await prisma.tenant.upsert({
     where: { slug: "dev-tenant" },
@@ -18,14 +21,16 @@ async function main() {
     },
   });
 
+  const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
+
   await prisma.user.upsert({
-    where: { clerkId: "dev_owner_clerk_id" },
-    update: {},
+    where: { email: "owner@dev-tenant.com" },
+    update: { passwordHash, isActive: true },
     create: {
       tenantId: devTenant.id,
-      clerkId: "dev_owner_clerk_id",
       email: "owner@dev-tenant.com",
       name: "Admin Dev",
+      passwordHash,
       role: UserRole.OWNER,
       isSuperAdmin: true,
     },

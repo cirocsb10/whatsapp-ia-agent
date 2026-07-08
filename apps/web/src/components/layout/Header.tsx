@@ -2,14 +2,13 @@
 import { Bell, LogOut, User, Menu, ChevronDown } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
 import { useSidebarStore } from "@/lib/store/sidebar.store";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useRef, useState, useEffect } from "react";
 
 const ICON = { size: 14, strokeWidth: 1.8 as const };
 
 function UserMenu() {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut } = useAuthContext();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -21,8 +20,8 @@ function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const name = user?.fullName ?? user?.firstName ?? "Usuário";
-  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  const name = user?.name ?? "Usuário";
+  const email = user?.email ?? "";
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 
   return (
@@ -49,7 +48,7 @@ function UserMenu() {
           <button
             type="button"
             className="header-user-dropdown-item header-user-dropdown-item-danger"
-            onClick={() => signOut({ redirectUrl: "/" })}
+            onClick={() => void signOut()}
           >
             <LogOut size={13} strokeWidth={1.8} />
             Sair

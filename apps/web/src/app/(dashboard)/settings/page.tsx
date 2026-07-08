@@ -9,7 +9,7 @@ import {
   MessageSquare, ShoppingCart,
 } from "lucide-react";
 import { useApi } from "@/lib/hooks/useApi";
-import { useClerk, UserProfile } from "@clerk/nextjs";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -84,7 +84,7 @@ function FieldRow({ label, hint, children }: { label: string; hint?: string; chi
 
 function TabConta() {
   const { apiFetch } = useApi();
-  const { signOut } = useClerk();
+  const { signOut } = useAuthContext();
   const [name, setName] = useState("Minha Loja");
   const [email] = useState("contato@minhaloja.com");
   const [slug, setSlug] = useState("minhaloja");
@@ -204,7 +204,7 @@ function TabConta() {
             <Trash2 className="w-3.5 h-3.5" />
             Excluir conta
           </button>
-          <button className="settings-danger-btn" onClick={() => signOut()}>
+          <button className="settings-danger-btn" onClick={() => void signOut()}>
             <LogOut className="w-3.5 h-3.5" />
             Encerrar sessão atual
           </button>
@@ -354,13 +354,52 @@ function TabNotificacoes() {
 }
 
 function TabSeguranca() {
-  const [showProfile, setShowProfile] = useState(false);
+  const { apiFetch } = useApi();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (newPassword !== confirmPassword) {
+      setError("As senhas não coincidem");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiFetch("/auth/change-password", {
+        method: "PATCH",
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? "Não foi possível alterar a senha");
+      }
+      setSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => {
+        setSuccess(false);
+        setShowPasswordModal(false);
+      }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível alterar a senha");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="settings-tab-content">
       <SectionPanel
         title="Senha e autenticação"
-        description="Gerencie sua senha, autenticação em dois fatores e sessões ativas."
+        description="Gerencie sua senha e sessões ativas."
         accent="#6366f1"
       >
         <div className="settings-2fa-row">
@@ -368,41 +407,74 @@ function TabSeguranca() {
             <Shield className="w-5 h-5 text-indigo-400" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-[#e2e8f0]">Segurança da conta</p>
+            <p className="text-[13px] font-medium text-[#e2e8f0]">Alterar senha</p>
             <p className="text-[11px] text-[#64748b] mt-0.5">
-              Senha, 2FA e sessões ativas gerenciados pelo Clerk
+              Atualize sua senha de acesso ao painel
             </p>
           </div>
           <button
-            onClick={() => setShowProfile(true)}
+            onClick={() => setShowPasswordModal(true)}
             className="settings-save-btn"
             style={{ width: "auto", padding: "0 16px" }}
           >
             <Key className="w-3.5 h-3.5" />
-            Gerenciar
+            Alterar
           </button>
         </div>
       </SectionPanel>
 
-      {showProfile && (
-        <div className="settings-modal-overlay" onClick={() => setShowProfile(false)}>
-          <div className="settings-modal settings-modal-lg" onClick={(e) => e.stopPropagation()}>
+      {showPasswordModal && (
+        <div className="settings-modal-overlay" onClick={() => setShowPasswordModal(false)}>
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
             <div className="settings-modal-head">
               <div>
-                <p className="settings-modal-title">Segurança da conta</p>
-                <p className="settings-modal-desc">Gerencie senha, 2FA e sessões via Clerk</p>
+                <p className="settings-modal-title">Alterar senha</p>
+                <p className="settings-modal-desc">Use uma senha forte com pelo menos 8 caracteres</p>
               </div>
               <button
-                onClick={() => setShowProfile(false)}
+                onClick={() => setShowPasswordModal(false)}
                 className="settings-modal-close"
                 aria-label="Fechar"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="settings-modal-body">
-              <UserProfile routing="hash" />
-            </div>
+            <form className="settings-modal-body space-y-4" onSubmit={(e) => void handleChangePassword(e)}>
+              <FieldRow label="Senha atual">
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="settings-input"
+                  required
+                />
+              </FieldRow>
+              <FieldRow label="Nova senha">
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="settings-input"
+                  minLength={8}
+                  required
+                />
+              </FieldRow>
+              <FieldRow label="Confirmar nova senha">
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="settings-input"
+                  minLength={8}
+                  required
+                />
+              </FieldRow>
+              {error && <p className="text-sm text-rose-400">{error}</p>}
+              {success && <p className="text-sm text-green-400">Senha alterada com sucesso!</p>}
+              <button type="submit" className="settings-save-btn" disabled={saving}>
+                {saving ? "Salvando..." : "Salvar nova senha"}
+              </button>
+            </form>
           </div>
         </div>
       )}

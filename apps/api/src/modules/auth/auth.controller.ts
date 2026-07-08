@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -14,6 +15,7 @@ import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { GoogleLoginDto } from "./dto/google-login.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 
 @Controller("auth")
@@ -24,6 +26,12 @@ export class AuthController {
   @Post("register")
   register(@Body() dto: RegisterDto) {
     return this.auth.register(dto);
+  }
+
+  @Post("forgot-password")
+  @HttpCode(501)
+  forgotPassword() {
+    return { message: "Recuperação de senha ainda não implementada" };
   }
 
   @Post("login")
@@ -69,5 +77,13 @@ export class AuthController {
       unknown
     >;
     return user;
+  }
+
+  @Patch("change-password")
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
+    const user = req.user as { id: string };
+    await this.auth.changePassword(user.id, dto.currentPassword, dto.newPassword);
+    return { success: true };
   }
 }

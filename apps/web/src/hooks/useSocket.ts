@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useCallback, useRef } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuthContext } from "@/contexts/auth-context";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
 
@@ -8,20 +8,43 @@ const WS_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:3002") + "/e
 
 export type SocketStatus = "connected" | "disconnected" | "reconnecting";
 
+async function fetchSocketTicket(): Promise<string | null> {
+  const res = await fetch("/api/proxy/auth/socket-ticket", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { ticket?: string };
+  return data.ticket ?? null;
+}
+
 export function useSocket() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuthContext();
   const addMessage = useInboxStore((s) => s.addMessage);
   const updateStatus = useInboxStore((s) => s.updateConversationStatus);
   const updateMessageStatus = useInboxStore((s) => s.updateMessageStatus);
   const setSocketStatus = useInboxStore((s) => s.setSocketStatus);
   const addHandoff = useInboxStore((s) => s.addHandoffConversation);
   const incrementHandoffs = useNotificationsStore((s) => s.incrementHandoffs);
-  const socketRef = useRef<any>(null);
+  const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
-  // Keep callbacks in refs so the effect never re-runs due to them changing
-  const cbRef = useRef({ addMessage, updateStatus, updateMessageStatus, setSocketStatus, addHandoff, incrementHandoffs, getToken });
+  const cbRef = useRef({
+    addMessage,
+    updateStatus,
+    updateMessageStatus,
+    setSocketStatus,
+    addHandoff,
+    incrementHandoffs,
+  });
   useEffect(() => {
-    cbRef.current = { addMessage, updateStatus, updateMessageStatus, setSocketStatus, addHandoff, incrementHandoffs, getToken };
+    cbRef.current = {
+      addMessage,
+      updateStatus,
+      updateMessageStatus,
+      setSocketStatus,
+      addHandoff,
+      incrementHandoffs,
+    };
   });
 
   useEffect(() => {
@@ -30,8 +53,8 @@ export function useSocket() {
     let active = true;
 
     async function connect() {
-      const token = await cbRef.current.getToken();
-      if (!token || !active) return;
+      const ticket = await fetchSocketTicket();
+      if (!ticket || !active) return;
 
       const { io } = await import("socket.io-client");
 
@@ -41,7 +64,7 @@ export function useSocket() {
 
       const sock = io(WS_URL, {
         transports: ["websocket"],
-        auth: { token },
+        auth: { ticket },
         autoConnect: true,
         reconnection: true,
         reconnectionDelay: 1500,
@@ -50,23 +73,20 @@ export function useSocket() {
       });
 
       sock.on("connect", () => {
-        console.debug("[socket] connected", sock.id);
         cbRef.current.setSocketStatus("connected");
       });
 
-      sock.on("disconnect", (reason: string) => {
-        console.warn("[socket] disconnected:", reason);
+      sock.on("disconnect", () => {
         cbRef.current.setSocketStatus("disconnected");
       });
 
       sock.io.on("reconnect_attempt", async () => {
         cbRef.current.setSocketStatus("reconnecting");
-        const fresh = await cbRef.current.getToken({ skipCache: true });
-        if (fresh) sock.auth = { token: fresh };
+        const freshTicket = await fetchSocketTicket();
+        if (freshTicket) sock.auth = { ticket: freshTicket };
       });
 
       sock.io.on("reconnect", () => {
-        console.debug("[socket] reconnected");
         cbRef.current.setSocketStatus("connected");
       });
 
@@ -74,19 +94,29 @@ export function useSocket() {
         cbRef.current.setSocketStatus("reconnecting");
       });
 
-      sock.on("connect_error", (err: Error) => {
-        console.warn("[socket] connect_error", err.message);
+      sock.on("connect_error", () => {
         cbRef.current.setSocketStatus("reconnecting");
       });
 
-      sock.on("event", (event: any) => {
+      sock.on("event", (event: { type: string; payload: unknown }) => {
         const cb = cbRef.current;
         switch (event.type) {
-          case "new_message":                 cb.addMessage(event.payload);              break;
-          case "conversation_status":         cb.updateStatus(event.payload);            break;
-          case "conversation_status_changed": cb.updateStatus(event.payload);            break;
-          case "message_status_changed":      cb.updateMessageStatus(event.payload);     break;
-          case "handoff_created":             cb.addHandoff(event.payload); cb.incrementHandoffs(); break;
+          case "new_message":
+            cb.addMessage(event.payload as Parameters<typeof addMessage>[0]);
+            break;
+          case "conversation_status":
+          case "conversation_status_changed":
+            cb.updateStatus(event.payload as Parameters<typeof updateStatus>[0]);
+            break;
+          case "message_status_changed":
+            cb.updateMessageStatus(event.payload as Parameters<typeof updateMessageStatus>[0]);
+            break;
+          case "handoff_created":
+            cb.addHandoff(event.payload as Parameters<typeof addHandoff>[0]);
+            cb.incrementHandoffs();
+            break;
+          default:
+            break;
         }
       });
 
@@ -100,7 +130,7 @@ export function useSocket() {
       socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn]);
 
   const emit = useCallback((name: string, data: unknown) => {
     socketRef.current?.emit(name, data);
