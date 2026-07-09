@@ -141,7 +141,7 @@ function TabConta() {
 
         <div className="settings-divider" />
 
-        <FieldRow label="E-mail" hint="Endereço associado à conta Clerk.">
+        <FieldRow label="E-mail" hint="Endereço associado à sua conta.">
           <input className="settings-input" value={email} disabled style={{ opacity: 0.5, cursor: "not-allowed" }} />
         </FieldRow>
 
