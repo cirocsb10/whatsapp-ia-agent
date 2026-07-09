@@ -1,8 +1,10 @@
 {
   "name": "@whatsagent/channel-service",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prebuild": "node ../../scripts/gen-build-info.js ./package.json ./build-info.json",
+    "predev": "node ../../scripts/gen-build-info.js ./package.json ./build-info.json",
     "dev": "dotenv -e ../../.env.local -- nest start --watch",
     "build": "nest build",
     "start": "node dist/main",
