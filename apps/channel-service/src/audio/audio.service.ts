@@ -43,8 +43,15 @@ export class AudioService {
   async downloadDocumentAndStore(mediaId: string, filename: string): Promise<string> {
     this.logger.log(`Processing document: mediaId=${mediaId}`);
     const buffer = await this.downloadFromMeta(mediaId);
-    const ext = filename.split(".").pop() ?? "bin";
+    const ext = this.sanitizeExtension(filename.split(".").pop());
     return this.uploadToStorage(buffer, mediaId, "application/octet-stream", "document", ext);
+  }
+
+  private sanitizeExtension(rawExt: string | undefined): string {
+    if (rawExt && /^[a-zA-Z0-9]{1,10}$/.test(rawExt)) {
+      return rawExt.toLowerCase();
+    }
+    return "bin";
   }
 
   private async downloadFromMeta(mediaId: string): Promise<Buffer> {
@@ -72,7 +79,8 @@ export class AudioService {
     ext: string,
   ): Promise<string> {
     const bucket = this.config.get<string>("storage.bucket") as string;
-    const objectName = `${folder}/${randomUUID()}-${mediaId}.${ext}`;
+    const safeMediaId = mediaId.replace(/[^a-zA-Z0-9_-]/g, "");
+    const objectName = `${folder}/${randomUUID()}-${safeMediaId}.${ext}`;
 
     await this.minio.putObject(bucket, objectName, buffer, buffer.length, {
       "Content-Type": mimeType,

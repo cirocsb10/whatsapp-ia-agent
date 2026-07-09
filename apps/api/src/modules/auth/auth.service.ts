@@ -38,6 +38,8 @@ interface GoogleTokenInfo {
   sub?: string;
   name?: string;
   picture?: string;
+  aud?: string;
+  azp?: string;
 }
 
 interface CreateTenantUserInput {
@@ -70,6 +72,7 @@ export class AuthService {
   private readonly accessExpiresIn: string;
   private readonly refreshExpiresIn: string;
   private readonly refreshTtlSeconds: number;
+  private readonly googleClientId: string | undefined;
 
   private readonly userInclude = {
     tenant: { select: { id: true, slug: true, status: true, name: true } },
@@ -81,11 +84,18 @@ export class AuthService {
     private readonly config: ConfigService,
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {
-    this.accessSecret = config.get<string>("JWT_ACCESS_SECRET") ?? "dev_access_secret";
-    this.refreshSecret = config.get<string>("JWT_REFRESH_SECRET") ?? "dev_refresh_secret";
+    const accessSecret = config.get<string>("JWT_ACCESS_SECRET");
+    const refreshSecret = config.get<string>("JWT_REFRESH_SECRET");
+    if (!accessSecret || !refreshSecret) {
+      throw new Error("JWT_ACCESS_SECRET e JWT_REFRESH_SECRET são obrigatórios");
+    }
+    this.accessSecret = accessSecret;
+    this.refreshSecret = refreshSecret;
     this.accessExpiresIn = config.get<string>("JWT_ACCESS_EXPIRES_IN") ?? "15m";
     this.refreshExpiresIn = config.get<string>("JWT_REFRESH_EXPIRES_IN") ?? "7d";
     this.refreshTtlSeconds = parseDurationToSeconds(this.refreshExpiresIn, 604800);
+    this.googleClientId =
+      config.get<string>("GOOGLE_CLIENT_ID") ?? config.get<string>("NEXT_PUBLIC_GOOGLE_CLIENT_ID");
   }
 
   async login(email: string, password: string) {
@@ -139,6 +149,10 @@ export class AuthService {
     const emailVerified = info.email_verified === true || info.email_verified === "true";
     if (!emailVerified || !info.email || !info.sub) {
       throw new UnauthorizedException("E-mail do Google não verificado");
+    }
+
+    if (this.googleClientId && info.aud !== this.googleClientId && info.azp !== this.googleClientId) {
+      throw new UnauthorizedException("Token do Google não foi emitido para esta aplicação");
     }
 
     const googleId = info.sub;

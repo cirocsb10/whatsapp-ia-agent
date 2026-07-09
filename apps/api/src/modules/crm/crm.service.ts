@@ -101,6 +101,7 @@ export class CrmService {
 
   async createDeal(tenantId: string, dto: CreateDealDto) {
     await this._findStageOrThrow(tenantId, dto.stageId);
+    if (dto.contactId) await this._findContactOrThrow(tenantId, dto.contactId);
     return this.prisma.deal.create({
       data: {
         tenantId,
@@ -120,6 +121,7 @@ export class CrmService {
   async updateDeal(tenantId: string, id: string, dto: UpdateDealDto) {
     await this._findDealOrThrow(tenantId, id);
     if (dto.stageId) await this._findStageOrThrow(tenantId, dto.stageId);
+    if (dto.contactId) await this._findContactOrThrow(tenantId, dto.contactId);
     return this.prisma.deal.update({
       where: { id },
       data: {
@@ -158,6 +160,12 @@ export class CrmService {
     const deal = await this.prisma.deal.findFirst({ where: { id, tenantId } });
     if (!deal) throw new NotFoundException(`Negócio ${id} não encontrado`);
     return deal;
+  }
+
+  private async _findContactOrThrow(tenantId: string, id: string) {
+    const contact = await this.prisma.contact.findFirst({ where: { id, tenantId } });
+    if (!contact) throw new NotFoundException(`Contato ${id} não encontrado`);
+    return contact;
   }
 
   // ─── Stats ───────────────────────────────────────────────────────────────

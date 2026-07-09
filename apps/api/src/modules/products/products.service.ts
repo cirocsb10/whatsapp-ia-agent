@@ -10,6 +10,7 @@ export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(tenantId: string, dto: CreateProductDto) {
+    if (dto.categoryId) await this._findCategoryOrThrow(tenantId, dto.categoryId);
     return this.prisma.product.create({
       data: {
         tenantId,
@@ -112,6 +113,7 @@ export class ProductsService {
     if (dto.stockQty !== undefined) data.stockQty = dto.stockQty;
     if (dto.lowStockThreshold !== undefined) data.lowStockThreshold = dto.lowStockThreshold;
     if (dto.categoryId !== undefined) {
+      if (dto.categoryId) await this._findCategoryOrThrow(tenantId, dto.categoryId);
       data.category = dto.categoryId
         ? { connect: { id: dto.categoryId } }
         : { disconnect: true };
@@ -130,6 +132,12 @@ export class ProductsService {
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
     await this.prisma.product.delete({ where: { id } });
+  }
+
+  private async _findCategoryOrThrow(tenantId: string, id: string) {
+    const category = await this.prisma.category.findFirst({ where: { id, tenantId } });
+    if (!category) throw new NotFoundException(`Categoria ${id} não encontrada`);
+    return category;
   }
 
   async bulkImport(
