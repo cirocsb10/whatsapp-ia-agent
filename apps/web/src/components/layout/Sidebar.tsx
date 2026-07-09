@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package, Kanban,
-  ShoppingCart, BarChart3, PhoneCall, Settings, Shield,
+  ShoppingCart, BarChart3, PhoneCall, Settings, Shield, Mail,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
@@ -34,6 +34,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
   ]},
   { section: "Plataforma", items: [
     { href: "/tenants", label: "Super Admin", icon: Shield, admin: true },
+    { href: "/email",   label: "Email",       icon: Mail,   admin: true },
   ]},
 ];
 
