@@ -21,6 +21,8 @@ dist/
 .next/
 .output/
 build/
+apps/api/build-info.json
+apps/channel-service/build-info.json
 
 # Coverage
 coverage/
