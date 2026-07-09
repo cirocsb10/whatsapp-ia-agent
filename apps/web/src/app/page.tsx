@@ -149,6 +149,7 @@ export default function HomePage() {
         {/* Gradient orbs */}
         <div className="lp-orb lp-orb-1" />
         <div className="lp-orb lp-orb-2" />
+        <div className="lp-orb lp-orb-3" />
         <div className="lp-grid-bg" />
 
         {/* ── Navbar ─────────────────────────────────────── */}
@@ -183,7 +184,7 @@ export default function HomePage() {
               <h1 className="lp-headline">
                 Atendimento automático<br />
                 que <span className="lp-gradient-text">vende enquanto</span><br />
-                você dorme
+                <span className="lp-headline-serif">você dorme</span>
               </h1>
               <p className="lp-subheadline">
                 Conecte sua loja ao WhatsApp e deixe a IA responder clientes,
@@ -228,7 +229,7 @@ export default function HomePage() {
             <p className="lp-section-sub">Da IA ao pagamento, tudo integrado em uma plataforma.</p>
             <div className="lp-features-grid">
               {FEATURES.map((f) => (
-                <div key={f.title} className="lp-feature-card">
+                <div key={f.title} className="lp-feature-card" style={{ "--glow": f.color } as React.CSSProperties}>
                   <div className="lp-feature-icon" style={{ background: f.bg, border: `1px solid ${f.border}` }}>
                     <f.icon size={20} color={f.color} strokeWidth={1.8} />
                   </div>
@@ -251,7 +252,7 @@ export default function HomePage() {
               {STEPS.map((s, i) => (
                 <div key={s.n} className="lp-step">
                   <div className="lp-step-num" style={{ color: s.color, borderColor: s.color + "40", background: s.color + "12" }}>{s.n}</div>
-                  {i < STEPS.length - 1 && <div className="lp-step-connector" />}
+                  {i < STEPS.length - 1 && <div className="lp-step-connector" style={{ color: s.color }} />}
                   <h3 className="lp-step-title">{s.title}</h3>
                   <p className="lp-step-desc">{s.desc}</p>
                 </div>
@@ -268,7 +269,7 @@ export default function HomePage() {
             <p className="lp-section-sub">7 dias grátis em qualquer plano. Sem cartão de crédito.</p>
             <div className="lp-plans">
               {PLANS.map((p) => (
-                <div key={p.id} className={`lp-plan-card ${p.highlight ? "lp-plan-highlight" : ""}`}>
+                <div key={p.id} className={`lp-plan-card ${p.highlight ? "lp-plan-highlight" : ""}`} style={{ "--glow": p.iconColor } as React.CSSProperties}>
                   {p.highlight && <div className="lp-plan-badge">Mais popular</div>}
                   <div className="lp-plan-header">
                     <div className="lp-plan-icon" style={{ background: p.iconColor + "18", border: `1px solid ${p.iconColor}30` }}>
