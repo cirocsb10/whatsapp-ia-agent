@@ -113,10 +113,10 @@ export default function PlanPage() {
             <CreditCard className="w-6 h-6 text-indigo-400 relative z-10" />
           </div>
           <h1>Escolha seu plano</h1>
-          <p>Comece grátis por 14 dias. Cancele quando quiser, sem burocracia.</p>
+          <p>Comece grátis por 7 dias. Cancele quando quiser, sem burocracia.</p>
           <div className="onboarding-trial-pill">
             <Sparkles className="w-3 h-3" />
-            14 dias grátis em qualquer plano
+            7 dias grátis em qualquer plano
           </div>
         </header>
 
@@ -169,7 +169,7 @@ export default function PlanPage() {
                   className={isFeatured ? "onboarding-btn-primary" : "onboarding-btn-secondary"}
                   style={{ height: 42, fontSize: 13 }}
                 >
-                  {isLoading ? "Ativando…" : "Começar 14 dias grátis"}
+                  {isLoading ? "Ativando…" : "Começar 7 dias grátis"}
                   {!isLoading && <ArrowRight className="w-4 h-4" />}
                 </button>
               </article>

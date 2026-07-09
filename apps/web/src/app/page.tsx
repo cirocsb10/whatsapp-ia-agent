@@ -191,7 +191,7 @@ export default function HomePage() {
               </p>
               <div className="lp-hero-ctas">
                 <Link href="/register" className="lp-btn-primary lp-btn-lg">
-                  Começar 14 dias grátis
+                  Começar 7 dias grátis
                   <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
                 <a href="#como-funciona" className="lp-btn-outline">
@@ -265,7 +265,7 @@ export default function HomePage() {
           <RevealSection>
             <div className="lp-section-label">Preços</div>
             <h2 className="lp-section-title">Plano certo para o seu momento</h2>
-            <p className="lp-section-sub">14 dias grátis em qualquer plano. Sem cartão de crédito.</p>
+            <p className="lp-section-sub">7 dias grátis em qualquer plano. Sem cartão de crédito.</p>
             <div className="lp-plans">
               {PLANS.map((p) => (
                 <div key={p.id} className={`lp-plan-card ${p.highlight ? "lp-plan-highlight" : ""}`}>
@@ -314,7 +314,7 @@ export default function HomePage() {
             </h2>
             <p className="lp-cta-sub">Configure em minutos. Venda em segundos. Durma tranquilo.</p>
             <Link href="/register" className="lp-btn-primary lp-btn-xl">
-              Começar agora — 14 dias grátis
+              Começar agora — 7 dias grátis
               <ArrowRight size={18} strokeWidth={2.5} />
             </Link>
             <div className="lp-cta-trust">

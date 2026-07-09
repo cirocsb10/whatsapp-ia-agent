@@ -35,7 +35,7 @@ export class BillingService {
       customer: customerId, mode: "subscription", payment_method_types: ["card"],
       line_items: [{ price: this.getPriceMap()[plan] ?? "", quantity: 1 }],
       success_url: `${frontendUrl}/overview?checkout=success`, cancel_url: `${frontendUrl}/setup/plan?canceled=true`,
-      metadata: { tenantId, plan }, subscription_data: { metadata: { tenantId }, trial_period_days: 14 },
+      metadata: { tenantId, plan }, subscription_data: { metadata: { tenantId }, trial_period_days: 7 },
     });
     return { checkoutUrl: session.url as string };
   }
