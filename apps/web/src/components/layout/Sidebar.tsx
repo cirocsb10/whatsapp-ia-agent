@@ -1,6 +1,8 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { apiClient } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package, Kanban,
@@ -43,6 +45,15 @@ export function Sidebar() {
   const collapsed = useSidebarStore((s) => s.collapsed);
   const badges = useNotificationsStore((s) => s.badges);
   const width = collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded;
+  const [apiVersion, setApiVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiClient
+      .get("health")
+      .json<{ version?: string }>()
+      .then((res) => setApiVersion(res.version ?? null))
+      .catch(() => {});
+  }, []);
 
   return (
     <aside
@@ -119,6 +130,11 @@ export function Sidebar() {
             <div className="min-w-0">
               <p className="text-[11px] text-[#94a3b8] font-medium leading-none truncate">WhatsApp conectado</p>
               <p className="text-[10px] text-[#334155] mt-0.5 leading-none">Meta Cloud API</p>
+              <p className="text-[10px] text-[#334155] mt-1.5 leading-none truncate">
+                v{process.env.NEXT_PUBLIC_APP_VERSION}
+                {process.env.NEXT_PUBLIC_BUILD_COMMIT && ` · ${process.env.NEXT_PUBLIC_BUILD_COMMIT}`}
+                {apiVersion && ` · API v${apiVersion}`}
+              </p>
             </div>
           </div>
         )}
