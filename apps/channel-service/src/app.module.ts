@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import configuration from "./config/configuration";
 import { HealthController } from "./health/health.controller";
 import { WebhookController } from "./webhook/webhook.controller";
@@ -19,6 +21,9 @@ import { MessagingModule } from "./messaging/messaging.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    ThrottlerModule.forRoot([
+      { name: "global", ttl: 10_000, limit: 300 },
+    ]),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -41,6 +46,7 @@ import { MessagingModule } from "./messaging/messaging.module";
     HmacGuard,
     ConfigService,
     CrmAutoLeadService,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
 export class AppModule {}

@@ -149,6 +149,9 @@ async def add_to_cart_tool(
     from datetime import datetime
 
     try:
+        if quantity <= 0:
+            return "Quantidade inválida. Por favor, informe uma quantidade maior que zero."
+
         db_product = await _get_authoritative_price(product_id, tenant_id)
         if not db_product:
             return "Produto não encontrado no catálogo. Por favor, busque o produto novamente."

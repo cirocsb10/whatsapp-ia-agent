@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, UnauthorizedException, BadRequestExcepti
 import { OrderStatus } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { CrmProgressionService } from "../crm/crm-progression.service";
+import { CreateOrderDto } from "./dto/create-order.dto";
+import { CreateInternalOrderDto } from "./dto/create-internal-order.dto";
 
 @Injectable()
 export class OrdersService {
@@ -10,17 +12,7 @@ export class OrdersService {
     private readonly crmProgression: CrmProgressionService,
   ) {}
 
-  async createInternal(body: {
-    tenantId: string;
-    contactPhone: string;
-    items: Array<{
-      productId: string;
-      productName: string;
-      priceCents: number;
-      quantity: number;
-      variationSelected?: Record<string, string>;
-    }>;
-  }) {
+  async createInternal(body: CreateInternalOrderDto) {
     const productIds = body.items.map((i) => i.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, tenantId: body.tenantId },
@@ -119,11 +111,7 @@ export class OrdersService {
     return this.updateStatus(tenantId, id, "CANCELLED");
   }
 
-  async createFromUi(tenantId: string, body: {
-    contactPhone: string;
-    items: Array<{ productId: string; quantity: number }>;
-    notes?: string;
-  }) {
+  async createFromUi(tenantId: string, body: CreateOrderDto) {
     const productIds = body.items.map((i) => i.productId);
     const products = await this.prisma.product.findMany({
       where: { id: { in: productIds }, tenantId },

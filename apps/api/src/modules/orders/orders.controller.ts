@@ -6,6 +6,8 @@ import { timingSafeEqual } from "crypto";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
+import { CreateOrderDto } from "./dto/create-order.dto";
+import { CreateInternalOrderDto } from "./dto/create-internal-order.dto";
 
 @Controller("orders")
 export class OrdersController {
@@ -48,7 +50,7 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard)
   createFromUi(
     @CurrentTenantId() tenantId: string,
-    @Body() body: { contactPhone: string; items: Array<{ productId: string; quantity: number }>; notes?: string },
+    @Body() body: CreateOrderDto,
   ) {
     return this.service.createFromUi(tenantId, body);
   }
@@ -57,7 +59,7 @@ export class OrdersController {
   @HttpCode(201)
   createInternal(
     @Headers("x-internal-token") token: string,
-    @Body() body: any,
+    @Body() body: CreateInternalOrderDto,
   ) {
     const expectedToken = process.env.INTERNAL_API_TOKEN;
     if (!expectedToken) {

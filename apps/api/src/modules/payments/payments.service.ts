@@ -58,6 +58,9 @@ export class PaymentsService {
       include: { contact: true, items: true },
     });
     if (!order) throw new NotFoundException("Order not found");
+    if (order.totalCents <= 0) {
+      throw new BadRequestException("Pedido com valor total inválido");
+    }
 
     const existing = await this.prisma.payment.findFirst({
       where: { orderId, status: { in: ["PENDING", "APPROVED"] } },
