@@ -555,6 +555,20 @@ model PlatformBilling {
   tenant                  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+// Configuração SMTP global da plataforma (singleton, gerenciada pelo super-admin).
+// Usada para emails "do sistema" (billing, alertas, onboarding), não em nome de um tenant.
+model PlatformSmtpSettings {
+  id                String   @id @default("default")
+  host              String?
+  port              Int      @default(587)
+  username          String?
+  passwordEncrypted String?
+  secure            Boolean  @default(false)
+  fromEmail         String?
+  fromName          String?
+  updatedAt         DateTime @updatedAt
+}
+
 model FunnelStage {
   id        String   @id @default(uuid())
   tenantId  String
