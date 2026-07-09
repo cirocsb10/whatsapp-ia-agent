@@ -18,6 +18,7 @@ import { ConversationsModule } from "./modules/conversations/conversations.modul
 import { AgentModule } from "./modules/agent/agent.module";
 import { CrmModule } from "./modules/crm/crm.module";
 import { CategoriesModule } from "./modules/categories/categories.module";
+import { PlatformEmailModule } from "./modules/platform-email/platform-email.module";
 import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
 
 @Module({
@@ -48,7 +49,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     PrismaModule, RedisModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     AuthModule, SettingsModule, ConversationsModule, AgentModule,
-    CrmModule, CategoriesModule,
+    CrmModule, CategoriesModule, PlatformEmailModule,
   ],
   providers: [
     InboxEventsConsumer,
