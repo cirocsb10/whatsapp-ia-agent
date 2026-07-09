@@ -25,6 +25,16 @@ pnpm docker:up    # Start PostgreSQL, Redis, RabbitMQ via Docker Compose
 pnpm docker:down  # Stop Docker services
 ```
 
+### Versioning
+
+Manual semver per app, no CI release automation:
+
+```bash
+node scripts/bump-version.js <api|web|channel-service> <patch|minor|major|x.y.z>
+```
+
+`scripts/build-info.js` resolves `{ version, commit, buildDate }` (git SHA via `git rev-parse --short HEAD`, falling back to platform env vars like `VERCEL_GIT_COMMIT_SHA`). `apps/api` and `apps/channel-service` generate a `build-info.json` via a `prebuild`/`predev` hook (`scripts/gen-build-info.js`) and expose it at `GET /health`. `apps/web` injects `NEXT_PUBLIC_APP_VERSION`/`NEXT_PUBLIC_BUILD_COMMIT`/`NEXT_PUBLIC_BUILD_DATE` at build time via `next.config.mjs` and shows `v{version} · {commit} · API v{apiVersion}` in the Sidebar footer (fetches API `/health` live, silent fallback if unavailable).
+
 ### Per-service (use `pnpm --filter <name> <script>`)
 
 ```bash
@@ -64,7 +74,7 @@ pytest -k "test_name"              # Run specific test
 ### Service Map
 
 ```
-port 3000 — web         (Next.js 14 App Router, Clerk Auth, Zustand, Recharts)
+port 3000 — web         (Next.js 14 App Router, JWT+BFF Auth, Zustand, Recharts)
 port 3001 — channel-service  (NestJS, receives Meta webhook, pushes to RabbitMQ)
 port 3002 — api         (NestJS, back-office REST + Socket.io real-time)
 port 8000 — ai-orchestrator  (FastAPI + LangGraph, consumes RabbitMQ)
@@ -86,13 +96,20 @@ Infrastructure (Docker Compose dev):
 
 Nodes in order: `entry → route → reasoning → guard_rail → output → END`
 
-- `entry_node`: builds the dynamic system prompt via `PromptBuilderService`
+- `entry_node`: builds the dynamic system prompt via `PromptBuilderService`, which queries the tenant's `AgentConfig` row (raw SQL) for `llm_model` and persona/handoff fields
 - `route_node`: classifies intent
-- `reasoning_node`: runs the LLM with bound tools (`ALL_TOOLS`)
-- `guard_rail_node`: checks for hallucinations/policy violations; can force-handoff
+- `reasoning_node`: runs the LLM with bound tools (`ALL_TOOLS`); the LLM instance is built per-tenant from `state["llm_model"]` (falls back to `settings.openai_model_simple`)
+- `guard_rail_node`: checks for hallucinations/policy violations against per-tenant `guard_rules`; also reads `AgentConfig.handoffMessage` for tenant-specific handoff copy; can force-handoff
 - `output_node`: formats the final reply; triggers human handoff if `should_handoff=True`
 
 The compiled graph is a singleton (`get_agent_graph()`). All config comes from `src/config.py` (pydantic-settings, reads `.env`).
+
+### Auth (JWT + BFF proxy — Clerk fully removed)
+
+- **api** (`apps/api/src/modules/auth/`): `auth.controller.ts` (register, login, google, refresh, logout, socket-ticket, me, change-password) + `auth.service.ts` — bcrypt password hashing, JWT access/refresh pairs (`@nestjs/jwt`), refresh tokens stored in Redis (`refresh:` prefix), Google OAuth token validation. `strategies/jwt.strategy.ts` is passport-jwt, Bearer token, payload `{ sub, tenantId }`.
+- **Socket auth**: `POST /auth/socket-ticket` issues a 30s single-use ticket stored in Redis (`socket-ticket:` prefix) for the Socket.io handshake.
+- **web** (`apps/web/src/app/api/auth/*`): Next.js route handlers (login, register, google, refresh, logout, me, forgot-password) act as a BFF that proxies to the api and sets httpOnly cookies; `apps/web/src/app/api/proxy/[...path]/route.ts` is the generic authenticated proxy for all other backend calls. Client-side: `apps/web/src/contexts/auth-context.tsx` (`AuthProvider`/`useAuth`, `credentials: "include"`) and `apps/web/src/components/auth/AuthShell.tsx` for the split-screen login UI.
+- `apps/api/src/modules/clerk/` is an empty leftover directory — safe to delete, not in use.
 
 ### Multi-tenancy
 
@@ -106,11 +123,19 @@ All database tables include `tenant_id`. The **api** service injects tenant cont
 ### Frontend Structure (`apps/web/src/`)
 
 Route groups:
-- `(dashboard)/` — authenticated tenant back-office (sidebar + header layout)
-- `(onboarding)/` — setup wizard
+- `(dashboard)/` — authenticated tenant back-office (sidebar + header layout): `overview`, `inbox`, `crm`, `catalog`, `orders`, `analytics`, `agent/{persona,rules,knowledge}`, `settings`, `support`
+- `(admin)/` — super-admin/platform-operator views (separate layout): `tenants`, `email` (platform SMTP config)
+- `(onboarding)/` — setup wizard, including `setup/plan` (Stripe plan selection)
 - `(public)/` — landing page, login
 
 Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state), `recharts` (charts), `shadcn/ui` + Tailwind CSS v4.
+
+### Back-office API modules (`apps/api/src/modules/`)
+
+`auth`, `agent` (persona/rules/knowledge config), `analytics` (`kpis`, `kpi-trends`, `setup-status`, `conversations-chart`, `funnel`, `heatmap`, `handoff-reasons`), `billing` (Stripe — platform subscription/metering), `categories`, `crm` (funnel stages + deals kanban, `crm-progression.service.ts` for auto-progression), `orders`, `payments` (MercadoPago — tenant order payments, distinct from `billing`), `platform-email` (system SMTP sending via BullMQ `email.processor.ts`), `products`, `settings`, `super-admin`, `health`.
+
+- **CRM**: `FunnelStage` (name, color, position, isWon/isLost) and `Deal` (stageId, contactId, title, valueCents, notes, closedAt) Prisma models, both `tenant_id`-scoped. WhatsApp contacts are auto-inserted and advanced through the funnel automatically (see Key Conventions).
+- **Platform SMTP**: `PlatformSmtpSettings` is a **platform-wide singleton** (no `tenant_id`), storing host/port/username/`passwordEncrypted` (AES-256-GCM) for outbound system emails (not per-tenant messaging).
 
 ### Design System
 
@@ -124,13 +149,17 @@ Dark OLED palette. Primary colors: `#020617` (bg), `#22C55E` (green/CTA), `#6366
 - **Opt-out handling**: if contact sends "parar"/"stop"/"cancelar", channel-service must set `isOptedOut=true` and block further replies.
 - **Guard rails** (`guard_rules` table, per-tenant) control anti-hallucination behavior; the LangGraph `guard_rail` node checks them before every response.
 - **Audio messages**: channel-service downloads the media from Meta, transcribes via OpenAI Whisper, and sends the transcript as text to the AI pipeline.
+- **Inactivity timer** (`apps/channel-service/src/queue/`, BullMQ `INACTIVITY_QUEUE`): two-phase — a "warn" job sends the tenant's `AgentConfig.inactivityMessage`, then a "close" job (after `CLOSE_GRACE_MINUTES`) sends `AgentConfig.closingMessage`, marks the conversation `CLOSED`, and deletes the Redis session. Timeout is per-tenant via `AgentConfig.inactivityTimeoutMin`.
+- **CRM auto-progression**: WhatsApp contacts are auto-inserted into the CRM and advanced through funnel stages (`crm-progression.service.ts`) based on conversation/order activity.
+- **Two separate payment rails**: `payments` module (MercadoPago) is for tenant-facing order payments; `billing` module (Stripe) is for platform subscription billing of tenants themselves.
 
 ## Environment Variables
 
 See `.env.example` at the root. Key groups:
 - `DATABASE_URL`, `REDIS_URL`, `RABBITMQ_URL` — infra
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET` — auth
+- `JWT_ACCESS_SECRET`, `JWT_ACCESS_EXPIRES_IN` (15m), `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN` (7d), `NEXT_PUBLIC_GOOGLE_CLIENT_ID` — auth (no Clerk vars remain)
 - `META_APP_ID`, `META_APP_SECRET`, `META_VERIFY_TOKEN`, `META_WEBHOOK_SECRET` — WhatsApp
 - `OPENAI_API_KEY` — LLM + Whisper + embeddings
-- `MERCADOPAGO_ACCESS_TOKEN`, `STRIPE_SECRET_KEY` — payments (MP for tenant orders, Stripe for platform billing)
+- `MERCADOPAGO_ACCESS_TOKEN` — tenant order payments (`payments` module)
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_*`, `STRIPE_METER_ID_CONVERSATIONS` — platform subscription billing (`billing` module)
 - `CHANNEL_SERVICE_URL`, `AI_ORCHESTRATOR_URL`, `BACKOFFICE_API_URL` — internal service URLs
