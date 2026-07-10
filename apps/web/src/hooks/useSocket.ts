@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthContext } from "@/contexts/auth-context";
-import { useInboxStore } from "@/lib/store/inbox.store";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
+import { useSocketStatus } from "@/shared/realtime/socket-status.store";
+import {
+  applyNewMessage,
+  applyConversationStatus,
+  applyMessageStatus,
+  applyHandoffCreated,
+} from "@/features/inbox/api/queries";
 
 const WS_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:3002") + "/events";
 
@@ -20,31 +27,16 @@ async function fetchSocketTicket(): Promise<string | null> {
 
 export function useSocket() {
   const { isLoaded, isSignedIn } = useAuthContext();
-  const addMessage = useInboxStore((s) => s.addMessage);
-  const updateStatus = useInboxStore((s) => s.updateConversationStatus);
-  const updateMessageStatus = useInboxStore((s) => s.updateMessageStatus);
-  const setSocketStatus = useInboxStore((s) => s.setSocketStatus);
-  const addHandoff = useInboxStore((s) => s.addHandoffConversation);
+  const queryClient = useQueryClient();
+  const setSocketStatus = useSocketStatus((s) => s.setStatus);
   const incrementHandoffs = useNotificationsStore((s) => s.incrementHandoffs);
   const socketRef = useRef<import("socket.io-client").Socket | null>(null);
 
-  const cbRef = useRef({
-    addMessage,
-    updateStatus,
-    updateMessageStatus,
-    setSocketStatus,
-    addHandoff,
-    incrementHandoffs,
-  });
+  // queryClient/setSocketStatus/incrementHandoffs são estáveis; ref evita recriar o
+  // socket a cada render sem perder acesso às últimas referências.
+  const cbRef = useRef({ queryClient, setSocketStatus, incrementHandoffs });
   useEffect(() => {
-    cbRef.current = {
-      addMessage,
-      updateStatus,
-      updateMessageStatus,
-      setSocketStatus,
-      addHandoff,
-      incrementHandoffs,
-    };
+    cbRef.current = { queryClient, setSocketStatus, incrementHandoffs };
   });
 
   useEffect(() => {
@@ -76,8 +68,19 @@ export function useSocket() {
         cbRef.current.setSocketStatus("connected");
       });
 
-      sock.on("disconnect", () => {
+      sock.on("disconnect", (reason) => {
         cbRef.current.setSocketStatus("disconnected");
+        // "io server disconnect" (e.g. rejected/expired ticket) disables
+        // socket.io's built-in auto-reconnect — kick it manually with a fresh ticket.
+        if (reason === "io server disconnect" && active) {
+          void (async () => {
+            const freshTicket = await fetchSocketTicket();
+            if (freshTicket && active) {
+              sock.auth = { ticket: freshTicket };
+              sock.connect();
+            }
+          })();
+        }
       });
 
       sock.io.on("reconnect_attempt", async () => {
@@ -99,21 +102,21 @@ export function useSocket() {
       });
 
       sock.on("event", (event: { type: string; payload: unknown }) => {
-        const cb = cbRef.current;
+        const qc = cbRef.current.queryClient;
         switch (event.type) {
           case "new_message":
-            cb.addMessage(event.payload as Parameters<typeof addMessage>[0]);
+            applyNewMessage(qc, event.payload as Parameters<typeof applyNewMessage>[1]);
             break;
           case "conversation_status":
           case "conversation_status_changed":
-            cb.updateStatus(event.payload as Parameters<typeof updateStatus>[0]);
+            applyConversationStatus(qc, event.payload as Parameters<typeof applyConversationStatus>[1]);
             break;
           case "message_status_changed":
-            cb.updateMessageStatus(event.payload as Parameters<typeof updateMessageStatus>[0]);
+            applyMessageStatus(qc, event.payload as Parameters<typeof applyMessageStatus>[1]);
             break;
           case "handoff_created":
-            cb.addHandoff(event.payload as Parameters<typeof addHandoff>[0]);
-            cb.incrementHandoffs();
+            applyHandoffCreated(qc, event.payload as Parameters<typeof applyHandoffCreated>[1]);
+            cbRef.current.incrementHandoffs();
             break;
           default:
             break;

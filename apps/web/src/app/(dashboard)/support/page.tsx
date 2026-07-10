@@ -1,7 +1,7 @@
 "use client";
 import { Header } from "@/components/layout/Header";
-import { useApi } from "@/lib/hooks/useApi";
-import { useInboxStore } from "@/lib/store/inbox.store";
+import { useConversations } from "@/features/inbox/api/queries";
+import { useSocketStatus } from "@/shared/realtime/socket-status.store";
 import {
   PhoneCall, Bot, Clock, CheckCircle2,
   User, ArrowRight, MessageSquare, ChevronRight,
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 function relativeTime(iso?: string): string {
   if (!iso) return "";
@@ -59,33 +59,19 @@ const STATS = [
 ] as const;
 
 export default function SupportPage() {
-  // Socket agora vive no RealtimeProvider (layout do dashboard) — S7.
+  // Socket vive no RealtimeProvider (S7); conversas via TanStack Query (cache
+  // compartilhado com o inbox).
   const router = useRouter();
-  const { apiFetch } = useApi();
-  const conversations = useInboxStore((s) => s.conversations);
-  const setConversations = useInboxStore((s) => s.setConversations);
-  const socketStatus = useInboxStore((s) => s.socketStatus);
+  const conversationsQuery = useConversations();
+  const conversations = conversationsQuery.data ?? [];
+  const loading = conversationsQuery.isPending;
+  const socketStatus = useSocketStatus((s) => s.status);
   const [tab, setTab] = useState<SupportTab>("pending");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
 
   function handleAttend(convId: string) {
     router.push(`/inbox?conv=${encodeURIComponent(convId)}`);
   }
-
-  async function loadConversations() {
-    setLoading(true);
-    try {
-      const res = await apiFetch("/conversations");
-      if (res.ok) setConversations(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadConversations();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handoffs = conversations.filter((c) => c.isHandoff);
   const aiActive = conversations.filter((c) => !c.isHandoff);
@@ -152,7 +138,7 @@ export default function SupportPage() {
             </div>
             <button
               type="button"
-              onClick={() => void loadConversations()}
+              onClick={() => void conversationsQuery.refetch()}
               className="support-refresh-btn"
               aria-label="Atualizar fila"
             >

@@ -1,9 +1,17 @@
 "use client";
 import { Header } from "@/components/layout/Header";
-import { useInboxStore } from "@/lib/store/inbox.store";
 import { ChatInputBar } from "@/components/chat/ChatInputBar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useApi } from "@/lib/hooks/useApi";
+import { useSocketStatus } from "@/shared/realtime/socket-status.store";
+import {
+  useConversations,
+  useMessages,
+  markConversationRead,
+  applyOptimisticMessage,
+  markOptimisticFailed,
+} from "@/features/inbox/api/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -63,25 +71,24 @@ export default function InboxPage() {
 }
 
 function InboxContent() {
-  // Socket agora vive no RealtimeProvider (layout do dashboard) — S7.
+  // Socket vive no RealtimeProvider (S7); server-state via TanStack Query (F3).
   const router = useRouter();
   const searchParams = useSearchParams();
   const convFromUrl = searchParams.get("conv");
   const { apiFetch } = useApi();
-  const conversations = useInboxStore((s) => s.conversations);
-  const messages = useInboxStore((s) => s.messages);
-  const activeId = useInboxStore((s) => s.activeConversationId);
-  const setConversations = useInboxStore((s) => s.setConversations);
-  const setMessages = useInboxStore((s) => s.setMessages);
-  const setActive = useInboxStore((s) => s.setActiveConversation);
-  const markAsRead = useInboxStore((s) => s.markAsRead);
-  const addOptimisticMessage = useInboxStore((s) => s.addOptimisticMessage);
-  const markMessageFailed = useInboxStore((s) => s.markMessageFailed);
-  const socketStatus = useInboxStore((s) => s.socketStatus);
-  const activeMessages = useMemo(
-    () => (activeId ? (messages[activeId] ?? []) : []),
-    [activeId, messages],
-  );
+  const queryClient = useQueryClient();
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const conversationsQuery = useConversations();
+  const conversations = useMemo(() => conversationsQuery.data ?? [], [conversationsQuery.data]);
+  const loading = conversationsQuery.isPending;
+
+  const messagesQuery = useMessages(activeId);
+  const activeMessages = useMemo(() => messagesQuery.data ?? [], [messagesQuery.data]);
+
+  const socketStatus = useSocketStatus((s) => s.status);
+
   const activeConv = useMemo(
     () => conversations.find((c) => c.id === activeId),
     [conversations, activeId],
@@ -90,24 +97,13 @@ function InboxContent() {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterTab>("all");
-  const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const handledConvRef = useRef<string | null>(null);
 
-  const loadConversations = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch("/conversations");
-      if (res.ok) setConversations(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch, setConversations]);
-
-  useEffect(() => {
-    void loadConversations();
-  }, [loadConversations]);
+  const loadConversations = useCallback(() => {
+    void conversationsQuery.refetch();
+  }, [conversationsQuery]);
 
   useEffect(() => {
     if (!convFromUrl || loading) return;
@@ -118,17 +114,12 @@ function InboxContent() {
 
     handledConvRef.current = convFromUrl;
 
-    void (async () => {
-      setActive(convFromUrl);
-      markAsRead(convFromUrl);
-      setDraft("");
-      if (!messages[convFromUrl]?.length) {
-        const res = await apiFetch(`/conversations/${convFromUrl}/messages`);
-        if (res.ok) setMessages(convFromUrl, await res.json());
-      }
-      router.replace("/inbox", { scroll: false });
-    })();
-  }, [convFromUrl, loading, conversations, messages, apiFetch, markAsRead, router, setActive, setMessages]);
+    // useMessages busca as mensagens automaticamente ao mudar activeId.
+    setActiveId(convFromUrl);
+    markConversationRead(queryClient, convFromUrl);
+    setDraft("");
+    router.replace("/inbox", { scroll: false });
+  }, [convFromUrl, loading, conversations, router, queryClient]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -150,15 +141,13 @@ function InboxContent() {
   }, [conversations, search, filter]);
 
   const handleSelectConv = useCallback(
-    async (id: string) => {
-      setActive(id);
-      markAsRead(id);
+    (id: string) => {
+      // useMessages(activeId) dispara o fetch (com cache) ao mudar o id.
+      setActiveId(id);
+      markConversationRead(queryClient, id);
       setDraft("");
-      if (useInboxStore.getState().messages[id]?.length) return;
-      const res = await apiFetch(`/conversations/${id}/messages`);
-      if (res.ok) setMessages(id, await res.json());
     },
-    [apiFetch, markAsRead, setActive, setMessages],
+    [queryClient],
   );
 
   const handleAssume = useCallback(async () => {
@@ -175,7 +164,7 @@ function InboxContent() {
     if (!activeId || !draft.trim() || sending) return;
     const text = draft.trim();
     // Optimistic: o balão aparece na hora; o echo do socket reconcilia depois.
-    const tempId = addOptimisticMessage(activeId, text);
+    const tempId = applyOptimisticMessage(queryClient, activeId, text);
     setDraft("");
     setSending(true);
     try {
@@ -185,17 +174,17 @@ function InboxContent() {
         body: JSON.stringify({ text }),
       });
       if (!res.ok) {
-        markMessageFailed(activeId, tempId);
+        markOptimisticFailed(queryClient, activeId, tempId);
         const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
         console.error("[handleSend] erro:", res.status, body);
       }
     } catch (err) {
-      markMessageFailed(activeId, tempId);
+      markOptimisticFailed(queryClient, activeId, tempId);
       console.error("[handleSend] falha de rede:", err);
     } finally {
       setSending(false);
     }
-  }, [activeId, draft, sending, apiFetch, addOptimisticMessage, markMessageFailed]);
+  }, [activeId, draft, sending, apiFetch, queryClient]);
 
   const tabs: { key: FilterTab; label: string; count: number }[] = useMemo(
     () => [
