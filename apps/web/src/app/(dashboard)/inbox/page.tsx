@@ -10,11 +10,14 @@ import {
   markConversationRead,
   applyOptimisticMessage,
   markOptimisticFailed,
+  fetchMessagesPage,
+  prependOlderMessages,
+  MESSAGES_PAGE_SIZE,
 } from "@/features/inbox/api/queries";
 import { useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal } from "lucide-react";
+import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal, ChevronUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 function getInitials(name?: string, phone?: string): string {
   if (name && name.trim()) {
@@ -94,12 +97,19 @@ function InboxContent() {
     [conversations, activeId],
   );
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // scrollHeight capturado antes de um prepend, para restaurar a posição depois.
+  const restoreScrollRef = useRef<number | null>(null);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterTab>("all");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const handledConvRef = useRef<string | null>(null);
+
+  const lastMessageId = activeMessages[activeMessages.length - 1]?.id;
 
   const loadConversations = useCallback(() => {
     void conversationsQuery.refetch();
@@ -121,9 +131,46 @@ function InboxContent() {
     router.replace("/inbox", { scroll: false });
   }, [convFromUrl, loading, conversations, router, queryClient]);
 
+  // Auto-scroll ao fim só quando entra mensagem nova no rodapé (muda o último id)
+  // ou troca de conversa. Prepend de antigas não altera o último id → não puxa.
   useEffect(() => {
+    if (restoreScrollRef.current != null) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeMessages.length]);
+  }, [lastMessageId, activeId]);
+
+  // Restaura a posição de leitura após prepend de mensagens antigas.
+  useLayoutEffect(() => {
+    if (restoreScrollRef.current == null || !scrollRef.current) return;
+    const el = scrollRef.current;
+    el.scrollTop = el.scrollHeight - restoreScrollRef.current;
+    restoreScrollRef.current = null;
+  }, [activeMessages]);
+
+  // Estima se há mensagens anteriores quando uma conversa é aberta (página cheia).
+  useEffect(() => {
+    if (!activeId) return;
+    setHasMoreOlder(activeMessages.length >= MESSAGES_PAGE_SIZE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, messagesQuery.isSuccess]);
+
+  const handleLoadOlder = useCallback(async () => {
+    if (!activeId || loadingOlder) return;
+    const oldest = activeMessages[0];
+    if (!oldest) return;
+    setLoadingOlder(true);
+    try {
+      const page = await fetchMessagesPage(activeId, {
+        limit: MESSAGES_PAGE_SIZE,
+        before: oldest.sentAt,
+      });
+      // Captura a altura antes do prepend para restaurar a posição (useLayoutEffect).
+      restoreScrollRef.current = scrollRef.current?.scrollHeight ?? 0;
+      prependOlderMessages(queryClient, activeId, page.messages);
+      setHasMoreOlder(page.hasMore);
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [activeId, activeMessages, loadingOlder, queryClient]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -430,7 +477,7 @@ function InboxContent() {
               </div>
 
               {/* Messages area with WhatsApp wallpaper */}
-              <div className="inbox-chat-bg">
+              <div className="inbox-chat-bg" ref={scrollRef}>
                 {activeMessages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                     <div className="inbox-chat-empty-icon">
@@ -440,6 +487,23 @@ function InboxContent() {
                   </div>
                 ) : (
                   <div className="inbox-messages">
+                    {hasMoreOlder && (
+                      <div className="flex justify-center py-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleLoadOlder()}
+                          disabled={loadingOlder}
+                          className="inbox-load-older-btn"
+                        >
+                          {loadingOlder ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          )}
+                          {loadingOlder ? "Carregando…" : "Carregar mensagens anteriores"}
+                        </button>
+                      </div>
+                    )}
                     {activeMessages.map((msg) => (
                       <MessageBubble
                         key={msg.id}

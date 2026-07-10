@@ -2157,6 +2157,30 @@
     width: 100%;
   }
 
+  .inbox-load-older-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--wa-muted, #94a3b8);
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    backdrop-filter: blur(8px);
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .inbox-load-older-btn:hover:not(:disabled) {
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.75);
+  }
+  .inbox-load-older-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
   .bubble-row {
     display: flex;
     width: 100%;

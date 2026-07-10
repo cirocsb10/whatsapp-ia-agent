@@ -36,6 +36,40 @@ export const inboxKeys = {
   messages: (conversationId: string) => ["inbox", "messages", conversationId] as const,
 };
 
+/** Tamanho da página inicial/incremental de mensagens (B2 §3.5). */
+export const MESSAGES_PAGE_SIZE = 50;
+
+export interface MessagesPage {
+  messages: InboxMessage[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+/**
+ * Busca uma página de mensagens lendo a meta de paginação dos headers
+ * (X-Has-More / X-Next-Cursor), repassados pelo proxy BFF. Vai direto ao
+ * `fetch` (em vez do `api`) porque precisamos inspecionar os headers.
+ */
+export async function fetchMessagesPage(
+  conversationId: string,
+  opts: { limit?: number; before?: string } = {},
+): Promise<MessagesPage> {
+  const params = new URLSearchParams({ limit: String(opts.limit ?? MESSAGES_PAGE_SIZE) });
+  if (opts.before) params.set("before", opts.before);
+
+  const res = await fetch(`/api/proxy/conversations/${conversationId}/messages?${params}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(`messages page failed: ${res.status}`);
+
+  const messages = (await res.json()) as InboxMessage[];
+  return {
+    messages,
+    hasMore: res.headers.get("X-Has-More") === "true",
+    nextCursor: res.headers.get("X-Next-Cursor"),
+  };
+}
+
 // ─────────────────────────── Hooks ───────────────────────────
 // server-state migrado da store Zustand para o cache do Query (F3 §3.5).
 // Sem refetch no foco: unreadCount/preview são estado efêmero atualizado pelo
@@ -54,10 +88,29 @@ export function useConversations() {
 export function useMessages(conversationId: string | null) {
   return useQuery({
     queryKey: inboxKeys.messages(conversationId ?? "__none__"),
-    queryFn: () => api.get<InboxMessage[]>(`/conversations/${conversationId}/messages`),
+    // Carga inicial limitada às últimas MESSAGES_PAGE_SIZE (B2). "Carregar
+    // anteriores" faz prepend via prependOlderMessages. Mantém o cache como
+    // array plano para os mutadores do socket.
+    queryFn: async () => (await fetchMessagesPage(conversationId as string)).messages,
     enabled: !!conversationId,
     refetchOnWindowFocus: false,
     staleTime: 15_000,
+  });
+}
+
+/**
+ * Prepend de mensagens mais antigas no cache, com dedupe por id (mantém ordem asc).
+ */
+export function prependOlderMessages(
+  qc: QueryClient,
+  conversationId: string,
+  older: InboxMessage[],
+) {
+  qc.setQueryData<InboxMessage[]>(inboxKeys.messages(conversationId), (current) => {
+    const existing = current ?? [];
+    const seen = new Set(existing.map((m) => m.id));
+    const toPrepend = older.filter((m) => !seen.has(m.id));
+    return [...toPrepend, ...existing];
   });
 }
 

@@ -67,11 +67,18 @@ async function proxyRequest(
   }
 
   const responseBody = await upstream.text();
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": upstream.headers.get("content-type") ?? "application/json",
+  };
+  // Repassa metadados de paginação (B2) — o proxy é opaco por padrão.
+  const hasMore = upstream.headers.get("x-has-more");
+  if (hasMore !== null) responseHeaders["X-Has-More"] = hasMore;
+  const nextCursor = upstream.headers.get("x-next-cursor");
+  if (nextCursor !== null) responseHeaders["X-Next-Cursor"] = nextCursor;
+
   return new NextResponse(responseBody, {
     status: upstream.status,
-    headers: {
-      "Content-Type": upstream.headers.get("content-type") ?? "application/json",
-    },
+    headers: responseHeaders,
   });
 }
 
