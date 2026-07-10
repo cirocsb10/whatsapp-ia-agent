@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Package, Pencil, Trash2 } from "lucide-react";
 import {
   formatPrice,
@@ -17,12 +18,19 @@ interface Props {
 export function ProductListRow({ product, onEdit, onDelete }: Props) {
   const isLowStock =
     product.stockQty > 0 && product.stockQty <= product.lowStockThreshold;
+  const imageUrl = product.imageUrls[0];
 
   return (
     <div className="product-list-row">
       <div className="product-list-thumb">
-        {product.imageUrls[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} />
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            sizes="36px"
+            className="object-cover"
+          />
         ) : (
           <Package className="w-4 h-4" style={{ color: "#475569" }} />
         )}

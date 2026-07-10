@@ -13,6 +13,21 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     serverComponentsExternalPackages: [],
+    // Tree-shake lucide/recharts no bundle (F5 §3.9).
+    optimizePackageImports: ["lucide-react", "recharts"],
+  },
+  // URLs de produto (MinIO/S3) e mídia WhatsApp (Meta CDN) são arbitrárias por tenant.
+  images: {
+    remotePatterns: [
+      { protocol: "http", hostname: "localhost", pathname: "/**" },
+      { protocol: "http", hostname: "127.0.0.1", pathname: "/**" },
+      { protocol: "https", hostname: "**.amazonaws.com", pathname: "/**" },
+      { protocol: "https", hostname: "**.cdn.whatsapp.net", pathname: "/**" },
+      { protocol: "https", hostname: "mmg.whatsapp.net", pathname: "/**" },
+      { protocol: "https", hostname: "**.fbcdn.net", pathname: "/**" },
+      { protocol: "https", hostname: "**", pathname: "/**" },
+      { protocol: "http", hostname: "**", pathname: "/**" },
+    ],
   },
   env: {
     NEXT_PUBLIC_APP_VERSION: buildInfo.version,

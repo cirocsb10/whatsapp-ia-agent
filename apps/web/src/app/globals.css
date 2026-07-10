@@ -9982,8 +9982,9 @@
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 }
-.product-list-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+.product-list-thumb img { object-fit: cover; border-radius: 6px; }
 .product-list-name { font-size: 13px; font-weight: 500; color: #e2e8f0; }
 .product-list-sku { font-size: 10px; color: #64748b; font-family: monospace; margin-top: 2px; }
 .product-list-actions { display: flex; gap: 4px; }

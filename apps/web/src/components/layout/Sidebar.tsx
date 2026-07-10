@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { apiClient } from "@/lib/api-client";
+import { api } from "@/shared/api/fetcher";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package, Kanban,
@@ -48,9 +48,8 @@ export function Sidebar() {
   const [apiVersion, setApiVersion] = useState<string | null>(null);
 
   useEffect(() => {
-    apiClient
-      .get("health")
-      .json<{ version?: string }>()
+    api
+      .get<{ version?: string }>("/health")
       .then((res) => setApiVersion(res.version ?? null))
       .catch(() => {});
   }, []);

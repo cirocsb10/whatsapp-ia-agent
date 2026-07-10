@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Package, Pencil, Trash2 } from "lucide-react";
 import {
   formatPrice,
@@ -18,12 +19,19 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
   const isLowStock =
     product.stockQty > 0 &&
     product.stockQty <= product.lowStockThreshold;
+  const imageUrl = product.imageUrls[0];
 
   return (
     <div className="product-card">
       <div className="product-card-image">
-        {product.imageUrls[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} loading="lazy" decoding="async" />
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, 220px"
+            className="object-cover"
+          />
         ) : (
           <Package className="w-8 h-8" style={{ color: "#334155" }} />
         )}

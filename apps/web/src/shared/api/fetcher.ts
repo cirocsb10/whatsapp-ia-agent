@@ -1,9 +1,8 @@
 /**
  * Fetcher único do frontend (F0 §3.4).
  *
- * Sempre vai ao proxy BFF (`/api/proxy/*`, cookie-aware) — elimina o segundo cliente
- * (`lib/api-client.ts`, `ky` direto no backend). Erros são normalizados em `ApiError`
- * para consumo padronizado por TanStack Query (`onError`, estados `isError`).
+ * Sempre vai ao proxy BFF (`/api/proxy/*`, cookie-aware). Erros são normalizados
+ * em `ApiError` para consumo padronizado por TanStack Query (`onError`, estados `isError`).
  */
 
 export class ApiError extends Error {

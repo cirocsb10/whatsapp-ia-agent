@@ -274,9 +274,6 @@ importers:
       jose:
         specifier: ^6.2.3
         version: 6.2.3
-      ky:
-        specifier: ^2.0.2
-        version: 2.0.2
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@18.3.1)
@@ -3755,10 +3752,6 @@ packages:
   kleur@3.0.3:
     resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
     engines: {node: '>=6'}
-
-  ky@2.0.2:
-    resolution: {integrity: sha512-/GmXpo9F9W+f8n4Ivr2iH+7h7wL7jLbLKWkMlpflcCRb6kGjBfTlASEXaZ9qUgNTn4VgS0P2pwxxzQ4EM6Ulgg==}
-    engines: {node: '>=22'}
 
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
@@ -9434,8 +9427,6 @@ snapshots:
       json-buffer: 3.0.1
 
   kleur@3.0.3: {}
-
-  ky@2.0.2: {}
 
   language-subtag-registry@0.3.23: {}
 

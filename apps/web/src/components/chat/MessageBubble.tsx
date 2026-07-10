@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { getEmojiOnlyVariant } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 import { Bot, FileText, Download } from "lucide-react";
@@ -16,12 +17,19 @@ function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
       >
         ×
       </button>
-      <img
-        src={src}
-        alt="imagem"
-        className="max-w-[90vw] max-h-[88vh] rounded-lg object-contain shadow-2xl"
+      <div
+        className="relative max-w-[90vw] max-h-[88vh] w-[90vw] h-[88vh]"
         onClick={(e) => e.stopPropagation()}
-      />
+      >
+        <Image
+          src={src}
+          alt="imagem"
+          fill
+          sizes="90vw"
+          className="rounded-lg object-contain shadow-2xl"
+          unoptimized
+        />
+      </div>
     </div>
   );
 }
@@ -102,14 +110,20 @@ function MessageBubbleComponent({
         <div className={cn("bubble-row", isInbound ? "bubble-row--inbound" : "bubble-row--outbound")}>
           <div className={cn("max-w-[72%] min-w-[120px]", isInbound ? "ml-1" : "mr-1")}>
             <div className={cn(bubbleClass, "!p-[3px]")}>
-              <img
-                src={imageUrl}
-                alt="imagem"
-                loading="lazy"
-                decoding="async"
-                className="w-full rounded-[5px] cursor-pointer object-cover max-h-[280px]"
+              <button
+                type="button"
+                className="relative block w-full overflow-hidden rounded-[5px] max-h-[280px] aspect-[4/3]"
                 onClick={() => setLightbox(imageUrl)}
-              />
+                aria-label="Ampliar imagem"
+              >
+                <Image
+                  src={imageUrl}
+                  alt="imagem"
+                  fill
+                  sizes="(max-width: 768px) 70vw, 320px"
+                  className="cursor-pointer object-cover"
+                />
+              </button>
               {text && (
                 <p className="bubble-text px-[6px] pt-[4px]">{text}</p>
               )}
