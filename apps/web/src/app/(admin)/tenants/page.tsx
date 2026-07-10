@@ -2,8 +2,7 @@
 
 import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
-import { useApi } from "@/lib/hooks/useApi";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Ban,
   Building2,
@@ -16,35 +15,13 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import {
+  useSuperAdminKpis,
+  useSuperAdminTenants,
+  useTenantAction,
+} from "@/features/admin/api/queries";
 
 const PAGE_SIZE = 25;
-
-interface TenantBilling {
-  conversationsThisMonth: number;
-  conversationsLimit: number;
-}
-
-interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-  status: "ACTIVE" | "TRIAL" | "SUSPENDED" | "CANCELLED";
-  planType: string;
-  whatsappStatus: "CONNECTED" | "DISCONNECTED";
-  billing: TenantBilling | null;
-  _count: { conversations: number };
-}
-
-interface KPIs {
-  total_tenants: number;
-  active_tenants: number;
-  total_conversations: number;
-}
-
-interface TenantsResponse {
-  items: Tenant[];
-  total: number;
-}
 
 type PendingAction = { tenantId: string; action: "suspend" | "activate"; tenantName: string };
 
@@ -118,56 +95,33 @@ function TableSkeleton() {
 }
 
 export default function TenantsPage() {
-  const { apiFetch } = useApi();
-  const [kpis, setKpis] = useState<KPIs>({
+  const [page, setPage] = useState(1);
+  const [pending, setPending] = useState<PendingAction | null>(null);
+
+  const kpisQuery = useSuperAdminKpis();
+  const tenantsQuery = useSuperAdminTenants(page, PAGE_SIZE);
+  const tenantAction = useTenantAction();
+
+  const kpis = kpisQuery.data ?? {
     total_tenants: 0,
     active_tenants: 0,
     total_conversations: 0,
-  });
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingAction | null>(null);
-
-  const load = useCallback(
-    async (p: number) => {
-      setLoading(true);
-      try {
-        const [kpiRes, tenantsRes] = await Promise.all([
-          apiFetch("/super-admin/kpis"),
-          apiFetch(`/super-admin/tenants?page=${p}&limit=${PAGE_SIZE}`),
-        ]);
-        if (kpiRes.ok) setKpis((await kpiRes.json()) as KPIs);
-        if (tenantsRes.ok) {
-          const data = (await tenantsRes.json()) as TenantsResponse;
-          setTenants(data.items);
-          setTotal(data.total);
-        }
-      } finally {
-        setLoading(false);
-      }
-    },
-    [apiFetch],
-  );
-
-  useEffect(() => {
-    void load(page);
-  }, [page, load]);
+  };
+  const tenants = tenantsQuery.data?.items ?? [];
+  const total = tenantsQuery.data?.total ?? 0;
+  const loading = kpisQuery.isLoading || tenantsQuery.isLoading;
+  const actionLoading = tenantAction.isPending
+    ? (tenantAction.variables?.tenantId ?? null)
+    : null;
 
   async function confirmAction() {
     if (!pending) return;
     const { tenantId, action } = pending;
     setPending(null);
-    setActionLoading(tenantId);
     try {
-      const res = await apiFetch(`/super-admin/tenants/${tenantId}/${action}`, {
-        method: "POST",
-      });
-      if (res.ok) await load(page);
-    } finally {
-      setActionLoading(null);
+      await tenantAction.mutateAsync({ tenantId, action });
+    } catch {
+      // keep UI identical — silent failure, list stays as-is until refetch
     }
   }
 

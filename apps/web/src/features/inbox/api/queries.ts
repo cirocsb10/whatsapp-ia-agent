@@ -1,4 +1,4 @@
-import { useQuery, type QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api } from "@/shared/api/fetcher";
 
 export type MessageStatus = "sent" | "delivered" | "read" | "failed";
@@ -266,6 +266,41 @@ export function applyConversationStatus(
     isHandoff: payload.status === "HUMAN_HANDOFF",
     isAssumed: payload.isAssumed ?? (payload.status === "HUMAN_HANDOFF" ? c.isAssumed : false),
   }));
+}
+
+export function useAssumeConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) =>
+      api.patch<{ ok: boolean }>(`/conversations/${conversationId}/assume`),
+    onSuccess: (_data, conversationId) => {
+      applyConversationStatus(qc, {
+        conversationId,
+        status: "HUMAN_HANDOFF",
+        isAssumed: true,
+      });
+    },
+  });
+}
+
+export function useReleaseConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) =>
+      api.patch<{ ok: boolean }>(`/conversations/${conversationId}/release`),
+    onSuccess: (_data, conversationId) => {
+      applyConversationStatus(qc, {
+        conversationId,
+        status: "ACTIVE",
+        isAssumed: false,
+      });
+    },
+  });
+}
+
+/** Envio de mensagem do operador; o otimismo fica no caller (applyOptimisticMessage). */
+export async function sendConversationMessage(conversationId: string, text: string) {
+  return api.post(`/conversations/${conversationId}/messages`, { text });
 }
 
 export function applyHandoffCreated(qc: QueryClient, payload: { conversationId: string }) {

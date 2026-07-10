@@ -1,10 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { RuleFormModal, RULE_TYPE_LABELS, ACTION_LABELS } from "@/components/agent/rule-form-modal";
 import { TYPE_META } from "@/components/agent/guard-rule-ui";
-import { useApi } from "@/lib/hooks/useApi";
+import {
+  useGuardRules,
+  useSaveGuardRule,
+  useDeleteGuardRule,
+  useToggleGuardRule,
+} from "@/features/agent/api/queries";
 import {
   Shield,
   Pencil,
@@ -36,28 +41,18 @@ const ACTION_BADGE: Record<string, string> = {
 type FilterKey = "all" | "active" | "inactive";
 
 export default function GuardRulesPage() {
-  const { apiFetch } = useApi();
-  const [rules, setRules] = useState<GuardRule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const rulesQuery = useGuardRules();
+  const saveRule = useSaveGuardRule();
+  const deleteRule = useDeleteGuardRule();
+  const toggleRule = useToggleGuardRule();
+
+  const rules = rulesQuery.data ?? [];
+  const loading = rulesQuery.isPending;
   const [modalOpen, setModalOpen] = useState(false);
   const [editRule, setEditRule] = useState<GuardRule | null>(null);
-  const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch("/agent/rules");
-      if (res.ok) setRules(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const saving = saveRule.isPending;
 
   useEffect(() => {
     if (!toast) return;
@@ -66,30 +61,24 @@ export default function GuardRulesPage() {
   }, [toast]);
 
   async function handleSubmit(dto: CreateGuardRuleDto) {
-    setSaving(true);
     try {
-      const url = editRule ? `/agent/rules/${editRule.id}` : "/agent/rules";
-      const method = editRule ? "PATCH" : "POST";
-      const res = await apiFetch(url, { method, body: JSON.stringify(dto) });
-      if (!res.ok) throw new Error(await res.text());
+      await saveRule.mutateAsync({
+        ...(editRule ? { id: editRule.id } : {}),
+        dto,
+      });
       setToast({ type: "success", msg: editRule ? "Regra atualizada" : "Regra criada" });
-      await load();
       setModalOpen(false);
       setEditRule(null);
     } catch {
       setToast({ type: "error", msg: "Erro ao salvar regra" });
-    } finally {
-      setSaving(false);
     }
   }
 
   async function handleDelete(rule: GuardRule) {
     if (!confirm(`Excluir a regra "${rule.name}"?`)) return;
     try {
-      const res = await apiFetch(`/agent/rules/${rule.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await deleteRule.mutateAsync(rule.id);
       setToast({ type: "success", msg: "Regra excluída" });
-      await load();
     } catch {
       setToast({ type: "error", msg: "Erro ao excluir regra" });
     }
@@ -97,11 +86,7 @@ export default function GuardRulesPage() {
 
   async function handleToggle(rule: GuardRule) {
     try {
-      await apiFetch(`/agent/rules/${rule.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ isActive: !rule.isActive }),
-      });
-      await load();
+      await toggleRule.mutateAsync({ id: rule.id, isActive: !rule.isActive });
     } catch {
       setToast({ type: "error", msg: "Erro ao atualizar regra" });
     }

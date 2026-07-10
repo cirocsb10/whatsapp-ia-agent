@@ -3,8 +3,13 @@
 import { Header } from "@/components/layout/Header";
 import { TestSimulator } from "@/components/agent/TestSimulator";
 import { PublishAgentModal } from "@/components/agent/PublishAgentModal";
-import { useApi } from "@/lib/hooks/useApi";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useAgentConfig,
+  useKnowledge,
+  useGuardRules,
+  useUpdateAgentConfig,
+} from "@/features/agent/api/queries";
+import { useMemo, useState } from "react";
 import {
   Bot, Shield, Database, ChevronRight,
   Sparkles, BookOpen, Cpu, Sliders,
@@ -54,53 +59,26 @@ const SETUP_STEPS = [
 ] as const;
 
 export default function AgentPage() {
-  const { apiFetch } = useApi();
-  const [config, setConfig] = useState<any>(null);
-  const [knowledgeCount, setKnowledgeCount] = useState(0);
-  const [rulesCount, setRulesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-  const [publishError, setPublishError] = useState<string | null>(null);
+  const configQuery = useAgentConfig();
+  const knowledgeQuery = useKnowledge();
+  const rulesQuery = useGuardRules();
+  const updateConfig = useUpdateAgentConfig();
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [configRes, knowledgeRes, rulesRes] = await Promise.all([
-          apiFetch("/agent/config"),
-          apiFetch("/agent/knowledge"),
-          apiFetch("/agent/rules"),
-        ]);
-        if (configRes.ok) setConfig(await configRes.json());
-        if (knowledgeRes.ok) setKnowledgeCount((await knowledgeRes.json()).length);
-        if (rulesRes.ok) setRulesCount((await rulesRes.json()).length);
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const config = configQuery.data ?? null;
+  const knowledgeCount = knowledgeQuery.data?.length ?? 0;
+  const rulesCount = rulesQuery.data?.length ?? 0;
+  const loading = configQuery.isPending || knowledgeQuery.isPending || rulesQuery.isPending;
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const publishing = updateConfig.isPending;
 
   async function handlePublish() {
-    setPublishing(true);
     setPublishError(null);
     try {
-      const res = await apiFetch("/agent/config", {
-        method: "PATCH",
-        body: JSON.stringify({ isPublished: true }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setConfig(updated);
-        setShowPublishModal(false);
-      } else {
-        setPublishError("Não foi possível publicar o agente. Tente novamente.");
-      }
+      await updateConfig.mutateAsync({ isPublished: true });
+      setShowPublishModal(false);
     } catch {
-      setPublishError("Erro de conexão. Verifique sua conexão e tente novamente.");
-    } finally {
-      setPublishing(false);
+      setPublishError("Não foi possível publicar o agente. Tente novamente.");
     }
   }
 

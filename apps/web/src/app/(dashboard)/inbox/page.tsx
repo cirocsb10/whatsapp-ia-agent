@@ -2,14 +2,16 @@
 import { Header } from "@/components/layout/Header";
 import { ChatInputBar } from "@/components/chat/ChatInputBar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { useApi } from "@/lib/hooks/useApi";
 import { useSocketStatus } from "@/shared/realtime/socket-status.store";
 import {
   useConversations,
   useMessages,
+  useAssumeConversation,
+  useReleaseConversation,
   markConversationRead,
   applyOptimisticMessage,
   markOptimisticFailed,
+  sendConversationMessage,
   fetchMessagesPage,
   prependOlderMessages,
   MESSAGES_PAGE_SIZE,
@@ -79,8 +81,9 @@ function InboxContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const convFromUrl = searchParams.get("conv");
-  const { apiFetch } = useApi();
   const queryClient = useQueryClient();
+  const assumeConversation = useAssumeConversation();
+  const releaseConversation = useReleaseConversation();
 
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -199,15 +202,15 @@ function InboxContent() {
     [queryClient],
   );
 
-  const handleAssume = useCallback(async () => {
+  const handleAssume = useCallback(() => {
     if (!activeId) return;
-    await apiFetch(`/conversations/${activeId}/assume`, { method: "PATCH" });
-  }, [activeId, apiFetch]);
+    assumeConversation.mutate(activeId);
+  }, [activeId, assumeConversation]);
 
-  const handleRelease = useCallback(async () => {
+  const handleRelease = useCallback(() => {
     if (!activeId) return;
-    await apiFetch(`/conversations/${activeId}/release`, { method: "PATCH" });
-  }, [activeId, apiFetch]);
+    releaseConversation.mutate(activeId);
+  }, [activeId, releaseConversation]);
 
   const handleSend = useCallback(async () => {
     if (!activeId || !draft.trim() || sending) return;
@@ -217,23 +220,14 @@ function InboxContent() {
     setDraft("");
     setSending(true);
     try {
-      const res = await apiFetch(`/conversations/${activeId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) {
-        markOptimisticFailed(queryClient, activeId, tempId);
-        const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-        console.error("[handleSend] erro:", res.status, body);
-      }
+      await sendConversationMessage(activeId, text);
     } catch (err) {
       markOptimisticFailed(queryClient, activeId, tempId);
       console.error("[handleSend] falha de rede:", err);
     } finally {
       setSending(false);
     }
-  }, [activeId, draft, sending, apiFetch, queryClient]);
+  }, [activeId, draft, sending, queryClient]);
 
   const tabs: { key: FilterTab; label: string; count: number }[] = useMemo(
     () => [

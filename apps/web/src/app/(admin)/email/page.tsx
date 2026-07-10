@@ -1,20 +1,14 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
-import { useApi } from "@/lib/hooks/useApi";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, Mail, Send, Server, Shield, XCircle } from "lucide-react";
-
-interface SmtpSettings {
-  host: string | null;
-  port: number;
-  username: string | null;
-  secure: boolean;
-  fromEmail: string | null;
-  fromName: string | null;
-  hasPassword: boolean;
-  configured: boolean;
-}
+import { ApiError } from "@/shared/api/fetcher";
+import {
+  useSmtpSettings,
+  useSaveSmtp,
+  useTestSmtp,
+} from "@/features/admin/api/queries";
 
 interface FormState {
   host: string;
@@ -39,53 +33,45 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function PlatformEmailPage() {
-  const { apiFetch } = useApi();
+  const smtpQuery = useSmtpSettings();
+  const saveSmtp = useSaveSmtp();
+  const testSmtp = useTestSmtp();
+
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [hasPassword, setHasPassword] = useState(false);
-  const [configured, setConfigured] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
   const [testTo, setTestTo] = useState("");
-  const [testing, setTesting] = useState(false);
   const [testFeedback, setTestFeedback] = useState<Feedback | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch("/super-admin/email/smtp");
-      if (res.ok) {
-        const data = (await res.json()) as SmtpSettings;
-        setForm({
-          host: data.host ?? "",
-          port: String(data.port ?? 587),
-          username: data.username ?? "",
-          password: "",
-          secure: Boolean(data.secure),
-          fromEmail: data.fromEmail ?? "",
-          fromName: data.fromName ?? "",
-        });
-        setHasPassword(data.hasPassword);
-        setConfigured(data.configured);
-        setPasswordTouched(false);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch]);
+  const hasPassword = smtpQuery.data?.hasPassword ?? false;
+  const configured = smtpQuery.data?.configured ?? false;
+  const loading = smtpQuery.isLoading;
+  const saving = saveSmtp.isPending;
+  const testing = testSmtp.isPending;
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    const data = smtpQuery.data;
+    if (!data || hydrated) return;
+    setForm({
+      host: data.host ?? "",
+      port: String(data.port ?? 587),
+      username: data.username ?? "",
+      password: "",
+      secure: Boolean(data.secure),
+      fromEmail: data.fromEmail ?? "",
+      fromName: data.fromName ?? "",
+    });
+    setPasswordTouched(false);
+    setHydrated(true);
+  }, [smtpQuery.data, hydrated]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSave() {
-    setSaving(true);
     setFeedback(null);
     try {
       const payload: Record<string, unknown> = {
@@ -101,34 +87,23 @@ export default function PlatformEmailPage() {
         payload.password = form.password;
       }
 
-      const res = await apiFetch("/super-admin/email/smtp", {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const data = (await res.json()) as SmtpSettings;
-        setHasPassword(data.hasPassword);
-        setConfigured(data.configured);
-        setPasswordTouched(false);
-        update("password", "");
-        setFeedback({ type: "success", message: "Configurações SMTP salvas com sucesso." });
-      } else {
-        const err = (await res.json().catch(() => null)) as { message?: string } | null;
+      await saveSmtp.mutateAsync(payload);
+      setPasswordTouched(false);
+      update("password", "");
+      setFeedback({ type: "success", message: "Configurações SMTP salvas com sucesso." });
+    } catch (err) {
+      if (err instanceof ApiError) {
         setFeedback({
           type: "error",
-          message: err?.message ?? "Não foi possível salvar as configurações.",
+          message: err.message || "Não foi possível salvar as configurações.",
         });
+      } else {
+        setFeedback({ type: "error", message: "Erro de rede ao salvar as configurações." });
       }
-    } catch {
-      setFeedback({ type: "error", message: "Erro de rede ao salvar as configurações." });
-    } finally {
-      setSaving(false);
     }
   }
 
   async function handleTest() {
-    setTesting(true);
     setTestFeedback(null);
     try {
       const payload: Record<string, unknown> = {
@@ -144,27 +119,20 @@ export default function PlatformEmailPage() {
         payload.password = form.password;
       }
 
-      const res = await apiFetch("/super-admin/email/smtp/test", {
-        method: "POST",
-        body: JSON.stringify(payload),
+      await testSmtp.mutateAsync(payload);
+      setTestFeedback({
+        type: "success",
+        message: `E-mail de teste enviado para ${testTo}.`,
       });
-
-      if (res.ok) {
-        setTestFeedback({
-          type: "success",
-          message: `E-mail de teste enviado para ${testTo}.`,
-        });
-      } else {
-        const err = (await res.json().catch(() => null)) as { message?: string } | null;
+    } catch (err) {
+      if (err instanceof ApiError) {
         setTestFeedback({
           type: "error",
-          message: err?.message ?? "Falha ao enviar o e-mail de teste.",
+          message: err.message || "Falha ao enviar o e-mail de teste.",
         });
+      } else {
+        setTestFeedback({ type: "error", message: "Erro de rede ao enviar o e-mail de teste." });
       }
-    } catch {
-      setTestFeedback({ type: "error", message: "Erro de rede ao enviar o e-mail de teste." });
-    } finally {
-      setTesting(false);
     }
   }
 

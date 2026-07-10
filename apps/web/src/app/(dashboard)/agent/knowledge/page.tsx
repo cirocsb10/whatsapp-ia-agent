@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
-import { useApi } from "@/lib/hooks/useApi";
+import { useKnowledge, useCreateKnowledge, useDeleteKnowledge } from "@/features/agent/api/queries";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -21,14 +21,6 @@ import {
   X,
   Save,
 } from "lucide-react";
-
-interface KB {
-  id: string;
-  name: string;
-  type: string;
-  isIndexed: boolean;
-  chunkCount?: number;
-}
 
 const TYPE_META: Record<
   string,
@@ -55,35 +47,17 @@ const TYPE_META: Record<
 const DEFAULT_FORM = { name: "", type: "TEXT", content: "" };
 
 export default function KnowledgePage() {
-  const { apiFetch } = useApi();
-  const [items, setItems] = useState<KB[]>([]);
+  const knowledgeQuery = useKnowledge();
+  const createKnowledge = useCreateKnowledge();
+  const deleteKnowledge = useDeleteKnowledge();
+
+  const items = knowledgeQuery.data ?? [];
+  const loading = knowledgeQuery.isPending;
   const [form, setForm] = useState(DEFAULT_FORM);
   const [adding, setAdding] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await apiFetch("/agent/knowledge");
-      if (res.ok) setItems(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const hasPending = items.some((i) => !i.isIndexed);
-    if (!hasPending) return;
-    const t = setInterval(() => void load(), 3000);
-    return () => clearInterval(t);
-  }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
+  const saving = createKnowledge.isPending;
 
   useEffect(() => {
     if (!toast) return;
@@ -98,21 +72,13 @@ export default function KnowledgePage() {
   }, [items]);
 
   async function handleCreate() {
-    setSaving(true);
     try {
-      const res = await apiFetch("/agent/knowledge", {
-        method: "POST",
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error();
+      await createKnowledge.mutateAsync(form);
       setForm(DEFAULT_FORM);
       setAdding(false);
       setToast({ type: "success", msg: "Documento adicionado — indexação em andamento" });
-      await load();
     } catch {
       setToast({ type: "error", msg: "Erro ao salvar documento" });
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -120,10 +86,8 @@ export default function KnowledgePage() {
     if (!confirm(`Remover "${name}" da base de conhecimento?`)) return;
     setDeletingId(id);
     try {
-      const res = await apiFetch(`/agent/knowledge/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+      await deleteKnowledge.mutateAsync(id);
       setToast({ type: "success", msg: "Documento removido" });
-      await load();
     } catch {
       setToast({ type: "error", msg: "Erro ao remover documento" });
     } finally {

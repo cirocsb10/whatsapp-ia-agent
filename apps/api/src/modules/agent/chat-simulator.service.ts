@@ -2,6 +2,13 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AgentConfigService } from "./agent-config.service";
 
+/**
+ * Simulador do back-office.
+ *
+ * Preferência: chama o ai-orchestrator (`POST /internal/simulate`) — mesmo
+ * LangGraph de produção (persona, tools, RAG, guard-rails), sem WhatsApp.
+ * Fallback: OpenAI direto (legado) se o orchestrator estiver indisponível.
+ */
 @Injectable()
 export class ChatSimulatorService {
   private readonly logger = new Logger(ChatSimulatorService.name);
@@ -21,13 +28,36 @@ export class ChatSimulatorService {
     return config;
   }
 
-  async reply(tenantId: string, message: string) {
+  private async replyViaOrchestrator(tenantId: string, message: string): Promise<string | null> {
+    const orchestratorUrl = this.config.get<string>("AI_ORCHESTRATOR_URL");
+    const internalToken = this.config.get<string>("INTERNAL_API_TOKEN");
+    if (!orchestratorUrl || !internalToken) return null;
+
+    const res = await fetch(`${orchestratorUrl.replace(/\/$/, "")}/internal/simulate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-internal-token": internalToken,
+      },
+      body: JSON.stringify({ tenantId, message }),
+    });
+
+    if (!res.ok) {
+      this.logger.warn(`Orchestrator simulate returned ${res.status}`);
+      return null;
+    }
+
+    const body = (await res.json()) as { reply?: string };
+    return body.reply?.trim() || null;
+  }
+
+  private async replyViaOpenAI(tenantId: string, message: string) {
     const cfg = await this.getCachedConfig(tenantId);
     const apiKey = this.config.get<string>("OPENAI_API_KEY");
 
     if (!apiKey) {
       return {
-        reply: `${cfg.agentName}: recebi "${message}". Configure OPENAI_API_KEY para respostas reais.`,
+        reply: `${cfg.agentName}: recebi "${message}". Configure OPENAI_API_KEY ou AI_ORCHESTRATOR_URL para respostas reais.`,
       };
     }
 
@@ -65,5 +95,16 @@ export class ChatSimulatorService {
         reply: `${cfg.agentName}: nao consegui acessar o modelo agora, mas recebi sua mensagem.`,
       };
     }
+  }
+
+  async reply(tenantId: string, message: string) {
+    try {
+      const orchestrated = await this.replyViaOrchestrator(tenantId, message);
+      if (orchestrated) return { reply: orchestrated };
+    } catch (err) {
+      this.logger.warn("Orchestrator simulate failed — falling back to OpenAI", err as Error);
+    }
+
+    return this.replyViaOpenAI(tenantId, message);
   }
 }

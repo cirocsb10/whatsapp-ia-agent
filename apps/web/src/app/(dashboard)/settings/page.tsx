@@ -8,7 +8,16 @@ import {
   DollarSign, BarChart3, ArrowUpRight,
   MessageSquare, ShoppingCart,
 } from "lucide-react";
-import { useApi } from "@/lib/hooks/useApi";
+import {
+  useBillingHistory,
+  useBillingSubscription,
+  useChangePassword,
+  useCompanySettings,
+  useNotificationPrefs,
+  useUpdateCompany,
+  useUpdateNotifications,
+  useUpdateWhatsapp,
+} from "@/features/settings/api/queries";
 import { useAuthContext } from "@/contexts/auth-context";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -83,41 +92,40 @@ function FieldRow({ label, hint, children }: { label: string; hint?: string; chi
 /* ── Tab content components ───────────────────────────────── */
 
 function TabConta() {
-  const { apiFetch } = useApi();
   const { signOut } = useAuthContext();
+  const companyQuery = useCompanySettings();
+  const updateCompany = useUpdateCompany();
   const [name, setName] = useState("Minha Loja");
   const [email] = useState("contato@minhaloja.com");
   const [slug, setSlug] = useState("minhaloja");
   const [timezone, setTimezone] = useState("America/Sao_Paulo");
   const [segment, setSegment] = useState("ecommerce");
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    async function load() {
-      const res = await apiFetch("/settings/company");
-      if (!res.ok) return;
-      const data = await res.json();
-      setName(data.name ?? "Minha Loja");
-      setSlug(data.slug ?? "minhaloja");
-      setTimezone(data.timezone ?? "America/Sao_Paulo");
-      setSegment(data.segment ?? "ecommerce");
-    }
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const data = companyQuery.data;
+    if (!data || hydrated) return;
+    setName(data.name ?? "Minha Loja");
+    setSlug(data.slug ?? "minhaloja");
+    setTimezone(data.timezone ?? "America/Sao_Paulo");
+    setSegment(data.segment ?? "ecommerce");
+    setHydrated(true);
+  }, [companyQuery.data, hydrated]);
 
-  const handleSave = async () => {
-    setSaving(true);
-    const res = await apiFetch("/settings/company", {
-      method: "PATCH",
-      body: JSON.stringify({ name, timezone, segment }),
-    });
-    setSaving(false);
-    if (res.ok) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1800);
-    }
+  const handleSave = () => {
+    updateCompany.mutate(
+      { name, timezone, segment },
+      {
+        onSuccess: () => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 1800);
+        },
+      },
+    );
   };
+
+  const saving = updateCompany.isPending;
 
   return (
     <div className="settings-tab-content">
@@ -249,32 +257,32 @@ const DEFAULT_PREFS: NotifPrefs = {
 };
 
 function TabNotificacoes() {
-  const { apiFetch } = useApi();
+  const prefsQuery = useNotificationPrefs();
+  const updateNotifications = useUpdateNotifications();
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
-  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    apiFetch("/settings/notifications").then(async (r) => {
-      if (r.ok) setPrefs({ ...DEFAULT_PREFS, ...(await r.json()) });
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const data = prefsQuery.data;
+    if (!data || hydrated) return;
+    setPrefs({ ...DEFAULT_PREFS, ...data });
+    setHydrated(true);
+  }, [prefsQuery.data, hydrated]);
 
   const toggle = (key: keyof NotifPrefs) =>
     setPrefs((p) => ({ ...p, [key]: !p[key] }));
 
-  const handleSave = async () => {
-    setSaving(true);
-    const res = await apiFetch("/settings/notifications", {
-      method: "PATCH",
-      body: JSON.stringify(prefs),
+  const handleSave = () => {
+    updateNotifications.mutate(prefs, {
+      onSuccess: () => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1800);
+      },
     });
-    setSaving(false);
-    if (res.ok) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 1800);
-    }
   };
+
+  const saving = updateNotifications.isPending;
 
   const GROUPS = [
     {
@@ -354,46 +362,42 @@ function TabNotificacoes() {
 }
 
 function TabSeguranca() {
-  const { apiFetch } = useApi();
+  const changePassword = useChangePassword();
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  async function handleChangePassword(e: React.FormEvent) {
+  function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (newPassword !== confirmPassword) {
       setError("As senhas não coincidem");
       return;
     }
-    setSaving(true);
-    try {
-      const res = await apiFetch("/auth/change-password", {
-        method: "PATCH",
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "Não foi possível alterar a senha");
-      }
-      setSuccess(true);
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setTimeout(() => {
-        setSuccess(false);
-        setShowPasswordModal(false);
-      }, 1500);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível alterar a senha");
-    } finally {
-      setSaving(false);
-    }
+    changePassword.mutate(
+      { currentPassword, newPassword },
+      {
+        onSuccess: () => {
+          setSuccess(true);
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
+          setTimeout(() => {
+            setSuccess(false);
+            setShowPasswordModal(false);
+          }, 1500);
+        },
+        onError: (err) => {
+          setError(err instanceof Error ? err.message : "Não foi possível alterar a senha");
+        },
+      },
+    );
   }
+
+  const saving = changePassword.isPending;
 
   return (
     <div className="settings-tab-content">
@@ -483,22 +487,16 @@ function TabSeguranca() {
 }
 
 function TabIntegracoes() {
-  const { apiFetch } = useApi();
-  const [company, setCompany] = useState<{ whatsappStatus: string; whatsappPhoneId: string | null } | null>(null);
+  const companyQuery = useCompanySettings();
+  const updateWhatsapp = useUpdateWhatsapp();
+  const company = companyQuery.data ?? null;
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [phoneId, setPhoneId] = useState("");
   const [accessToken, setAccessToken] = useState("");
-  const [savingWA, setSavingWA] = useState(false);
   const [savedWA, setSavedWA] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const webhookUrl = `${process.env.NEXT_PUBLIC_API_URL ?? "https://api.whatsagent.app"}/webhooks/meta`;
-
-  useEffect(() => {
-    apiFetch("/settings/company").then(async (r) => {
-      if (r.ok) setCompany(await r.json());
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCopyWebhook = async () => {
     await navigator.clipboard.writeText(webhookUrl);
@@ -506,22 +504,20 @@ function TabIntegracoes() {
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const handleSaveWhatsApp = async () => {
-    setSavingWA(true);
-    const res = await apiFetch("/settings/whatsapp", {
-      method: "PATCH",
-      body: JSON.stringify({ whatsappPhoneId: phoneId, metaAccessToken: accessToken }),
-    });
-    setSavingWA(false);
-    if (res.ok) {
-      const data = await res.json();
-      setSavedWA(true);
-      setShowWhatsAppModal(false);
-      setCompany((c) => c ? { ...c, whatsappPhoneId: data.whatsappPhoneId, whatsappStatus: data.whatsappStatus } : c);
-      setTimeout(() => setSavedWA(false), 2000);
-    }
+  const handleSaveWhatsApp = () => {
+    updateWhatsapp.mutate(
+      { whatsappPhoneId: phoneId, metaAccessToken: accessToken },
+      {
+        onSuccess: () => {
+          setSavedWA(true);
+          setShowWhatsAppModal(false);
+          setTimeout(() => setSavedWA(false), 2000);
+        },
+      },
+    );
   };
 
+  const savingWA = updateWhatsapp.isPending;
   const waStatus = company?.whatsappStatus ?? "DISCONNECTED";
   const isWAConnected = waStatus === "CONNECTED";
 
@@ -678,26 +674,11 @@ function TabIntegracoes() {
 }
 
 function TabPlano() {
-  const { apiFetch } = useApi();
-  const [sub, setSub] = useState<{
-    plan: string;
-    status: string;
-    renewalDate: string | null;
-    usage: {
-      conversations: { used: number; limit: number };
-      orders: { used: number; limit: number };
-      products: { used: number; limit: number };
-    };
-  } | null>(null);
-  const [invoices, setInvoices] = useState<{
-    id: string;
-    date: string;
-    amount: string;
-    currency: string;
-    status: string | null;
-    pdfUrl: string | null;
-  }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const subQuery = useBillingSubscription();
+  const historyQuery = useBillingHistory();
+  const sub = subQuery.data ?? null;
+  const invoices = historyQuery.data?.invoices ?? [];
+  const loading = subQuery.isPending || historyQuery.isPending;
 
   const PLAN_PRICE: Record<string, string> = {
     STARTER: "R$ 97", GROWTH: "R$ 297", SCALE: "R$ 497", ENTERPRISE: "Sob consulta",
@@ -708,23 +689,6 @@ function TabPlano() {
     SCALE: ["Tudo do Growth", "Multi-atendentes", "API access", "SLA garantido"],
     ENTERPRISE: ["Customizado", "Infraestrutura dedicada"],
   };
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      const [subRes, histRes] = await Promise.all([
-        apiFetch("/billing/subscription"),
-        apiFetch("/billing/history"),
-      ]);
-      if (subRes.ok) setSub(await subRes.json());
-      if (histRes.ok) {
-        const data = await histRes.json();
-        setInvoices(data.invoices ?? []);
-      }
-      setLoading(false);
-    }
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const planName = sub?.plan ?? "STARTER";
   const planDisplay = planName.charAt(0) + planName.slice(1).toLowerCase();

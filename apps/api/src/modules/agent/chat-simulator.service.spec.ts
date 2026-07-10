@@ -26,7 +26,7 @@ describe("ChatSimulatorService", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("returns local fallback when OPENAI_API_KEY is missing", async () => {
+  it("returns local fallback when OPENAI_API_KEY and orchestrator are missing", async () => {
     mockConfig.get.mockReturnValue(undefined);
     mockAgentConfig.getConfig.mockResolvedValue({ agentName: "Bot" });
 
@@ -36,8 +36,33 @@ describe("ChatSimulatorService", () => {
     expect(result.reply).toContain("Oi");
   });
 
-  it("calls correct OpenAI endpoint and extracts reply from choices", async () => {
-    mockConfig.get.mockReturnValue("sk-test-key");
+  it("prefers orchestrator simulate when available", async () => {
+    mockConfig.get.mockImplementation((key: string) => {
+      if (key === "AI_ORCHESTRATOR_URL") return "http://orchestrator:8000";
+      if (key === "INTERNAL_API_TOKEN") return "secret";
+      return undefined;
+    });
+
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ reply: "Resposta do LangGraph" }),
+    });
+    globalThis.fetch = mockFetch as any;
+
+    const result = await service.reply("t-1", "Oi");
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://orchestrator:8000/internal/simulate",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(result.reply).toBe("Resposta do LangGraph");
+  });
+
+  it("falls back to OpenAI when orchestrator is unavailable", async () => {
+    mockConfig.get.mockImplementation((key: string) => {
+      if (key === "OPENAI_API_KEY") return "sk-test-key";
+      return undefined;
+    });
     mockAgentConfig.getConfig.mockResolvedValue({
       agentName: "Bot",
       llmModel: "gpt-4o-mini",

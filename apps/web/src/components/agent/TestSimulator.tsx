@@ -1,16 +1,16 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
-import { useApi } from "@/lib/hooks/useApi";
+import { useAgentChat } from "@/features/agent/api/queries";
 
 interface Msg { role: "user" | "assistant"; content: string; }
 
 export function TestSimulator() {
-  const { apiFetch } = useApi();
+  const chat = useAgentChat();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const loading = chat.isPending;
 
   useEffect(() => {
     if (messages.length === 0 && !loading) return;
@@ -23,19 +23,13 @@ export function TestSimulator() {
     if (!input.trim() || loading) return;
     const msg = input.trim();
     setInput("");
-    setLoading(true);
     setMessages((p) => [...p, { role: "user", content: msg }]);
     try {
-      const res = await apiFetch("/agent/chat", {
-        method: "POST",
-        body: JSON.stringify({ message: msg }),
-      });
-      const data = res.ok ? await res.json() : null;
-      setMessages((p) => [...p, { role: "assistant", content: data?.reply ?? "Não consegui responder agora." }]);
+      const data = await chat.mutateAsync(msg);
+      setMessages((p) => [...p, { role: "assistant", content: data.reply ?? "Não consegui responder agora." }]);
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Erro de conexão com o simulador." }]);
     }
-    setLoading(false);
   }
 
   return (
@@ -52,7 +46,7 @@ export function TestSimulator() {
                 <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
                 <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
               </span>
-              <span className="text-[10px] text-[#64748b]">Simulação local — sem integração real</span>
+              <span className="text-[10px] text-[#64748b]">Pipeline real (LangGraph) — sem WhatsApp</span>
             </div>
           </div>
         </div>

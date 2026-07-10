@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/contexts/auth-context";
-import { useApi } from "@/lib/hooks/useApi";
+import { useBillingCheckout } from "@/features/settings/api/queries";
 import {
   Check,
   ArrowRight,
@@ -68,7 +68,7 @@ const PLANS = [
 export default function PlanPage() {
   const router = useRouter();
   const { isSignedIn } = useAuthContext();
-  const { apiFetch } = useApi();
+  const checkout = useBillingCheckout();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,12 +80,7 @@ export default function PlanPage() {
     setLoading(planId);
     setError(null);
     try {
-      const res = await apiFetch("/billing/checkout", {
-        method: "POST",
-        body: JSON.stringify({ plan: planId }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const { checkoutUrl } = await res.json();
+      const { checkoutUrl } = await checkout.mutateAsync(planId);
       router.push(checkoutUrl);
     } catch {
       setError("Não foi possível iniciar o checkout. Tente novamente.");

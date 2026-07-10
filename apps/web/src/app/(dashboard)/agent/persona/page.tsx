@@ -4,7 +4,7 @@ import { DecimalInput } from "@/components/ui/DecimalInput";
 import { Header } from "@/components/layout/Header";
 import { NumericInput } from "@/components/ui/NumericInput";
 import { TimeInput } from "@/components/ui/TimeInput";
-import { useApi } from "@/lib/hooks/useApi";
+import { useAgentConfig, useUpdateAgentConfig } from "@/features/agent/api/queries";
 import { centsToMaskedPrice, maskedPriceToCents } from "@/lib/decimal-mask";
 import {
   DAYS,
@@ -89,40 +89,34 @@ const DEFAULT_FORM: FormState = {
 
 
 export default function PersonaPage() {
-  const { apiFetch } = useApi();
+  const configQuery = useAgentConfig();
+  const updateConfig = useUpdateAgentConfig();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  const loading = configQuery.isPending && !hydrated;
+  const saving = updateConfig.isPending;
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await apiFetch("/agent/config");
-        if (res.ok) {
-          const data = await res.json();
-          setForm((current) => ({
-            ...current,
-            ...data,
-            llmModel: FIXED_LLM_MODEL.value,
-            handoffOrderValueBrl: data.handoffOrderValueBrl != null
-              ? centsToMaskedPrice(Math.round(Number(data.handoffOrderValueBrl) * 100))
-              : "",
-            businessHours: normalizeBusinessHours(data.businessHours),
-            inactivityTimeoutMin: data.inactivityTimeoutMin ?? DEFAULT_FORM.inactivityTimeoutMin,
-            sessionTtlHours: data.sessionTtlHours ?? DEFAULT_FORM.sessionTtlHours,
-            maxConversationLength: data.maxConversationLength ?? DEFAULT_FORM.maxConversationLength,
-            maxResponseLength: data.maxResponseLength ?? DEFAULT_FORM.maxResponseLength,
-          }));
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const data = configQuery.data;
+    if (!data || hydrated) return;
+    setForm((current) => ({
+      ...current,
+      ...data,
+      llmModel: FIXED_LLM_MODEL.value,
+      handoffOrderValueBrl: data.handoffOrderValueBrl != null
+        ? centsToMaskedPrice(Math.round(Number(data.handoffOrderValueBrl) * 100))
+        : "",
+      businessHours: normalizeBusinessHours(data.businessHours),
+      inactivityTimeoutMin: data.inactivityTimeoutMin ?? DEFAULT_FORM.inactivityTimeoutMin,
+      sessionTtlHours: data.sessionTtlHours ?? DEFAULT_FORM.sessionTtlHours,
+      maxConversationLength: data.maxConversationLength ?? DEFAULT_FORM.maxConversationLength,
+      maxResponseLength: data.maxResponseLength ?? DEFAULT_FORM.maxResponseLength,
+      systemPromptBase: data.systemPromptBase ?? "",
+    }));
+    setHydrated(true);
+  }, [configQuery.data, hydrated]);
 
   useEffect(() => {
     if (!toast) return;
@@ -136,7 +130,6 @@ export default function PersonaPage() {
   }
 
   async function handleSave() {
-    setSaving(true);
     try {
       const payload: Record<string, unknown> = {
         agentName: form.agentName,
@@ -161,17 +154,11 @@ export default function PersonaPage() {
         systemPromptBase: form.systemPromptBase,
         isPublished: form.isPublished,
       };
-      const res = await apiFetch("/agent/config", {
-        method: "PATCH",
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error();
+      await updateConfig.mutateAsync(payload);
       setDirty(false);
       setToast({ type: "success", msg: "Persona salva com sucesso" });
     } catch {
       setToast({ type: "error", msg: "Erro ao salvar persona" });
-    } finally {
-      setSaving(false);
     }
   }
 

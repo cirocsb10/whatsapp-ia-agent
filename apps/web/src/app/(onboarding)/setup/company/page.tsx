@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useApi } from "@/lib/hooks/useApi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +16,11 @@ import {
   AlertCircle,
   MessageCircle,
 } from "lucide-react";
+import { ApiError } from "@/shared/api/fetcher";
+import {
+  useCompanySettings,
+  useUpdateCompany,
+} from "@/features/settings/api/queries";
 
 const schema = z.object({
   name: z.string().min(2, "Nome muito curto").max(100),
@@ -42,9 +46,11 @@ function getInitial(name?: string): string | null {
 
 export default function CompanySetupPage() {
   const router = useRouter();
-  const { apiFetch } = useApi();
+  const { data: company } = useCompanySettings();
+  const updateCompany = useUpdateCompany();
   const [slugDisplay, setSlugDisplay] = useState("");
   const [apiError, setApiError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   const form = useForm<F>({
     resolver: zodResolver(schema),
@@ -54,40 +60,26 @@ export default function CompanySetupPage() {
   const name = form.watch("name");
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await apiFetch("/settings/company");
-        if (!res.ok) return;
-        const data = await res.json();
-        form.reset({
-          name: data.name ?? "",
-          timezone: data.timezone ?? "America/Sao_Paulo",
-        });
-        setSlugDisplay(data.slug ?? "");
-      } catch {
-        // best-effort prefill
-      }
-    }
-    void load();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!company || hydrated) return;
+    form.reset({
+      name: company.name ?? "",
+      timezone: company.timezone ?? "America/Sao_Paulo",
+    });
+    setSlugDisplay(company.slug ?? "");
+    setHydrated(true);
+  }, [company, hydrated, form]);
 
   async function onSubmit(data: F) {
     setApiError(null);
     try {
-      const res = await apiFetch("/settings/company", {
-        method: "PATCH",
-        body: JSON.stringify({ name: data.name, timezone: data.timezone }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setApiError((body as { message?: string }).message ?? "Erro ao salvar configuracoes.");
-        return;
-      }
-
+      await updateCompany.mutateAsync({ name: data.name, timezone: data.timezone });
       router.push("/setup/plan");
-    } catch {
-      setApiError("Erro de conexao. Tente novamente.");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setApiError(err.message || "Erro ao salvar configuracoes.");
+      } else {
+        setApiError("Erro de conexao. Tente novamente.");
+      }
     }
   }
 
