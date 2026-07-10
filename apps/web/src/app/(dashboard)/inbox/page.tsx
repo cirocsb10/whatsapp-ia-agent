@@ -14,6 +14,7 @@ import {
   prependOlderMessages,
   MESSAGES_PAGE_SIZE,
 } from "@/features/inbox/api/queries";
+import { useTypingStore } from "@/features/inbox/model/typing.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal, ChevronUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -91,6 +92,7 @@ function InboxContent() {
   const activeMessages = useMemo(() => messagesQuery.data ?? [], [messagesQuery.data]);
 
   const socketStatus = useSocketStatus((s) => s.status);
+  const isAiTyping = useTypingStore((s) => (activeId ? (s.typing[activeId] ?? false) : false));
 
   const activeConv = useMemo(
     () => conversations.find((c) => c.id === activeId),
@@ -136,7 +138,7 @@ function InboxContent() {
   useEffect(() => {
     if (restoreScrollRef.current != null) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lastMessageId, activeId]);
+  }, [lastMessageId, activeId, isAiTyping]);
 
   // Restaura a posição de leitura após prepend de mensagens antigas.
   useLayoutEffect(() => {
@@ -519,6 +521,16 @@ function InboxContent() {
                         {...(msg.messageStatus !== undefined ? { messageStatus: msg.messageStatus } : {})}
                       />
                     ))}
+                    {isAiTyping && (
+                      <div className="inbox-typing" aria-live="polite" aria-label="IA digitando">
+                        <span className="inbox-typing-label">IA digitando</span>
+                        <span className="inbox-typing-dots" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      </div>
+                    )}
                     <div ref={bottomRef} />
                   </div>
                 )}

@@ -10,6 +10,7 @@ import {
   applyMessageStatus,
   applyHandoffCreated,
 } from "@/features/inbox/api/queries";
+import { useTypingStore } from "@/features/inbox/model/typing.store";
 
 const WS_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:3002") + "/events";
 
@@ -103,9 +104,16 @@ export function useSocket() {
 
       sock.on("event", (event: { type: string; payload: unknown }) => {
         const qc = cbRef.current.queryClient;
+        const typing = useTypingStore.getState();
         switch (event.type) {
           case "new_message":
             applyNewMessage(qc, event.payload as Parameters<typeof applyNewMessage>[1]);
+            break;
+          case "ai_typing_started":
+            typing.start((event.payload as { conversationId: string }).conversationId);
+            break;
+          case "ai_typing_stopped":
+            typing.stop((event.payload as { conversationId: string }).conversationId);
             break;
           case "conversation_status":
           case "conversation_status_changed":

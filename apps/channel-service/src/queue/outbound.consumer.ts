@@ -65,8 +65,6 @@ export class OutboundConsumer implements OnModuleInit {
           this.logger.warn("Failed to persist outbound message:", err);
         }
       }
-
-      await new Promise((r) => setTimeout(r, 400));
     }
 
     if (event.tenantId && event.conversationId && event.inactivityTimeoutMin) {

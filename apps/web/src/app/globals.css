@@ -2181,6 +2181,39 @@
     cursor: default;
   }
 
+  .inbox-typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 8px 14px;
+    border-radius: 14px 14px 14px 4px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    color: #a5b4fc;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .inbox-typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .inbox-typing-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: currentColor;
+    opacity: 0.4;
+    animation: inbox-typing-bounce 1.2s infinite ease-in-out;
+  }
+  .inbox-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .inbox-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes inbox-typing-bounce {
+    0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+  }
+
   .bubble-row {
     display: flex;
     width: 100%;

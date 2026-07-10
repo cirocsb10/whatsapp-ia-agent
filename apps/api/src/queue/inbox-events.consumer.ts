@@ -100,6 +100,17 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         },
       });
 
+      // A IA vai responder assim que a mensagem do cliente chega, exceto quando a
+      // conversa está com humano ou pausada. Emitimos o indicador "IA digitando"
+      // para dar feedback imediato no inbox enquanto o orchestrator processa.
+      const status = event["conversationStatus"] as string | undefined;
+      if (status !== "HUMAN_HANDOFF" && status !== "PAUSED") {
+        this.gateway.emitToTenant(tenantId, {
+          type: "ai_typing_started",
+          payload: { conversationId },
+        });
+      }
+
       this.channel.ack(msg);
     } catch (err) {
       this.logger.error("handleInbound error:", err);
@@ -160,6 +171,10 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
 
       if ((event["type"] as string) === "handoff") {
         this.gateway.emitToTenant(tenantId, {
+          type: "ai_typing_stopped",
+          payload: { conversationId },
+        });
+        this.gateway.emitToTenant(tenantId, {
           type: "handoff_created",
           payload: { conversationId, handoffReason: event["handoffReason"] ?? null },
         });
@@ -169,6 +184,15 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         });
         this.channel.ack(msg);
         return;
+      }
+
+      // Resposta da IA chegou (ou mensagem do operador): encerra o "IA digitando".
+      // Emitir em toda mensagem outbound é idempotente no frontend.
+      if (event["isFromAi"] !== false) {
+        this.gateway.emitToTenant(tenantId, {
+          type: "ai_typing_stopped",
+          payload: { conversationId },
+        });
       }
 
       this.gateway.emitToTenant(tenantId, {
