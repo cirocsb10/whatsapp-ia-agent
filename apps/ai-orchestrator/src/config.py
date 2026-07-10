@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     rabbitmq_inbound_routing_key: str = "msg.inbound"
     rabbitmq_outbound_exchange: str = "ai"
     rabbitmq_outbound_routing_key: str = "ai.response"
+    rabbitmq_stream_routing_key: str = "ai.stream"
 
     # OpenAI
     openai_api_key: str = Field(default="")

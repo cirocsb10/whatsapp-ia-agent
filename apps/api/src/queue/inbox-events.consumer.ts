@@ -50,7 +50,17 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
         this.channel.consume(statusQ.queue, (msg: amqplib.Message | null) => this.handleStatus(msg));
         this.channel.consume(crmQ.queue, (msg: amqplib.Message | null) => void this.handleCrmAdvance(msg));
 
-        this.logger.log("✅ InboxEventsConsumer listening (inbound + outbound + crm)");
+        // Tokens parciais da IA (só inbox — WhatsApp continua com ai.response completo)
+        const streamQ = await this.channel.assertQueue("api.inbox.stream", {
+          durable: false,
+          exclusive: false,
+          autoDelete: false,
+          arguments: { "x-message-ttl": 60_000 },
+        });
+        await this.channel.bindQueue(streamQ.queue, "ai", "ai.stream");
+        this.channel.consume(streamQ.queue, (msg: amqplib.Message | null) => this.handleStream(msg));
+
+        this.logger.log("✅ InboxEventsConsumer listening (inbound + outbound + stream + crm)");
         return;
       } catch {
         retries--;
@@ -64,6 +74,46 @@ export class InboxEventsConsumer implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy(): Promise<void> {
     await this.channel?.close();
     await this.connection?.close();
+  }
+
+  private handleStream(msg: amqplib.Message | null): void {
+    if (!msg || !this.channel) return;
+    try {
+      const envelope = JSON.parse(msg.content.toString()) as {
+        event?: string;
+        payload?: Record<string, unknown>;
+      };
+      const eventType = envelope.event;
+      const payload = envelope.payload ?? {};
+      const tenantId = payload["tenantId"] as string | undefined;
+      const conversationId = payload["conversationId"] as string | undefined;
+
+      if (
+        tenantId &&
+        conversationId &&
+        (eventType === "ai_stream_started" ||
+          eventType === "ai_stream_token" ||
+          eventType === "ai_stream_ended")
+      ) {
+        this.gateway.emitToTenant(tenantId, {
+          type: eventType,
+          payload,
+        });
+
+        // Ao começar o stream, o "digitando" vira balão — encerra o typing indicator.
+        if (eventType === "ai_stream_started") {
+          this.gateway.emitToTenant(tenantId, {
+            type: "ai_typing_stopped",
+            payload: { conversationId },
+          });
+        }
+      }
+
+      this.channel.ack(msg);
+    } catch (err) {
+      this.logger.error("handleStream error:", err);
+      this.channel.nack(msg, false, false);
+    }
   }
 
   private handleInbound(msg: amqplib.Message | null): void {

@@ -10,6 +10,7 @@ export const ROUTING_KEYS = {
   MSG_OUTBOUND: "msg.outbound",
   AI_PROCESS: "ai.process",
   AI_RESPONSE: "ai.response",
+  AI_STREAM: "ai.stream",
   HANDOFF_CREATE: "handoff.create",
   HANDOFF_ACCEPT: "handoff.accept",
   NOTIFICATION_PUSH: "notification.push",

@@ -17,6 +17,7 @@ import {
   MESSAGES_PAGE_SIZE,
 } from "@/features/inbox/api/queries";
 import { useTypingStore } from "@/features/inbox/model/typing.store";
+import { useStreamStore } from "@/features/inbox/model/stream.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal, ChevronUp } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -96,6 +97,11 @@ function InboxContent() {
 
   const socketStatus = useSocketStatus((s) => s.status);
   const isAiTyping = useTypingStore((s) => (activeId ? (s.typing[activeId] ?? false) : false));
+  const streamBubble = useStreamStore((s) => (activeId ? s.byConversation[activeId] : undefined));
+  const showStreamText = Boolean(streamBubble && streamBubble.text.length > 0);
+  const showTyping =
+    (isAiTyping && !streamBubble) ||
+    Boolean(streamBubble && streamBubble.status === "streaming" && streamBubble.text.length === 0);
 
   const activeConv = useMemo(
     () => conversations.find((c) => c.id === activeId),
@@ -141,7 +147,7 @@ function InboxContent() {
   useEffect(() => {
     if (restoreScrollRef.current != null) return;
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lastMessageId, activeId, isAiTyping]);
+  }, [lastMessageId, activeId, isAiTyping, streamBubble?.text, streamBubble?.streamId]);
 
   // Restaura a posição de leitura após prepend de mensagens antigas.
   useLayoutEffect(() => {
@@ -515,7 +521,17 @@ function InboxContent() {
                         {...(msg.messageStatus !== undefined ? { messageStatus: msg.messageStatus } : {})}
                       />
                     ))}
-                    {isAiTyping && (
+                    {showStreamText && streamBubble && (
+                      <MessageBubble
+                        key={`stream-${streamBubble.streamId}`}
+                        direction="outbound"
+                        type="text"
+                        text={streamBubble.text}
+                        isFromAi
+                        sentAt={new Date().toISOString()}
+                      />
+                    )}
+                    {showTyping && (
                       <div className="inbox-typing" aria-live="polite" aria-label="IA digitando">
                         <span className="inbox-typing-label">IA digitando</span>
                         <span className="inbox-typing-dots" aria-hidden="true">

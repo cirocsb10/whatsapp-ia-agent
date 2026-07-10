@@ -86,6 +86,14 @@ async def test_pipeline_guard_rail_block(base_state):
     }
 
     mock_llm_response = make_mock_llm_response("Nossa concorrente cobra mais barato.")
+    # Precisa de histórico para não cair no greeting shortcircuit.
+    base_state["messages"] = [
+        {"role": "user", "content": "oi", "timestamp": 1},
+        {"role": "assistant", "content": "olá", "timestamp": 2},
+    ]
+
+    async def fake_astream(_messages):
+        yield mock_llm_response
 
     with (
         patch("src.graph.nodes.PromptBuilderService") as MockPB,
@@ -98,6 +106,7 @@ async def test_pipeline_guard_rail_block(base_state):
 
         mock_llm = MagicMock()
         mock_llm.ainvoke = AsyncMock(return_value=mock_llm_response)
+        mock_llm.astream = fake_astream
         mock_get_llm.return_value = mock_llm
 
         graph = create_agent_graph()

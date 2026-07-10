@@ -19,6 +19,61 @@ def _get_llm_with_tools(model: str = None, temperature: float = None):
     return get_llm_with_tools(effective_model, ALL_TOOLS, temperature=effective_temp)
 
 
+def _chunk_text(content) -> str:
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                parts.append(str(block.get("text") or ""))
+            else:
+                parts.append(str(getattr(block, "text", None) or ""))
+        return "".join(parts)
+    return str(content)
+
+
+async def _emit_known_text_as_stream(text: str) -> str:
+    """Publica texto já gerado (ex.: 1ª chamada sem tools) como stream para o inbox."""
+    from src.services.stream_context import emit_stream
+
+    await emit_stream("ai_stream_started")
+    if text:
+        await emit_stream("ai_stream_token", {"token": text})
+    await emit_stream("ai_stream_ended", {"status": "ok", "text": text})
+    return text
+
+
+async def _astream_final_text(llm, chat_messages: list) -> str:
+    """Stream do LLM final (sem tools) → tokens no inbox via RabbitMQ ai.stream."""
+    from src.services.stream_context import emit_stream
+
+    await emit_stream("ai_stream_started")
+    parts: list[str] = []
+    try:
+        async for chunk in llm.astream(chat_messages):
+            text = _chunk_text(getattr(chunk, "content", None))
+            if not text:
+                continue
+            parts.append(text)
+            await emit_stream("ai_stream_token", {"token": text})
+    except Exception as e:
+        log.warning("astream_failed_fallback_ainvoke", error=str(e))
+        response = await llm.ainvoke(chat_messages)
+        text = _chunk_text(getattr(response, "content", None))
+        if text:
+            parts.append(text)
+            await emit_stream("ai_stream_token", {"token": text})
+
+    full = "".join(parts)
+    await emit_stream("ai_stream_ended", {"status": "ok", "text": full})
+    return full
+
+
 async def _fetch_guard_rules(tenant_id: str) -> list[dict]:
     from src.db.postgres import get_async_session
     from sqlalchemy import text
@@ -104,8 +159,14 @@ async def _build_image_message(text: str, image_url: str) -> HumanMessage:
 
 
 async def reasoning_node(state: ConversationState) -> dict:
+    from src.services.llm import get_llm
+    from src.services.stream_context import emit_stream
+
     if not state.get("messages"):
         greeting = state.get("greeting_message") or "Olá! Como posso ajudar?"
+        await emit_stream("ai_stream_started")
+        await emit_stream("ai_stream_token", {"token": greeting})
+        await emit_stream("ai_stream_ended", {"status": "ok", "text": greeting})
         return {
             "llm_response": greeting,
             "llm_tool_calls": [],
@@ -115,10 +176,10 @@ async def reasoning_node(state: ConversationState) -> dict:
     has_image = bool(state.get("image_url"))
     tenant_model = state.get("llm_model") or settings.openai_model_simple
     tenant_temp = state.get("llm_temperature")
+    effective_temp = tenant_temp if tenant_temp is not None else settings.openai_temperature
 
     if has_image:
-        from src.services.llm import get_llm
-        llm = get_llm(tenant_model)
+        llm = get_llm(tenant_model, temperature=effective_temp)
     else:
         llm = _get_llm_with_tools(model=tenant_model, temperature=tenant_temp)
 
@@ -145,10 +206,35 @@ async def reasoning_node(state: ConversationState) -> dict:
     else:
         chat_messages.append(HumanMessage(content=current_msg))
 
-    response = await llm.ainvoke(chat_messages)
+    # Stream da 1ª chamada: se não houver tools, tokens vão ao inbox em tempo real.
+    # Se houver tool_calls, descartamos tokens parciais e fazemos astream só no texto final.
+    accumulated = None
+    streamed_tokens: list[str] = []
+    stream_started = False
 
+    async for chunk in llm.astream(chat_messages):
+        accumulated = chunk if accumulated is None else accumulated + chunk
+        # Se já detectamos tool_calls, não publica tokens (resposta final vem depois).
+        if getattr(accumulated, "tool_calls", None):
+            continue
+        text = _chunk_text(getattr(chunk, "content", None))
+        if not text:
+            continue
+        if not stream_started:
+            await emit_stream("ai_stream_started")
+            stream_started = True
+        streamed_tokens.append(text)
+        await emit_stream("ai_stream_token", {"token": text})
+
+    response = accumulated
     tool_calls = []
-    if hasattr(response, "tool_calls") and response.tool_calls:
+    if response is not None and getattr(response, "tool_calls", None):
+        # Tokens parciais (se houver) não representam a resposta final.
+        if stream_started:
+            await emit_stream("ai_stream_ended", {"status": "replaced", "text": ""})
+            stream_started = False
+            streamed_tokens = []
+
         for tc in response.tool_calls:
             tool = next((t for t in ALL_TOOLS if t.name == tc["name"]), None)
             if tool:
@@ -181,12 +267,20 @@ async def reasoning_node(state: ConversationState) -> dict:
             f"[{tc['tool_name']}]: {tc['result'] or tc['error']}"
             for tc in tool_calls
         )
-        chat_messages.append(AIMessage(content=response.content or ""))
+        chat_messages.append(AIMessage(content=_chunk_text(getattr(response, "content", None))))
         chat_messages.append(HumanMessage(content=f"Resultados das ferramentas:\n{tool_results_text}"))
-        final_response = await llm.ainvoke(chat_messages)
-        llm_text = final_response.content
+        plain_llm = get_llm(tenant_model, temperature=effective_temp)
+        llm_text = await _astream_final_text(plain_llm, chat_messages)
+    elif stream_started:
+        llm_text = "".join(streamed_tokens)
+        await emit_stream("ai_stream_ended", {"status": "ok", "text": llm_text})
     else:
-        llm_text = response.content
+        # Fallback (ex.: astream vazio) — ainvoke síncrono + emit one-shot.
+        if response is None:
+            response = await llm.ainvoke(chat_messages)
+        llm_text = await _emit_known_text_as_stream(
+            _chunk_text(getattr(response, "content", None))
+        )
 
     return {
         "llm_response": llm_text,
@@ -228,8 +322,12 @@ async def guard_rail_node(state: ConversationState) -> dict:
 
 
 async def output_node(state: ConversationState) -> dict:
+    from src.services.stream_context import emit_stream
+
     llm_response = state.get("llm_response", "") or ""
     guard_triggered = state.get("guard_rail_triggered", False)
+    stream_replaced = False
+    final_text_for_ui = llm_response
 
     should_handoff = False
     handoff_reason = None
@@ -257,23 +355,36 @@ async def output_node(state: ConversationState) -> dict:
             pass
 
         final_messages = [{"type": "text", "text": handoff_msg}]
+        final_text_for_ui = handoff_msg
+        stream_replaced = True
 
     elif guard_triggered:
         if state.get("guard_rail_action") == "block":
             response_text = state.get("guard_rail_fallback") or "Posso ajudar com outras questões?"
+            stream_replaced = True
         elif state.get("guard_rail_action") == "rewrite":
             response_text = await _rewrite_response(llm_response, state)
+            stream_replaced = True
         elif state.get("guard_rail_action") == "handoff":
             should_handoff = True
             response_text = state.get("guard_rail_fallback") or "Vou transferir para um atendente."
+            stream_replaced = True
         else:
             response_text = llm_response
 
         final_messages = [{"type": "text", "text": response_text}]
+        final_text_for_ui = response_text
 
     else:
         max_chars = state.get("max_response_length") or 1000
         final_messages = _split_into_messages(llm_response, max_chars=max_chars)
+
+    if stream_replaced:
+        # Tokens pré-guard já foram ao inbox; avisa a UI para substituir o balão.
+        await emit_stream(
+            "ai_stream_ended",
+            {"status": "replaced", "text": final_text_for_ui},
+        )
 
     new_message = {
         "role": "assistant",

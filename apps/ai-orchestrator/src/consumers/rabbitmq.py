@@ -178,11 +178,21 @@ async def process_inbound_message(
                 "debug_trace": [],
             }
 
-            graph = get_agent_graph()
-            final_state = await graph.ainvoke(
-                initial_state,
-                config={"recursion_limit": settings.langgraph_recursion_limit},
+            from src.services.stream_context import clear_stream_context, set_stream_context
+
+            stream_tokens = set_stream_context(
+                publisher.publish_stream,
+                tenant_id=tenant_id,
+                conversation_id=session.conversation_id,
             )
+            try:
+                graph = get_agent_graph()
+                final_state = await graph.ainvoke(
+                    initial_state,
+                    config={"recursion_limit": settings.langgraph_recursion_limit},
+                )
+            finally:
+                clear_stream_context(stream_tokens)
 
             session_ttl_hours = final_state.get("session_ttl_hours") or 24
             await session_svc.update(tenant_id, contact_phone, {

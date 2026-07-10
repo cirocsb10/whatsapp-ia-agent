@@ -46,3 +46,22 @@ class RabbitMQPublisher:
             tenant=event.get("tenantId"),
             msgs=len(event.get("messages", [])),
         )
+
+    async def publish_stream(self, event: str, payload: dict) -> None:
+        """Tokens parciais para o inbox (ephemeral — não persiste)."""
+        if not self._exchange:
+            return
+
+        body = json.dumps(
+            {"event": event, "payload": payload},
+            ensure_ascii=False,
+        ).encode()
+        message = aio_pika.Message(
+            body=body,
+            content_type="application/json",
+            delivery_mode=aio_pika.DeliveryMode.NOT_PERSISTENT,
+        )
+        await self._exchange.publish(
+            message,
+            routing_key=settings.rabbitmq_stream_routing_key,
+        )

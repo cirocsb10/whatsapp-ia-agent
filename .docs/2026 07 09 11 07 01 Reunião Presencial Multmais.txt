@@ -1,0 +1,783 @@
+0:00você fez isso. Criar um texto aqui, né? Fazendo sempre J.
+0:033 segundosÉ, eu coloquei um padrão aqui, depois a gente Beleza. Adiciona
+0:1212 segundoso que a gente precisa desse link para dispar disponível na verdade pra semana que vem pra rodada de negócio, a gente vai apresentar.
+0:2727 segundosTá, eu fiz uma miniata aqui da nossa última reunião, só pra gente validar os pontos, tá?
+0:3535 segundosEntão, eh, da prescrição, esse texto que você havia mencionado, inclusão CNPJ adicionais de farmácias convidadas
+0:4444 segundosinformando que vai ser utilizado para compra, não? Exatamente. Deixa eu pegar um CPJ que
+1:031 minuto e 3 segundosé essa mensagem aqui que eu coloquei como um padrão, não sei se dá para ler, mas depois a gente passa a farmácia passou outros CNPJ que era realizaram compra na comissão adições.
+1:141 minuto e 14 segundosA farmácia possui outro CNPJ, porque uma farmácia só sua farmácia faça parte de um grupo.
+1:191 minuto e 19 segundosGR, né? Inclua os outros serjados. F esse texto aí, tá, né?
+1:281 minuto e 28 segundosEh, stand aqui, mudar pra palavra para stand. Deixa eu pegar aqui logo.
+1:371 minuto e 37 segundosIsso aí um atazinho que você fez, né? Isso.
+1:401 minuto e 40 segundosDepois passa pra gente, tá? Faz, eu não falo sem bom porque eu tô fazendo a memória da fica
+1:471 minuto e 47 segundosaqui o stand per eh troca de cheques, valor do cupom configurável por indústria, né?
+1:571 minuto e 57 segundosAlterar a troca de cheque, o nome, a gente criou um novo nome, não foi no sisteminha o senhor falou que queria alterar esse nome em troça de
+2:052 minutos e 5 segundoscheque, registro de compra, alguma coisa aí. Aham.
+2:092 minutos e 9 segundosVai ser registro de compra. Eu tô sugerindo aqui, mas aceitou sugestões, sugestões que é uma troca de cheque não vai fazer
+2:172 minutos e 17 segundosmais sentido. Mas no discurso do do você já trouxe a sua ideia de registro.
+2:222 minutos e 22 segundosÉ, registro das contas.
+2:252 minutos e 25 segundosÉ, deixa eu anotar aqui de forma.
+2:402 minutos e 40 segundosalterar nome troca de cheque, né? Isso.
+2:482 minutos e 48 segundosEh, tá. Então, o valor configurável, né, que a gente havia comentado na última
+2:542 minutos e 54 segundosreunião, que todos os os as indústrias por padrão e seria o valor de 5.000 por cupom, sendo esse valor
+3:023 minutos e 2 segundosconfigurável. Exato. Deixa eu mostrar aqui. Ela vem tudo configurado com cinco. Isso.
+3:073 minutos e 7 segundosPadrão cinco. E a gente pode modificar, baixar a 500, 10.000, subir, que esse é um trabalho fantômico.
+3:163 minutos e 16 segundosRegra de valor para gerar cô. Não foi? É isso daí você tá falando isso.
+3:283 minutos e 28 segundosEntão você vem aqui em cadastros, né, indústrias.
+3:323 minutos e 32 segundosE aqui você consegue visualizar um valor por cupom.
+3:353 minutos e 35 segundosNesse caso aqui eu alterei um aqui para 3.000, mas eu consigo mudar aqui.
+3:383 minutos e 38 segundosAí mesmo assim ele vai obedecer a regra 10 cupons o máximo.
+3:433 minutos e 43 segundosIsso. O máximo 10 cupons vai seguindo esse porque então assim que é cara, por exemplo, você botou ali a cripel. Uhum.
+3:493 minutos e 49 segundosSe ele mantiver 5.000 com 50.000 o cara atinge o máximo. Se ele baixar para 1000
+3:573 minutos e 57 segundoscom 10.000 o cara atinge o máximo. Ating o máximo. É isso aí. É. O total de 10 é geral.
+4:024 minutos e 2 segundosÉ o total de 10 geral, entendeu, Fábio?
+4:064 minutos e 6 segundosAham. Só vai. Só que por exemplo pro cara que vende lá uma fumariazinha que o pedido dele é R$ 300. O cara comprou 300
+4:144 minutos e 14 segundosé o cupom. Mas se o cara comprar 300, o máximo vai ser 10.
+4:164 minutos e 16 segundosVai ser 10, porque senão o que que acontece? Uma para farma, sei lá, né?
+4:214 minutos e 21 segundosUma aí bota o cupom de bota o cupom de 100 conto, o cara compra 50.000. O cara bagot vai
+4:294 minutos e 29 segundosvoltar aquela [ __ ] vai voltar aquela [ __ ] que aconteceu que acontecia do caro de 10 por indústria. O que vai mudar é a o valor por
+4:374 minutos e 37 segundospor indústria CNPJ, né? Por indústria CNPJ tá amarrado. Indústria CNPJ com máximo de 10, sendo que a variação do cupom é pela indústria.
+4:464 minutos e 46 segundosCupom. Isso. Esse aqui foi o único ponto que ficou aberto que eu fiquei com algumas dúvidas que era sobre a nova visão da da distribuidora. perguntar aqui agora que a gente
+4:554 minutos e 55 segundosé porque hoje a gente tem os quatro perfis, né, que eu admiro muito mais que vê tudo, o responsável da indústria, o vendedor da indústria e o logista que vê as compras dele.
+5:045 minutos e 4 segundosAí nesse quinto perfil vocês sugeriram a distribuidora e a distribuidora. Nesse caso eu preciso fazer alguma configuração extra ou ele
+5:125 minutos e 12 segundosvai ver tudo que a indústria vendeu no nome dele ou ele vai vender também.
+5:175 minutos e 17 segundosA visão distribuidora é tudo que é vendido dentro. A distribuidora, na verdade, ela não tem que ver o que a indústria vender, tá?
+5:265 minutos e 26 segundosÉ o que ele vende dentro do stand dele daquela indústria, de cada indústria, né?
+5:305 minutos e 30 segundosDe cada indústria. Só que o que é que acontece?
+5:345 minutos e 34 segundosEh, eu eu não eu não vejo, vocês falaram eu, para mim ele esse perfil da distribuidora é o
+5:435 minutos e 43 segundosmesmo da indústria. Vou tentar desenhar aqui para não precisa ter um outro perfil, apenas uma adequação. O que é que acontece aqui?
+5:525 minutos e 52 segundosA indústria ela é aqui EMS. Pronto.
+5:565 minutos e 56 segundosEntão ela vai est cravado lá s e ele só faz cadastrar os vendedores, não é isso? Isso. Não é isso? Isso.
+6:026 minutos e 2 segundosPronto. Qual é a diferença no distribuidor? O distribuidor eu tenho que cadastrar, eu tenho que cadastrar as indústrias.
+6:116 minutos e 11 segundosAs indústrias são as que estão cadastradas. Ele não pode vender, aliás.
+6:166 minutos e 16 segundosNão, mas ele tem que saber. Então você tá tá parido. É. É.
+6:216 minutos e 21 segundosVamos lá. Deixa eu raciocinar. Porque isso aqui a gente tinha uma ideia do selo. Então ele recebia lá um selo o
+6:286 minutos e 28 segundoscara comprava, ele colava o selo dele. Uhum.
+6:326 minutos e 32 segundosNa indústria, ela recebe, por exemplo, ela ela tem direito a levar quatro casas, quatro laboratórios, tá?
+6:396 minutos e 39 segundosEntão ela recebe lá o selo assim, ó, panfarma barra mss, Panfarma/ED,
+6:496 minutos e 49 segundosentendeu? Então a gente cria, a gente criava quatro selos para ele.
+6:526 minutos e 52 segundosAham. Qual é a ideia para mim aqui? A única coisa é que ela é múltipla, que eu acho que a indústria também já é
+6:596 minutos e 59 segundosmúltipla, né? Se ela tiver mais de um, ela pode. Então, quando eu cadastrar aqui a Panfarma, eu já vou dizer que a Panfarma tem Panfarma Mes, Panfarma Simed, Panfarma Med.
+7:107 minutos e 10 segundosUhum. Pronto.
+7:127 minutos e 12 segundosA única diferença que eu não sei, mas pelo visto da indústria já tá resolvida, é que quando eu botar minha senha geral aqui da distribuidora, eu vou ver tudo.
+7:237 minutos e 23 segundosHoje na na indústria você associa com a suas distribuidoras que ele vai vender, né? Hoje você faz essa amarração para uma indústria, quais distribuidoras ele
+7:317 minutos e 31 segundosvai, o vendedor dessa, dessa indústria vai vender hoje? Está assim. Você tem como abrir aí pra gente ver?
+7:387 minutos e 38 segundosVamos, vamos recapitular, porque para mim eu acho que temos que estar criando um perfil que não precisa, porque isso
+7:447 minutos e 44 segundosfoi baseado no selo e o selo ele já vinha separado, já vinha
+7:527 minutos e 52 segundoscom com Só que o que acontece, eu não sei se a gestão desses quatro, da forma como você tá falando aqui, você
+8:008 minutosquer que unifique, mas da forma que se for vai ficar tipo quatro gestões. Pô, você deu exemplo de panfarma com quatro indústrias, então ficar quatro acessos
+8:088 minutos e 8 segundosseparados. Só que você quer concentrar tudo. Exatamente.
+8:128 minutos e 12 segundosMas na indústria, a indústria tá podendo cadastrar mais de um que de um ano. A indústria cadastra mais de um ano.
+8:188 minutos e 18 segundosSó que é a indústria cadastrando colaboradores e a distribuidora cadastrando indústrias. Não, vendedores, sabe?
+8:278 minutos e 27 segundosÓ, vendedores, mas eles vão botar lá o que de qual indústria estão vendendo.
+8:318 minutos e 31 segundosExatamente. Mas a indústria que tá lá dele vai est sempre assim, ó. Confarma Farma Ced, ele não tem venda direto do
+8:398 minutos e 39 segundosMS, entendeu? Isso aí vai ter que ser feito em relatório depois.
+8:428 minutos e 42 segundosAí essa visão de quisão da indústria no admin, tá?
+8:478 minutos e 47 segundosTá. Eh, a gente parametrizou nesse cenário aqui que a Abot vai vender apenas para essas cinco distribuid distribuidoras aqui, tá?
+8:578 minutos e 57 segundosE aí eu salvei o vendedor quando ele for realizar o lançamento.
+9:019 minutos e 1 segundoPera, pera aí, pera aí, perota, pera aí. É a retaguarda. Retaguarda.
+9:049 minutos e 4 segundosÉ isso. Eu preciso entender. Abot, no caso ali só vai vender Abot. Sim. Mas através de que distribuidor? Aí a distribuidora ele informa.
+9:129 minutos e 12 segundosIsso são esses cinco aqui, tá? Tá?
+9:149 minutos e 14 segundosEntão o vendedor quando ele tiver inserindo os valores, ele vai poder selecionar dentro. Pera que você abre um do abre o acesso como se fosse a galera
+9:229 minutos e 22 segundosfazer agora um lançamento para seu bandeleiro. Entendeu? Você tá dizendo?
+9:269 minutos e 26 segundosNão, mas a gente sempre botou lá outros quando o cara não preenchia. Sim, tem outros lá também.
+9:319 minutos e 31 segundosÉ porque quando o cara não preenchia o distribuidor, ele botava outros, não é isso?
+9:399 minutos e 39 segundosAqui, ó. Apenas os que foram parametrizados lá para abot e apareceu outro.
+9:449 minutos e 44 segundosIsso é isso. Outros. Beleza. Isso é o perfil de quem?
+9:499 minutos e 49 segundosDo da indústria. Da indústria. Vendedor da indústria. Ele tá vendendo Abot. Isso. Cadê? Onde que tá o nome de Abot?
+9:579 minutos e 57 segundosAcho que não. Ah, aqui. Quando ele loga no sistema aqui, ele já vai ver. Mas eu posso replicar nas outras telas. É bom, né? Tá. Para ficar claro qual é.
+10:0610 minutos e 6 segundosSim. Sim. Tá.
+10:0810 minutos e 8 segundosEntão, ali. Então, então vamos lá. Ah, mas aí ele é um stand, só para eu entender esse caso aí, ele é um stand da da Abotum
+10:1610 minutos e 16 segundose aí vai ter o vendedor naquele stand vendendo por diversos distribuidores, correto?
+10:2110 minutos e 21 segundosIsso. Esses esses parametrizados aqui, apenas esses, os que estão liberados ou outros ou outros.
+10:2710 minutos e 27 segundosE aí? E o então vamos pegar esse mesmo exemplo, quer dizer, vou trazer o exemplo da distribuidora. Eu tenho a Santa Cruz. Uhum.
+10:3510 minutos e 35 segundosque ela vende pela, ela vende produtos da Abot, ela vende produtos da ela é o inverso. A Santa Cruz, a Santa Cruz é o inverso. O distribuidor já é
+10:4310 minutos e 43 segundosela. Ela não forma o distribuidor, ela só informa o laboratório que ela tá vendendo. Exato. Então é o inverso, entendeu?
+10:5010 minutos e 50 segundosSeria mesmo a visão, visão invertida. Em vez de eu ter aqui em cima Abot e os distribuidores, eu tenho aqui em
+10:5810 minutos e 58 segundoscimafarm e as indústrias e as indústrias que agora a lista de indústrias que vai aparecer aqui, eu preciso parametrizar o listo todas.
+11:0611 minutos e 6 segundosEssa é minha, uma das dúvidas que eu tinha, gente, vai ter que passar, eu acho, eu acho, não repare bem, ele que passa pra gente, não é a gente que passa
+11:1411 minutos e 14 segundosa gente sabe assim, é isso que eu tô falando, mas não é aquelas indústrias que já estão lá cadastradas, porque o que é que acontece quando a
+11:2211 minutos e 22 segundosgente diz que o Abot está lá, o Abot comprou um stand, certo? Quando a distribuidora leva uma casa, leva uma indústria, ela leva uma uma casa que não tem este.
+11:3311 minutos e 33 segundosEntão ela não tá registrada lá naquele seu seu coisa. Então vai ter então vai ter que ser imputado, vai ter que ser a gente chegar ali e
+11:4111 minutos e 41 segundosdizer, vou cadastrar aqui para Santa Cruz, para Santa Cruz, sei lá, Casa Granado, não sei o quê, Calena. Pronto, ele vai vender isso.
+11:5211 minutos e 52 segundosE aí vai ser a lista que vai aparecer aqui. No caso aqui vai ser distribuidora, vai ser a indústria. Isso. Isso.
+11:5711 minutos e 57 segundosE o lançamento é a mesma coisa o restante.
+11:5911 minutos e 59 segundosPronto. A única dificuldade maior aí é essa lista, tá?
+12:0312 minutos e 3 segundosQue a gente pode ter, vamos dizer assim, uma lista de todos a parte que você lançar e na hora que a gente for configurar ali como ele fez mesmo jeito.
+12:1512 minutos e 15 segundosMesma coisa. É, mas só que o Antônio vai ter que fazer uma lista geral de todas as casas que vão estar presentes dentro dos distribuidores para ele jogar em
+12:2312 minutos e 23 segundosalgum campo lá e a gente poder buscar, tá? E deve ter um outro também, né?
+12:2812 minutos e 28 segundosVai ter outros também de indústria. Não, indústria não vai ter outro. Só esse cenário só distribuidor. Uhum. Porque aí o distribuidor já é ela.
+12:3612 minutos e 36 segundosUhum. Ela não manda para outro distribuidor.
+12:3812 minutos e 38 segundosDistribuidor já é ela. Ela só vende para aquela indústria.
+12:4112 minutos e 41 segundosMas pode ser que temha uma indústria, por exemplo, se mede a distribuição é própria. Sim. se méde.
+12:4612 minutos e 46 segundosAh, mas aí ele se méd é laboratório, mas o que eu tô dizendo é que não é um dos distribuidores que
+12:5412 minutos e 54 segundoscompraram o stand. Ele comprou como indústria. Distribuidor que a mesma coisa como outros que eu perguntei.
+13:0013 minutosÉ isso que eu tô explicando a ele, que indústria vão ser aquelas mesmo, piadas.
+13:0413 minutos e 4 segundosAgora, distribuidor que tem que ter outras por conta disso. Porque o distribuidor ele traz um produto que não tá com stand.
+13:1213 minutos e 12 segundosUhum. É, é diferente do do da indústria. A indústria ela tem estar com instante, mas o distribuidor não, ele tá lá e ele leva
+13:2113 minutos e 21 segundosum um aí às vezes é às vezes é por um distribuidor que não é não tá aqui, não é assim, por exemplo,
+13:2913 minutos e 29 segundostá não, distribuidor distribuidor, distribuidor distribuidor é ele. Eu não preciso saber quem é o distribuidor quando é só indústria.
+13:3713 minutos e 37 segundosÉ, agora é uma indústria. Pode botar uma indústria lá CRIF que eu não sei nem o que é, que não tá aqui cadastr que não tá aí. Aí é por isso tô falando.
+13:4413 minutos e 44 segundosAí eu preciso ter onde cadastrar, né, essa essa lista para puxar, tá beleza?
+13:5413 minutos e 54 segundosHum. Hum.
+13:5513 minutos e 55 segundosE aí o vendedor do distribuidor, ele vai ver tudo que ele vendeu ali, como quem for o indústria,
+14:0114 minutos e 1 segundoquem não, quem for a o o líder ali, ele também vai ver o total de de tudo vendido de cada de cada selinho daquele
+14:1014 minutos e 10 segundosque a gente criou, que nem o líder da indústria, vê todo o líder da distribuidora vê todo debaixo dele, entendeu? Exatamente. Perfeito.
+14:1814 minutos e 18 segundosBeleza. Eh, então, visão do vendedor aqui, remover cupons, mostrar valor total, né? Na versão que eu apresentei aqui, 500 informações.
+14:2714 minutos e 27 segundosQual é isso aí?
+14:2814 minutos e 28 segundosVisão do vendedor. Remover a quantidade de cupões que ele conseguia verificar que era irrelevante para ele.
+14:3614 minutos e 36 segundosDeixa eu pegar um perfil de vendedor aqui.
+14:4114 minutos e 41 segundosDaí, isso aqui já é, né? É o total de isso. Ele só mostra o total e não mostra a quantidade de cupões, tá?
+14:4914 minutos e 49 segundosAham. É, não tem próximo. Visão do logista faz, né?
+14:5414 minutos e 54 segundosNão, pro vendedor não, não importa. Só importa pro logista quantos cupões tá gerando eh na visão do logista.
+15:0315 minutos e 3 segundosÉ, ainda mais que vai ter diferença de um valor para outro, melhor não aparecer. Na visão do logista, quando ele fizer parte de um grupo econômico, vai ter que haver o filtro por CNPJ para
+15:1115 minutos e 11 segundosele conseguir ver o individualizado e aparecer o total de compras e número de cupões para PJ
+15:2515 minutos e 25 segundospersonalizar.
+15:2815 minutos e 28 segundosEntão aqui eu tenho logista filtro pro CNPJ, OK? Aparecer total de compras e número de cupões pro CNPJ.
+15:3515 minutos e 35 segundosTotal número de cup isso. Como foram valores baixos aqui, tudo fez dois grupos juntos, né?
+15:4115 minutos e 41 segundosAí eu consigo visualizar esse grupo aqui. Eu vincolei para teste, né? Tem três, sim. Os três são PJ aliança. Uhum.
+15:4815 minutos e 48 segundosTá. Eh, aí você selecionou um, ele atualiza. Isso, ele selecionou um, ele atualiza. Tipo aqui eu tô vendo tudo.
+15:5515 minutos e 55 segundosSe eu quiser ver só um, ele mostra a quantidade de cupões. Se eu quiser ver tudo de novo, ele mostra tudo de novo.
+16:0316 minutos e 3 segundosEh, regra do valor para gerar cupom que a gente falou que vai ser por indústria.
+16:0716 minutos e 7 segundosUhum. Isso já foi feito aqui. Só ordem que e o que você tinha colocado aí na CPF do proprietário na base, por que mesmo?
+16:1416 minutos e 14 segundosVocê precisa disso para grupo econômico. Sim. Deixa eu voltar aqui.
+16:1916 minutos e 19 segundosNão pode ser o nome, não pode ser, mas só porque a gente não chegou a bater o martelo, né? Cadê aqui? Grupos econômicos.
+16:2616 minutos e 26 segundosÉ a loja mais antigas, talvez a gente não tenha essa técnica. Então assim, na nossa base já tem o nome. Uhum.
+16:3116 minutos e 31 segundosAí é o nome completo, entendeu? Que é o nome como o nome como tá na nossa base vai ser então basicamente essa tela de grupo econfigura o grupo econômico.
+16:3916 minutos e 39 segundosIsso e vai configurar a gente.
+16:4216 minutos e 42 segundosSim. No caso do visitante, ele só vai ver pros pro pros CPJ mundal. Ele consegue agrupar,
+16:5016 minutos e 50 segundosvai conseguir agrupar porque ele botou para adicionar ali, lembra?
+16:5316 minutos e 53 segundosAdicionar os outros sem, entendeu? Ciro isso já fica agrupado.
+16:5716 minutos e 57 segundosUhum. Eu só coloco o nome completo e faço os links.
+17:0017 minutosSim, mas por exemplo, eu sou visitante, eu vou botar ali. Aí você diz, tem mais CNPJ. Aí ele já vai incluir dentro do C.
+17:0817 minutos e 8 segundosSim. Mas e aí o nome do grupo? Onde é que ele bota?
+17:1317 minutos e 13 segundosAh, não é, tem que ver isso. Ou se vai ser CNPJ separado, né? Vai lá. O da Multi você vai agrupar, você vai chegar ali e botar velandes.
+17:2217 minutos e 22 segundosUhum. Você já vai botar todas as lojas dele. Quando ele botar lá, ele já vai ver. Sim. Né? Pelo nome dele. Uhum. Não é isso?
+17:3017 minutos e 30 segundosSim. É porque esse é um um é um E o acesso dele, como é que ele entra?
+17:3617 minutos e 36 segundosÉ daquele mesmo jeito. CF CBF. Sim, mas você acabou de dizer que não tem o CPF todo mundo. Como é que você vai cadastrar?
+17:4317 minutos e 43 segundosNão é porque aqui eu eu havia sugerido para amarrar aqui pelo CPF, não pelo nome. Para amarrar no retaguarda. O outro é cadastro da loja.
+17:5117 minutos e 51 segundosCredenciamento.
+17:5217 minutos e 52 segundosTá claro para mim? Não, não é. Vem cá, Ciro. Eu entendi o que se tá falando. Quando ele for baixar o aplicativo, Sim.
+17:5917 minutos e 59 segundosComo é que vai linkar que tem que tá CF?
+18:0318 minutos e 3 segundosAh, sim. É o CPF, a senha porque a senha é então realmente tem que ter eu coloquei como teste esses aqui que eu
+18:1118 minutos e 11 segundosconsigo entrar entendeu do CPF de cada proprietário. Eu acho que são cinco.
+18:1518 minutos e 15 segundosQuem não tiver o CPF vai ficar como loja individual, irmão. Exato.
+18:2118 minutos e 21 segundosMas você tem aqui o CPF todo mundo. Qual o proprietário que a gente não tem o CPF? Poxa, as antigas a gente não consegue nem falar.
+18:2918 minutos e 29 segundosAh, mas eu se o cara pode ter caso certificado digital. É, pô. Vamos fazer começar a fazer.
+18:3518 minutos e 35 segundosOutra coisa, se não tem dificuldade mesmo, acesso individual, eu trago agora o o visitante, é isso que eu tô
+18:4418 minutos e 44 segundosfalando, o visitante como é que ele vincula?
+18:4918 minutos e 49 segundosNão vai ter agrupamento visitante, vai descer pro CNPJ, porque não necessariamente Ciro foi lá e incluiu o nome dele.
+18:5818 minutos e 58 segundosMas quando eu digo ali que eu tenho mais CNPJ ali ele tem que ajudar. Não necessariamente sirve a don de tudo no o CPF, entendeu? Não, mas não interessa.
+19:0719 minutos e 7 segundosEle tá criando o grupo.
+19:0819 minutos e 8 segundosTá, quem tá se se se ali só teria que que ter um um campo para dizer assim, qual o nome do grupo?
+19:1719 minutos e 17 segundosPera aí, vamos pensar aqui. Quando a pessoa baixar o aplicativo Uhum. vai pedir o quê de dados para ela? Isso.
+19:2319 minutos e 23 segundosO CNPJ e os cinco, se eu não me engano, cinco últimos dígitos do CPF. Passum cinco últimos dígitos do CPF. Pronto.
+19:3119 minutos e 31 segundosQuando se trata de vai pedir um CNPJ, esse não é o problema. O problema é aqui. Eu tô aqui fazendo uma inscrição.
+19:3819 minutos e 38 segundosAí eu chego aqui boto9419504 Vanderlei Fernandes. Uhum.
+19:4219 minutos e 42 segundosAí você me pergunta, tem mais CNPJ aí que incluir aí eu boto incluí do maisinho né?
+19:5119 minutos e 51 segundosIsso. Isso para farmacista convidado.
+19:5319 minutos e 53 segundosEle vai ele vai pra farmacista convidado. Aí eu vou botar mais quatro CNPJ.
+19:5719 minutos e 57 segundosAutomaticamente. Eu tô criando um grupo ali. Não tô sim. Sim, não éando.
+20:0220 minutos e 2 segundosSó tá faltando ali o nome. Sóia, só tinha que ter o seguinte. Na primeira vez que eu clico, mas não tem, na primeira vez que eu clico mais para
+20:0920 minutos e 9 segundosincluir outro CNPJ, tinha que ter um pontinho. Digite o nome do grupo.
+20:1320 minutos e 13 segundosMas no de logista nosso não tem. Pega aí o de logista.
+20:1620 minutos e 16 segundosMas logista não precisa porque logista tá pegando controle controle. É só o problema é com visitante.
+20:2120 minutos e 21 segundosMas então, abre aí a visão logista. Para que tem o nome para visitante se a gente não tem? aparece na lista de CNPJ igual o nosso.
+20:2920 minutos e 29 segundosNão, mas eu sei qual é o Não, mas é aí é mais finalidade de o que externo, né? Bote a visão logista por favorista.
+20:3720 minutos e 37 segundosDeixa eu pescar aqui de uma loja, aquela que você colocou que
+20:4420 minutos e 44 segundosjá tem três lojas lá. Não, aí é cadastro. Eu falo lá lá no aplicativo.
+20:5020 minutos e 50 segundosAh, tá mostrando. Eu tô falando de cadastro.
+20:5420 minutos e 54 segundosComo eu cadastro uma loja, o cara chega lá, aqui ele votou, ó, grupo econômico com três CNPJ vinculados.
+21:0221 minutos e 2 segundosMas como é que deu esse nome do grupo econômico? Todas tem como grupo econômico e o número de velandes vai aparecer grupo econômico com 18 CNPJ vinculado.
+21:1221 minutos e 12 segundosNão vai aparecer o nome do grupo?
+21:1321 minutos e 13 segundosE esse nome do grupo que você tá botando é para quê? Não, o nome é porque a gente tem que linkar, ele tem que buscar de alguma base que esse CPF de velanes traz as 18. Interna, identificação interna.
+21:2621 minutos e 26 segundosC, entendeu?
+21:2921 minutos e 29 segundosEntend CNPJ que você vincula tudo se é da base m. Como assim?
+21:3821 minutos e 38 segundosQuando ele for buscar o grupo, busca pelo CP.
+21:4121 minutos e 41 segundosNão, vamos, vamos voltar para o logista Multimais.
+21:4421 minutos e 44 segundosUhum. O cara é logista multimax. Ele tem aqui três TNPJ na Multimax. CL. Certo.
+21:5021 minutos e 50 segundosQue é Fabiane que vai agrupar, não é isso? Não é isso? Sim. Vai agrupar como?
+21:5621 minutos e 56 segundosAtravés dessa interface aqui, ó.
+22:0122 minutos e 1 segundoAqui. Vou criar um coisa rapidinho porque a gente ela vai pegar tudo ali.
+22:0622 minutos e 6 segundosEla vai clicar aliança, aliança, aliança, aliança. Ela clica nos três, bota salvar. Isso. Dá um dá proprietário. Isso.
+22:1322 minutos e 13 segundosAí ela dá um nome, isso. Grupo tal, grupo aliança.
+22:1722 minutos e 17 segundosTá pronto. É assim que vai agrupar.
+22:2022 minutos e 20 segundosIsso. Eu não dou o nome, já agrupou naquela pessoa.
+22:2222 minutos e 22 segundosNão é isso. Mas para salvar aqui você tem que dar o nome do grupo que ele tá falando que a gente chama de proprietário.
+22:2822 minutos e 28 segundosEu vou botar o nome de inteiro. Luiz Sérgio, né?
+22:3022 minutos e 30 segundosO nome do grupo é proprietário hoje. É isso.
+22:3222 minutos e 32 segundosPronto. Pronto. Beleza. Então quando você botar Luiz Sérgio Velanes, ou seja, mas Luiz Sérgio Velanes tem um CNP, tem um CPF.
+22:4122 minutos e 41 segundosque é o que vai servir para ele entrar no aplicativo. Isso. Isso aí. Concorda?
+22:4422 minutos e 44 segundosSim. Vai ter que ter, vai ter que ter quem acende.
+22:4722 minutos e 47 segundosEntão é isso. E onde é que ela tá botando o CPF dele? Ele tem que tá escrito ou ela vai botar o CPF dele?
+22:5222 minutos e 52 segundosComo é que tá? Da onde foi buscar o CPF dele?
+22:5422 minutos e 54 segundosNão, isso a gente vai ter que buscar naquela base que vai importar, né? Eu entendo aquela base que vocês me passam entendendo que tá furado aí. Se eu vou
+23:0123 minutos e 1 segundoagrupar, eu tenho que agrupar algo, eu precisaria ter ali o CPF dele.
+23:0723 minutos e 7 segundosUhum. Sim. Não, vamos lá. Vamos pela, vamos sair um pouquinho do logística só para entender a lógica CP. Vamos lá.
+23:1523 minutos e 15 segundosUma pessoa que não é logista, bora bota a prescrição aí de C.
+23:2023 minutos e 20 segundosNão tem porque a gente como se ele fosse fazer, né? No início.
+23:2323 minutos e 23 segundosTá pegando aplicativo de carreção, inscrição de um não logista que não é da base. Só para eu entender uma coisa, tá?
+23:3023 minutos e 30 segundosDeixa eu limpar aqui. Deixa. Essa. Essa é da base, né? Pronto. Sempre. Ah, então vá bota um. Você quer um que não seja ou que seja?
+23:3823 minutos e 38 segundosque não seja, tá?
+23:4223 minutos e 42 segundosPara entender o processo tem que fazer não. Uhum. Fion.
+23:5123 minutos e 51 segundosPronto. Esse daqui é um associado convidado que não é da base. Beleza.
+23:5523 minutos e 55 segundosNão está na base, né? Convidado e que não está na base. Sim. Pronto. E ele passou sem o quadradinho lá, né?
+24:0024 minutosNão tinha que não. Não pulei ainda. Pra próxima etapa de validação.
+24:0324 minutos e 3 segundosAh, ele cria um nome fantasião na cidade. Tá. É farmácia. X. Adiciona o CNPJ qualquer. Isso não vale.
+24:1224 minutos e 12 segundosVocê quer adicionar algum ou nenhum? Ah, adiciona. Pronto. Qualquer um. Deixa eu pescar aqui. Ele já botou um CNPJ em cima. É, foi o primeiro.
+24:1924 minutos e 19 segundosFoi o primeiro. Ele tá adicionando é um grupo com dois. Pronto. Concordo. Continuar. Isso. Então, ele tem o 98 e o 52.
+24:2624 minutos e 26 segundosQuando você criar aqui, você já consegue ver lá na tela da do app? Essa que você fez agora já tá vinculada?
+24:3224 minutos e 32 segundosNão, mas o app só quem vai acessar lá é farmácia examinais. Não, não. Aí por isso que a gente tá falando
+24:3924 minutos e 39 segundoshoje. Tá sim. Tanto é que na tela do vendedor lá, quando eu deixei aberto, aí vocês falaram assim, só vai poder vender pra farmacista muito mais.
+24:4724 minutos e 47 segundosNão, não, não, não, nunca fez assim. Não vai. Então vai confirmar a inscrição. Então esse não tem.
+24:5424 minutos e 54 segundosEsse não tem. Não tem, ele entrou na base, ele não tem a visão.
+24:5824 minutos e 58 segundosEle não tem visão.
+25:0025 minutosTinha uma coisa furada, porque se se valesse aqui, se tivesse conseguido pra logista, não precisaria necessariamente
+25:0725 minutos e 7 segundosvincular CPF. Mas vamos pegar então isso aqui, tá?
+25:0925 minutos e 9 segundosVamos então fechar essa ideia aqui do que a gente vai fazer com o convidado, tá?
+25:1425 minutos e 14 segundosO convidado não pode estar vinculado ao CPF para ele puxar as lojas que estão nele? Poderia.
+25:2025 minutos e 20 segundosSó que vamos lá, a CPF de quem fez o cadastro primeiro daquele grupo, que não necessariamente é o proprietário, entendeu? É quem fez primeiro.
+25:3025 minutos e 30 segundosPorque como a galera de fora vai baixar, quando baixar esse aplicativo, o que é que vai pedir para puxar essa? Ó, fica a
+25:3725 minutos e 37 segundosconfusão. Deixa eu explicar aqui. Você é da mesma loja, eu tenho cinco loos. Uhum.
+25:4225 minutos e 42 segundosVocê chega lá, faz, bota mais um CP CRPJ. Botou dois. Aí, aí depois eu resolvo complementar, botar os outros todos.
+25:5325 minutos e 53 segundosVai virar uma confusão. Para de saber se pode, se não pode, se já adicionou, entendeu? Uhum.
+26:0526 minutos e 5 segundosO convidado, a gente vai deixar o link mais aberto, né?
+26:1026 minutos e 10 segundosSim, rapaz. deixava o CMPJ, ele só bota para valer e compra.
+26:1826 minutos e 18 segundosVale compra.
+26:2026 minutos e 20 segundosMas e aí como é que ele vê as compras dele? Ele não vê. Tem que ver. Ele precisa ver. Ele concorre também.
+26:2626 minutos e 26 segundosÔ Círio, se a gente não fizer agrupamento pra loja de fora, é a melhor coisa. É melhor coisa.
+26:3226 minutos e 32 segundosÉ só que vamos lá. Se não fizer o agrupamento pra loja de fora, ele vai ter que acessar de alguma forma para mim.
+26:4026 minutos e 40 segundosSe ele tiver cinco lojas, ele quiser comprar pelo cinco CNPJ, ele tem, tem que cadastrar o cinco. A ideia de adicionar, a ideia de adicionar
+26:4926 minutos e 49 segundosé boa, porque num cadastro só ele adiciona tudo que fazer, só que o aplicativo desvincula, digamos assim, eu baixei e coloquei um CNPJ na minha loja.
+26:5926 minutos e 59 segundosPor isso que eu tô dando a ideia. Desde o início eu tava pensando nisso. Quando eu cliquei em adicionar, tinha que aparecer ali, atribua o número
+27:0727 minutos e 7 segundosesse o nome, esse grupo. Aí eu botava lá grupo de Vanderlei, adicionava todos. O grupo já tá criado.
+27:1327 minutos e 13 segundosMas vai dar no mesmo se a pessoa só adicionar dois em cima dele, outra chegar não saber que não sabe que você quer adicionar. Não, mas aí você só tem aí, aí não tem jeito. Aí você só poderia
+27:2127 minutos e 21 segundosfazer isso uma vez. Mas se for um CNPJ único ou se vinculou para o acesso daquela
+27:2927 minutos e 29 segundospessoa ao que ela criou, tá? Ela criou com CPF dela dois, no dela só vai aparecer dois porque ela só criou dois.
+27:3727 minutos e 37 segundosSe ela for comprar, ah, eu quero comprar no CNPJ tal, se já tiver cadastrado, não tá aparecendo no aplicativo dela. Se ela se procurar, por que não tá? Porque na
+27:4427 minutos e 44 segundosobra você vinculou esses. Alguém do seu grupo vinculou outra a tá rodando a compra para alguém. Se não tiver nem vai rodar, entendeu? A gente também não pode
+27:5227 minutos e 52 segundosse apegar muito porque tipo o mundo de convidar é como foi que nós fizemos os dois últimos anos?
+27:5827 minutos e 58 segundosOs dois últimos anos a gente cadastrava lá a galera que mandava aqui qual era o CNPJ a gente mandava para lá. Então exatamente não. E a gente agrupou?
+28:0628 minutos e 6 segundosNão agrupou bom não.
+28:0828 minutos e 8 segundosA gente mandava todo o CNPJ para CNPJ que tinha inscrição que não era base multimar a gente mandava. Uhum.
+28:1528 minutos e 15 segundosNuma lista e aí não sabe como é que ele sobe, né? Então ele faz a mesma coisa. É aberto também.
+28:2128 minutos e 21 segundosSe você botou os cinco do grupo, beleza.
+28:2528 minutos e 25 segundosSe você não colocou agora quando, por exemplo, se ela Fábio, trabalha na mesma empresa que ela, Fábio é compradora, tal, ela adicionou dois CNPJ lá, eu tô chegando depois, tô
+28:3328 minutos e 33 segundosdesavisado, vou adicionar um dos um dos dois, ele vai bloquear, né? Ele não vai permitir. Só vai ver o que você lançou, né?
+28:3928 minutos e 39 segundosNão, mas se for igual dela, ele bloqueia, né? Não, mas vamos lá. Não é isso não, ó.
+28:4328 minutos e 43 segundosEntendi. Na hora do cadastro você já inseriu, ele tá tentando aí vai dar CNPJ já. Ele vai já CNPJ cadastrado. Sim, rapaz. Ele tem que ter o o logista tem
+28:5228 minutos e 52 segundosque ter convidado, tem que ter o mesmo o mesmo perfil, a mesma dashboard do do cara que é da máquina.
+28:5828 minutos e 58 segundosMas não dá para agrupar, não dá para agrupar se ele agrupar. E se ele agrupar, acho que a gente tá se preocupando muito com agrupamento. Agrupamento é minoria.
+29:0629 minutos e 6 segundosIsso. É isso. É verdade. Apesar que é quem compra bem. Sim.
+29:1129 minutos e 11 segundosÉ quem faz longe. Seander, eu acho assim, ó. Eu tô aqui, vamos dizer, um grupo grande da do irmão do seu colega.
+29:1929 minutos e 19 segundosChegou Fabrícia lá que trabalha para ele agrupou, botou três CNPJ. Os três estão valendo. Os três estão valendo. Uhum.
+29:2729 minutos e 27 segundosSe ela for comprar por um ou qualquer outra pessoa que não foi cadastrado, não foi cadastrado previamente. Paciência. Como é ontem ou como foi o ano passado.
+29:3529 minutos e 35 segundosSe ele batia lá no CNPJ não tá cadastrado. A gente tem que mandar pra indústria e Cláudio chegou depois e cadastrou outros três diferentes.
+29:4229 minutos e 42 segundosEle vai ficar vindo de um lado, ela do outro. Exatamente. Mas tá valendo. Eles estão ganhando do mesmo jeito que ponto.
+29:4729 minutos e 47 segundosValendo. Então, mas aí cada um, aquele C, aquele CPF ali que cadastrou aquele grupo é que tá cadastrado.
+29:5529 minutos e 55 segundosÉ. Agora uma dúvida, eu fui trabalho com você, fui lá, fiz uma inscrição, coloquei todos os CNPJ no nosso grupo,
+30:0330 minutos e 3 segundosfoi. Você vai lá fazer a sua inscrição porque você quer entrar.
+30:0630 minutos e 6 segundosUhum. Aí você coloca o CNPJ, pode, vai dizer CNPJ já cadastrado, mas vai acatar essa inscrição. Sim.
+30:1430 minutos e 14 segundosE vai aparecer os outros que estão cadastrados. Não, não precisaria. Beleza.
+30:1930 minutos e 19 segundosSó precisa porque você tá cadastrando facilitar. Beleza. É, aí se você clicar outro CNPJ ali, eu acho que se você botar um CNPJ que já tá
+30:2830 minutos e 28 segundoscadastrado, não tem nem que dar opção de de acrescentar CNPJ. Opção.
+30:3330 minutos e 33 segundosSe você tá botando um CNPJ que já tá cadastrado Uhum. Não tem que botar a opção de de mais CNPJ.
+30:4030 minutos e 40 segundosEssa essa opção de mais, a opção de mais CNPJ só pode ser com aquele CNPJ virgem. Uhum. Uhum.
+30:4730 minutos e 47 segundosAquele CNPJ não tá na base. Quem botar aquele CNPJ na base tem a opção de incluir outros.
+30:5430 minutos e 54 segundosMas para mim, se aparecesse, seu Vanderlei, quando ele fosse lá e dissesse cadastrado, eh, CNPJ cadastrado e a lista que tá cadastrado vinculada ao mesmo grupo, né?
+31:0431 minutos e 4 segundosAí, tipo assim, a pessoa pode dizer: "Ah, não, essa pessoa esqueceu três v adicionar." Você bota um virgem e adiciona outros dois. Pessoa não vai saber qual tá
+31:1331 minutos e 13 segundosvirgem não. Mas aí quando a informação bater aí, velho, aí a gente tem que est preparado para falar assim, quem viu cadastrou, buscar a informação de quem cadastrou e falar fulano tá cadastrou.
+31:2031 minutos e 20 segundosVai ter esse serviço quando é que a gente vai ter esse serviço?
+31:2331 minutos e 23 segundosaplicativo, sabe, mas a gente não vai saber gente um grupo de uma pessoa que é convidada quantas não faz confusão, não. Tá quer tá criando ficar confuso pro usuário se
+31:3231 minutos e 32 segundosapareceu informação do nada aqui uma lista falou assim eu não digitei isso.
+31:3631 minutos e 36 segundosEu sei que vai ficar gente penso na confusão do usuário, mas eu penso no seguinte quando eles lançavam lá que mandava qualquer pessoa escrever
+31:4331 minutos e 43 segundosqualquer CNPJ a gente jogava todos os CNPJ na lista que ia pra galera.
+31:4731 minutos e 47 segundosUhum. Hoje, se a gente fizer isso do jeito que vocês estão falando, a pessoa tiver 10 e alguém preguiçoso foi o primeiro e só cadastrou três setes e ficam de fora, ele não consegue comprar nesse sete na feira.
+31:5631 minutos e 56 segundosE do jeito anterior a mesma coisa se ele não mandasse tudo ouvindo.
+32:0032 minutosMas às vezes pode ser que cada um, cada, vamos dizer, você é balconista, se inscreva no CNPJ que você trabalha. Aí era mais chance de ir todo do que agora quando você fizer isso.
+32:1032 minutos e 10 segundosEu só não quero deixar fura. Pronto. Vamos lá. Vamos lá.
+32:1832 minutos e 18 segundosSe tivesse uma pergunta, esse CNPJ pertence a algum grupo econômico? Inclu
+32:2532 minutos e 25 segundose aí já se botar não na dupla ele fica individual.
+32:3532 minutos e 35 segundosEu botei o CNPJ ali. Aí pergunta: "Pertence a algum grupo econômico?" Se sim, digitos o nome do grupo e o mais um para incluir outro CNPJ.
+32:4532 minutos e 45 segundosSe não o cadastro é individual, mas isso na primeira vez somente e
+32:5232 minutos e 52 segundosdepois se ele esqueceu nessa nesse cadastro, aí ele tem que usar o CNPJ. Se ele tiver 10, ele ele botou nove e depois esqueceu
+32:5932 minutos e 59 segundosde um, aquele um vai ficar individual, não vai poder agrupar.
+33:0733 minutos e 7 segundosou só ser CNPJ individual e o agrupamento ser feito por aqui.
+33:1533 minutos e 15 segundosAí a gente tem que pegar os principais, os grandes para poder ligar di mande o CNPJ todos aí. O ano passado a gente não
+33:2433 minutos e 24 segundosfazia isso. Como é que a gente pegava Roger? Todos os CNPJ Roger como é que a gente pegava? A gente não fazia isso, né?
+33:3233 minutos e 32 segundosE como é que a gente pegou esse pejado?
+33:3433 minutos e 34 segundosNão, certo? A indústria tinha que puxar o primeiro Não, não, não. Alguém agrupou?
+33:3833 minutos e 38 segundosNão, não. A gente agrupou aqui de alguma forma e mandou e Antônio mandou.
+33:4333 minutos e 43 segundosA gente só fez isso com os convidados de vocês.
+33:4733 minutos e 47 segundosSim, é isso que os convidados de Cléber é da boa fara. É diferente de convidado geral. Tô falando de convidado especial.
+33:5333 minutos e 53 segundosSim. Não, gente. Então, a gente tá criando um bicho sete cabeça.
+33:5633 minutos e 56 segundosA gente tá falando de convidado especial. muito salta.
+33:5933 minutos e 59 segundosA gente tá criando de cabeça que o cara, a maioria desses caras que tem três, quatro lojas, compra por um semijão.
+34:0734 minutos e 7 segundosAh, então e outra coisa, a a possibilidade de agrupar aqui, de incluir esses CNPJ seria nossa.
+34:1634 minutos e 16 segundosEu pego aqui os os principais, os grandes e a gente faz o mesmo trabalho que a gente fazia. Ó, liga aí para fulano. O de Cléber, irmão de Cléber se
+34:2334 minutos e 23 segundosinscreveu, a gente vê ele inscrito, me mande todos para você poder comprar todas as lojas. Ele manda, a gente inclui, entendeu? Porque a gente tá procurando
+34:3134 minutos e 31 segundosresolver uma coisa que é difícil de resolver, que é a cabeça dos outros.
+34:3634 minutos e 36 segundosEntão o da Multima qualquer um que se inscrever puxa puxa o grupo porque tá dentro do do do do agrupamento
+34:4534 minutos e 45 segundose ter a mesma possibilidade para você fazer de fora.
+34:4834 minutos e 48 segundosO convidado com dizer ó Cláudio vai Cláudio, você tem mais loja mesmo que não esteja com a gente aqui, me mande CNPJ que eu vou
+34:5634 minutos e 56 segundosincluir para você poder comprar. A gente vai fazer uma triagem. Exato. A gente sabe o nome dos grupos grande.
+35:0135 minutos e 1 segundoFamácia dos médicos, não sei o quê, PPP, Atacadão. A gente vai e faz. E o que der para fazer, deu. O que não der, meu
+35:0935 minutos e 9 segundosirmão, é o CNPJ que se cadastrou e tá valendo. O agrupamento na base.
+35:1435 minutos e 14 segundosSim, eu posso fazer, eu tenho que fazer antes de começar as inscrições ou eu posso fazer depois, ele vai puxar de qualquer forma, né?
+35:2335 minutos e 23 segundosPorque quando a pessoa se inscrever que tiver nove lojas, vai aparecer a loja do CNPJ que ela colocou, não as nove lojas, não vai aparecer,
+35:3135 minutos e 31 segundossó vai vincular isso na hora do aplicativo, então posso vincular a qualquer momento. Isso. Beleza. Como é que ele vai ficar?
+35:3835 minutos e 38 segundosVamos descartar esse adicionar CPJ. Ah, descarta o adicionar CNPJ.
+35:4335 minutos e 43 segundosPara mim deixaria para o primeira pessoa que cadastrasse aquele CNPJ. Aí estamos voltando para o que tava.
+35:5135 minutos e 51 segundosO primeiro que cadastrar é que fica na aplicação. Aí tem que ter o texto aqui.
+35:5635 minutos e 56 segundosCaso esta farmácia faça parte de algum grupo, cadastre todos osj do grupo.
+36:0336 minutos e 3 segundosÉ, pronto. E deixa aí. Aí é aí, como você falou, aí é mais aberto. Quem botar dois, três lei.
+36:0936 minutos e 9 segundosÉ, acho que é o que eu tô falando.
+36:1136 minutos e 11 segundosMas no único, no único painel ele vai olhar, né? Esse cara já conseguiu olhar tudo no mesmo painel. É.
+36:1636 minutos e 16 segundosTá aí. Outra pessoa que vier, você Fabiane foi lá, escreveu aliança, três, botou três CNPJ Aliança.
+36:2536 minutos e 25 segundosSim, beleza. Eu, Vanderlei também trabalha na loja. Aí depois eu vou, boto o CNPJ e eu
+36:3336 minutos e 33 segundosganho uma minha inscrição, mas o CNPJ já tá ali, não vai aparecer nem adicionar mais para mim, porque o CNPJ já está na base, né? Isso aí.
+36:4136 minutos e 41 segundosBeleza. Mas na hora do aplicativo, eu consigo com o meu CPF acessar?
+36:4736 minutos e 47 segundosconsegue, você vai tá vinculado a CNPJ e se esse CNPJ fizer parte de um grupo, você vê o grupo. Beleza? A ideia é essa.
+36:5436 minutos e 54 segundosEntão, pronto. Como já tá hoje pro pro, né?
+36:5936 minutos e 59 segundosÉ pro associado. Tá. Então isso aqui mantém. Beleza.
+37:0637 minutos e 6 segundosSó tem que ver esse texto, né, F? É, eu já botei aqui. E o aplicativo.
+37:1037 minutos e 10 segundosEntão, no aplicativo, quando essa pessoa for cadastrar, colocar o CPF e vai postar todas as lojas que ela cadastrou.
+37:1637 minutos e 16 segundosa mesma ideia do ou se eu entrei, você cadastou tudo aliança. Eu trabalho, entrou e disse que o CNPJ já estava vinculado. Quando ele colocar o CNPJ já
+37:2437 minutos e 24 segundosvai, já puxa do grupo. É, eu tenho que verificar se ele já tá vinculado a algum grupo. Beleza. Ótimo. Aqui foi só umas verificações.
+37:3337 minutos e 33 segundosEu acho que não deve ter compras efetuadas, né? É tipo assim, pedidos registrados porque eh a compra não foiada faturada.
+37:4337 minutos e 43 segundosFaturada, não foi faturada, não é compra. Então bota pedidos registrados no lugar de comp.
+37:4737 minutos e 47 segundosÓ, eu fiz um pedido aqui de R$ 1.000 aqui mesmo. O cara na hora de fatura total porque não tem mercadoria, não tem coisa.
+37:5537 minutos e 55 segundosJá tá ali, ó. Total registrado.
+37:5737 minutos e 57 segundosMas tipo assim, minhas compras seria meus pedidos.
+38:0138 minutos e 1 segundoO texto minhas compras mesmo. P agora tem que botar a informação do que a a verificar, né?
+38:0638 minutos e 6 segundosAli, ó. Total registrada. É registrado, não tá faturado. É. Tá beleza. Tá bom.
+38:1338 minutos e 13 segundosNão, mas é no outro texto que tinha.
+38:1538 minutos e 15 segundosQual foi onde a gente falou no aplicativo que era troca de cheque?
+38:2038 minutos e 20 segundosNão, aí é aí troca de cheque é na frente vai não se vê de troca de cheque aí, né?
+38:2438 minutos e 24 segundosRegistro de registro de compras.
+38:2638 minutos e 26 segundosAh, registro de compras. É, esse já registro de compras, tá? Então ficamos como tá. Só vai criar o acesso do
+38:3638 minutos e 36 segundosdo convidado e verificar se ele tá vinculado a um grupo.
+38:3938 minutos e 39 segundosO CPF da galera da base que eu tenho que colocar, né? vai querer visualizar esse agrupamento no retaguarda dos associados. Como assim?
+38:4638 minutos e 46 segundosTipo, porque hoje você só consegue visualizar aqui no cadê quando você vai fazer a opção de de marcar
+38:5438 minutos e 54 segundosisso não, eu quero. A gente precisa visualização.
+38:5838 minutos e 58 segundosVocês não vão editar, né? No caso, só visualizar, né? Porque o agrupamento vai ser feito pelo próprio usuário, né?
+39:0439 minutos e 4 segundosNesse caso, não. Somos nós que vamos fazer. Ah, não. O convidado, o convidado só vai adicionar. Só que ele adicionou é como se tivesse. Adicionou, vocês querem só visualizar aqui, né?
+39:1539 minutos e 15 segundosVocês não vão editar não. A gente não vai editar o dele, é só visualizar.
+39:1939 minutos e 19 segundosAgora, qual é o nome que vai aparecer lá? Quando o cara eu boto lá meu CPF, meu nome e a grupo e a grupo
+39:2839 minutos e 28 segundose a grupo 5 CNPJ, porque o o da Multima Fabiane atribuindo o nome ali. Isso. Até pra gente ter uma forma de buscar.
+39:3639 minutos e 36 segundosUhum.
+39:3739 minutos e 37 segundosQual é o nome que vai ser atribuído? O da pessoa, o da pessoa que fez o cadastro, a primeira pessoa que cadastrou, gente, não vai, é, vai pegar os dados,
+39:4539 minutos e 45 segundostá? Tá atribuído porque é só retaguarda na retaguarda, porque lá na hora do aplicativo não tem.
+39:5239 minutos e 52 segundosEra bom, era bom se eu botasse um CNPJ aqui, aparecesse o coisinha, se for um CPJ só na base, aparecesse cadastrado por fulano e tal.
+40:0340 minutos e 3 segundosIsso já é gravado, né? Só não tá exibindo a informação, mas tudo que é feito podia já podia exibir, né? Eu vou eu vou botar meu CNPJ aí. Tem CNPJ
+40:1240 minutos e 12 segundoscadastrado para Lavosia. Pronto. É uma segurança mais fulano. Fulano fulano que é Lavos. Isso falando da arrastraabilidade. Ô
+40:2040 minutos e 20 segundosCiro, quando aparecer CNPJ já cadastrado, vai ficar claro que ele pode dar continuidade no processo de inscrição,
+40:2840 minutos e 28 segundosporque às vezes a galera vê CNPJ já cadastrado, aí já tenta com outro achando que não vai poder se inscrever porque já tá cadastrado.
+40:3340 minutos e 33 segundosNão é isso? Tipo, hoje quando você quando você tenta com que já tá cadastrado, ele exibe apenas as informações. Hoje ele não exibe que já está cadastrado, ele carrega, né? Ele
+40:4240 minutos e 42 segundoscarregação. Então aí a pessoa dá continuidade, é, dá continuidade, tipo, já tá carregado aqui na base, só continuar. Pronto. Beleza.
+40:4840 minutos e 48 segundosMarcar e seguir.
+40:5240 minutos e 52 segundosEh, tem esses dois pontos de dúvida aqui que era o texto da atenção e o gestor da distribuidora que a gente já conversou.
+40:5940 minutos e 59 segundosEu acho que agora o que é que falta? A questão da etiqueta, do crachado da impressão lá. Cadê essa impressão?
+41:0641 minutos e 6 segundosE chegou? Não chegou. Você que pegou. Não peguei nada não. Nem vi. Hã? O shit.
+41:1241 minutos e 12 segundosFoi no dia que você disse que ele trouxe, eu não nem toquei assim. Tu pegou sem? Eu te entreguei. Pô, tava na caixa. Lembra? Não.
+41:1841 minutos e 18 segundosNão. Você falou que aguardar fin de segunda ele não vai. Ah, velho.
+41:2341 minutos e 23 segundosNão, foi, foi. Eu falei com onde é que tá aqui, ó.
+41:3241 minutos e 32 segundosVerdade, verdade, verdade. Deixa isso que eu já levo. Valeu.
+41:4041 minutos e 40 segundosVí e é pra gente validar, né, o essa etiqueta e a gente vai precisar do Zeda
+41:4841 minutos e 48 segundospara fazer o tótem lá, né, do cred do autocredenciamento, né? É, precisa da imagenzinha do aplicativo.
+41:5341 minutos e 53 segundosDo aplicativo também, vi. Anota aí, tá? Eh, imagem do aplicativo precisa urgente, porque deixa eu te falar, dá pra gente porque ali se ele mandar uma foto,
+42:0242 minutos e 2 segundosentão é isso, isso, tu manda a foto do aplicativo para botar na apresentação da na inscrição, entendeu? Isso já vai fazer inscrição,
+42:1142 minutos e 11 segundosnão é do aplicativo que vai ficar no Não, mas da fotinha do aplicativo também, porque na rodada de negócio a gente já vai dizer que na conção vai ser o
+42:1842 minutos e 18 segundosaplicativo, o registro das tem que ver o que você precisa fazer, dar se vai colocar alguma coisa pra
+42:2642 minutos e 26 segundosinscrição, porque como a gente já vai divulgar, já tem que estar com a carinha da condição, entendeu?
+42:3042 minutos e 30 segundosSim. Uhum. Eu vou colocar essa versão no ar que vocês vão poder testar também, tá?
+42:3342 minutos e 33 segundosHoje ela tá só aqui na minha, é terça-feira já essa rodada, entendeu?
+42:3742 minutos e 37 segundosTá. E é isso. Do do que ele monte, né, estrutura do autoatendimento lá pra gente programar em cima, né? Sem manda vertem.
+42:4742 minutos e 47 segundosTá, vamos finalizar isso aí.
+42:4942 minutos e 49 segundosQual é a a o tamanho desse arquivo do aplicativo para celular?
+42:5442 minutos e 54 segundosAh, ele é pequeninho. É pequenininho. É pequeninho.
+42:5742 minutos e 57 segundosNão é porque na você não vai baixar o aplicativo. Você, eu vou colocar ele na internet, você vai acessar ele do celular, entendeu? Ele é responsivo, então você não precisa baixar o aplicativo.
+43:0543 minutos e 5 segundosAh, entendi. Então, isso é tipo um site responsível, tá?
+43:0943 minutos e 9 segundosPor isso que eu tava acessando ele aqui do bota o QRcode espalhado do aplicativo, é do link já lá também lá na beleza.
+43:1643 minutos e 16 segundosTem que definir também onde é que vai ficar hospedado, né? Pra gente virar montar a estrutura para hospedar esse essa versão. Onde que hospedar?
+43:2443 minutos e 24 segundosServidor tudo aí com o Vilomar, né?
+43:2643 minutos e 26 segundosAcredito, né? de vocês em que lugar vai ficar aqui só tem um de lá e o daqui porque vai ter que criar um
+43:3343 minutos e 33 segundosdominiozinho, né? Tipo alguma coisa multi+ app multima alguma coisa do tipo credenciamento, enfim, convenção, né?
+43:4043 minutos e 40 segundosIsso pro formulário de credenciamento quanto pro aplicativo, né? Não se dois domínios aí que eu entendo o do
+43:4743 minutos e 47 segundosformulário e o do aplicativo de cheques não é troca de cheques, não é assim não seria bom manter o nome para
+43:5543 minutos e 55 segundosfazer a correlação com anterior a gente se compra na gente aí a gente se compra aí você tem que ver o que que precisa aí
+44:0344 minutos e 3 segundose comomai tá tá né pode usar esse servidor aqui ou tá lá baixo é porque ele tá no lugar da recepção tá trabalhando de lá
+44:1244 minutos e 12 segundosé a gente vai precisar vai criar os dois domínios, né, subdomínios e verificar onde é que vai hospedar, né, se vai ser lá na local web, enfim, onde é que vai ser.
+44:2244 minutos e 22 segundosÉ, a gente geralmente a gente bota tudo local, né? Uhum.
+44:2744 minutos e 27 segundosCerto. Eh, eu acho que por enquanto é isso, né, do de convenção. Tem esses pontos que a gente conversou hoje para e a inscrição.
+44:3444 minutos e 34 segundosE a inscrição. Eu vou mandar para vocês a mandar já. Agora a gente tem que ver o que precisa colocar para ficar a carinha da convenção para liberar o livro semana que vem, viu?
+44:4244 minutos e 42 segundosTá. É esse print aqui vocês precisam com o nome já trocado, registro de compra, né? É isso. Tá. Algumas fotos de dentro também.
+44:5044 minutos e 50 segundosÉ, os meninos jogam a telinha no celular, né?
+44:5244 minutos e 52 segundosAí eles pegam isso aí, joga dentro do celular. É, dentro do celular.
+44:5544 minutos e 55 segundosEra bom a parte de da visão logista, porque como a gente vai apresentar para associado, é bom que tenha da visão logística. Só logista. É.
+45:0345 minutos e 3 segundosÉ para ele entender o que é que ele vai. É verdade. Aí bota assim uns dois, né?
+45:0945 minutos e 9 segundosVocês vão entrar e vai ter todos seus registros de tá? Esse aqui eu mando hoje. Beleza.
+45:1645 minutos e 16 segundosAs compras efetuadas, não faturadas, certo?
+45:2045 minutos e 20 segundosE do e do e da inscrição é o quê? O Qcode.
+45:2345 minutos e 23 segundosA não, Qcode é o de menos. Ele manda só tem que ver alguma arte para botar na visão de quem tá se inscrevendo com a
+45:3145 minutos e 31 segundoscara do da roda, com a cara da convenção, tá? A etiqueta. Eu vou mandando as fotos.
+45:3845 minutos e 38 segundospara ver como ficar certinho.
+45:4145 minutos e 41 segundosTem como ver onde é que vai aplicar a arte aí da da inscrição?
+45:4545 minutos e 45 segundosOlha, ab lá a inscrição aqui.
+45:4945 minutos e 49 segundosÉ só ali em cima para ficar alguma coisa falando que é da convenção. Simzinho da convenção, né?
+45:5545 minutos e 55 segundosÉ. Ou uma testeira da convenção mesmo em cima para chamar atenção. Zeda, o formuláriozinho da inscrição, né? A
+46:0346 minutos e 3 segundosgente precisa de alguma já uma identificação da identidade. Urgência, na verdade, mas é pequeno, né? É só uma aplicaçãozinha ali, né?
+46:1046 minutos e 10 segundosNão, para mim que ser uma textirinha.
+46:1246 minutos e 12 segundosÉ tal convenção ali texteira. Ali já não é uma testeira, mas tá muito simples se botar só o nome.
+46:1846 minutos e 18 segundosÉ, tinha que ser uma texteira já preenchida dizendo que é convenção e e é inscrição. Aí vem aqui pedindo preencha seus dados. C.
+46:2646 minutos e 26 segundosVocê tá falando na parte azul, na parte branca medida se tá. Eu acho que o multimis ali era só pegar ali aquela parte branca multima
+46:3546 minutos e 35 segundosmais ali e virar tudo uma testeira junto com embaixo preença seus dados a logomarca da conversão ficar sim criar uma testeira para ficar no lugar para
+46:4346 minutos e 43 segundoschamar atenção. 1920 aí proporciona é 1920 beleza isso é urgente que a gente precisa botar
+46:5146 minutos e 51 segundosna mandar uma também para você aplicativ não precisa ser nada demais não, Zed é um negocinho só que identifique e bote
+46:5846 minutos e 58 segundoslogo a marca nova da convenção, tá viu? Aí ele vai você vai personalizar com aqui também devia ter logo máquina já vai entrar tudo naquela quantidade que a
+47:0647 minutos e 6 segundosgente já viu sim aqui ele precisa botar né porque a gente precisa pegar iss imagens botar dentro do celular para mostrar esse aqui você consegue montar né para
+47:1547 minutos e 15 segundosessa apresentação consegue montar por cima, né? É, monta, faz uma montagem tanto que a gente mostra na convenção. Exato. Até se for fazer aíada.
+47:2347 minutos e 23 segundosÉ, na rodada, se for fazer aí depois, como o Fábio falou, monta. Não quer dizer que no dia o cara vai entrar, tá diferente, não importa.
+47:3047 minutos e 30 segundosMonta para poder só fazer, me mandar, me manda pelo WhatsApp, tá bom?
+47:3347 minutos e 33 segundosFazer a apresentação só, tá?
+47:3547 minutos e 35 segundosEntendeu? É que tem logo marca, a logo marca na conversão. Beleza?
+47:4447 minutos e 44 segundosEntão vou mandar essa imagem todo para você também. Vou mandar direto para ele.
+47:4647 minutos e 46 segundosPronto. Aí só me manda o o o tamanho que você vai precisar depois para subir, tá? Viu?
+47:5147 minutos e 51 segundosTá bom. Então na outra semana a gente começa testar tudo.
+47:5547 minutos e 55 segundosNa outra semana isso já tem que tá rodando, né? Na inscrição. Se a gente já vai liberar inscrição. A inscrição. Sim.
+48:0048 minutosTem que testar. Tem que testar a segunda. Até segunda. Tem que testar.
+48:0448 minutos e 4 segundosEh, não fala insomidade logo na inscrição, tá?
+48:0848 minutos e 8 segundosPorque a gente precisa a parte do daquela parte do do da distribuidora. A gente pode ver depois.
+48:1648 minutos e 16 segundospeg aqui, dá uma testada, tá bom, viu?
+48:1948 minutos e 19 segundosEu já vou fazendo alguns agrupamentos para testar. Beleza?
+48:2348 minutos e 23 segundosEntão, vamos só recapitular essa questão, tá?
+48:2548 minutos e 25 segundosO no caso da farmácia Multima sempre que ele se inscrever,
+48:3248 minutos e 32 segundosnão tem problema nenhum, o agrupamento é feito por Fabiano.
+48:3648 minutos e 36 segundosIsso é isso.
+48:3748 minutos e 37 segundosUhum. No caso do convidado, quando ele chegar ali que perguntar, tem mais algum CNPJ para incluir, ele incluind no CNPJ,
+48:4448 minutos e 44 segundosaquilo forma um agrupamento com o nome da pessoa que que vinculado a esse nome. Não vai ter o nome, vai ter o nome normal lá, grupo.
+48:5348 minutos e 53 segundosMas como é que você acha o grupo? Senhor falar, procura o grupo aí, procura o meu grupo aí.
+48:5748 minutos e 57 segundosEu na retaguarda vou usar, vou achar pelo CNPJ, pelo nome. Um nome vai ter que ser.
+49:0249 minutos e 2 segundosMas que nome? Se ninguém souber o nome, se você tá dizendo que o nome não é para vincular, mas você, mas você disse que era para botar um campo. Eu acho que tem que botar um campo.
+49:1049 minutos e 10 segundosSe você vai agrupar, atribua nome perito. O grupo perfeito. Que é isso?
+49:1549 minutos e 15 segundosSe tiver mais de um, tem como fazer isso? Só a partir de dois para não ficarem criando o grupo para CNPJ. Só quem for incluir CNPJ.
+49:2249 minutos e 22 segundosAdicionou, eu botei um CNPJ. Vou incluir o segundo. Atribuo o nome ao grupo.
+49:2749 minutos e 27 segundosUhum. Mas que não ficou de colocar o nome da primeira pessoa que cadastrasse ali?
+49:3149 minutos e 31 segundosMas ele tá dizendo que pode ser que a gente não ache, mas se for e se eu sou funcionário e eu tô cadastrando todo mundo, aí eu
+49:3949 minutos e 39 segundosvou botar farmácia Santo Antônio porque se a pessoa depois procurar, qual é o nome? Eu vou te perguntar como é o nome do grupo.
+49:4549 minutos e 45 segundosA gente vai achar pelo CNPJ, né? Tá agora tudo pelo CNPJ a gente acha. É, então não precisa. É, então atribui com o nome de quem fez a inscrição primeiro.
+49:5449 minutos e 54 segundosPronto.
+49:5449 minutos e 54 segundosÉ porque eu pensando quanto menos informação al ter que digitar melhor.
+49:5649 minutos e 56 segundosNão, se a gente for usar posteriormente para uma expansão, a gente vai ligar para o primeiro, digamos, ou Mas vai ligar pro primeiro vai dizer não, o proprietário é tal pessoa.
+50:0450 minutos e 4 segundosPronto. Beleza. Beleza. A gente pode editar.
+50:0950 minutos e 9 segundosÉ isso. Eu posso. Por isso que eu perguntei. Vocês podem editar vocês vocês vão querer editar na retaguarda?
+50:1450 minutos e 14 segundosNão, eu acho que depois se for caso, a gente puxa em Excel e edita o que precisa, tá?
+50:1850 minutos e 18 segundosDeixa esse de na editar. ia lá os agrupamentos e baixar alguma produtiva.
+50:2250 minutos e 22 segundosAgora aquela história, eu tenho cinco CNPJ, aí Fabiane trabalha comigo, ela foi botou quatro, esqueceu um. Esses quatro
+50:3050 minutos e 30 segundosvai est agrupado, se o outro quando eu fizer vai ficar, vai ficar de fora.
+50:3450 minutos e 34 segundosExato. Isso aí fez também não pode ficar procurando não, que ficar procurando exceção da exceção, você fica no É,
+50:4250 minutos e 42 segundosentão esque convidado vai ter a recaptura aqui para escrever. Não vai ter grupo não.
+50:4750 minutos e 47 segundosNão vai ter grupo grupo não. Não vai ter o nome.
+50:5150 minutos e 51 segundosNão tem o nome. O grupo tem o grupo que vai ser o nome da pessoa.
+50:5750 minutos e 57 segundosPrimeiro adicionou cadastrou. Cadastrou.
+50:5950 minutos e 59 segundosSerá possível adicionar grupo se esquecer.
+51:0151 minutos e 1 segundoPor isso que eu falo todo o CNPJ, todo CNPJ. Quando eu botar ali podia ter embaixo um avisozinho, né? NPJ incluído por Floritar.
+51:1151 minutos e 11 segundosÉ.
+51:1251 minutos e 12 segundosUhum. Já que você disse que a informação tem gravada, é só pouco.
+51:1551 minutos e 15 segundosEu tô botando aqui. Aí eu tô aqui até eu sou proprietário, tô botando aqui. Aí botei o CNPJ, eu vejo aqui. CNPJ foi do
+51:2351 minutos e 23 segundosFabiano. Fabian já escreveu. Escreveu a loja. Eu só tô escrevendo. Ô ô ô ô ô Ciro, ele fez o cadastro, o cara fez.
+51:3251 minutos e 32 segundosPronto. Nesse caso Vandir falou. Aí eu ligo pra Vand Vandele, você esqueceu a loja aí de cadastrar. Ele, ele que já fez dos outros quatro, ele consegue
+51:4051 minutos e 40 segundosadicionar o que fic nesse grupo? Não, ele vai fazer separado.
+51:4451 minutos e 44 segundosÉ, vai fazer separado. É o que eu falei, tá? Aí no texto ali tem inclua todos, né?
+51:4951 minutos e 49 segundosCaso essa esse esse esse CNPJ faça parte de um grupo, inclua todos os botar até todos.
+51:5751 minutos e 57 segundosÉ, inclua todos os CNPJ. Uhum. Né? Uhum.
+52:0052 minutosDe uma só vez. Pronto. Aí acabou. Se inclui incluir. Não inclui aí foda- palavra. Não exclu não. Se não inclui incluir depois separado, fica separadoção, sem problema.
+52:0952 minutos e 9 segundosFica separado. Beleza. Eh, acho que aqui fechou, né?
+52:1452 minutos e 14 segundosEh, é convenção sobre o pegar resolver isso. Nem tem noção. Era Z que tava com a vocês, né?
+52:3852 minutos e 38 segundosVamos lá. Essa solução de WhatsApp já tá rodando?
+52:4852 minutos e 48 segundosNão, preciso publicar para vocês testarem, né? Tá rodando aqui minha máquina.
+52:5152 minutos e 51 segundosTá. Mas falado em outra empresa em alguma outra Ainda não. Ainda não.
+52:5652 minutos e 56 segundosO que é de fato que que você fez? É isso. O que é que eu fiz? Eu criei um charbo tá.
+53:0953 minutos e 9 segundosPrimeira pergunta, de fato, o que é que ele fez pra gente entender?
+53:1253 minutos e 12 segundosSim, né?
+53:1353 minutos e 13 segundosO que é a solução? É isso. Eu criei um chatbox configurável onde você consegue treinar ele através de inteligência artificial para ele fazer o atendimento, né, automático.
+53:2253 minutos e 22 segundosE aí dentre essas configurações, você configura o período que ele vai poder ficar atendendo, você vai configurar a linguagem que ele vai tratar com a
+53:3053 minutos e 30 segundospessoa. E eu criei um mini funil, que não é pro cenário de vocês, porque já tem um, né? Mas dentro da solução aqui, eu criei um mini funil. E aí, a depender
+53:3953 minutos e 39 segundosdo desenrolar da conversa, ele vai ter inteligência de já ir direcionando pras etapas do funil. para ele indicar como
+53:4553 minutos e 45 segundostá perto ali de concluir uma uma venda, né? Uhum.
+53:4953 minutos e 49 segundosEh, esse funil ele não é obrigatório, eu deixo ele modularizado. Então, tipo, o cliente que precisar do funil, ele usa. Que não precisar, ele não vai utilizar.
+53:5853 minutos e 58 segundosMas o problema aqui não é só funil, né? É atendimento geral.
+54:0454 minutos e 4 segundosMas é isso, por isso que eu coloquei ele. Você pode treinar ele para fazer qualquer coisa. Personaliza, né?
+54:0754 minutos e 7 segundosÉ, você pode treinar. Deixa eu entrar aqui para mostrar como funciona. E mas e aí e ele tá vinculado a quem?
+54:1354 minutos e 13 segundosPorque o nosso problema aqui hoje chama bloqueio. Uhum.
+54:1754 minutos e 17 segundosIsso. Esse ele tá vinculado à PI oficial do do Facebook.
+54:2054 minutos e 20 segundosMas o pessoal disse que o AP oficial tá tá tá tá bloqueando.
+54:2354 minutos e 23 segundosÉ isso. Os testes que eu fiz não bloqueou nenhuma vez, tá?
+54:2554 minutos e 25 segundosO API o API tá bloqueando ainda porque assim ele tá fazendo uma série de mudanças que tudo vai ser pago. Até as mensagens
+54:3554 minutos e 35 segundosdirecionais vão ser pago. O que não vai ser pago vão ser as conversas de chat que tem que ele vê que não é spam. que
+54:4354 minutos e 43 segundosaí é o atendimento em si, mas até isso futuramente vai ter um valor ou por conversa ou por mês ou alguma coisa,
+54:5054 minutos e 50 segundosmas ele já tá direcionando a tudo ser pago e inclusive ele já tá dentro do painel do meta do Facebook que você já
+54:5854 minutos e 58 segundospode desenvolver as campanhas de disparo via WhatsApp pelo pelo painel.
+55:0455 minutos e 4 segundosSim, né? Mas assim, o que é que tá se tornando? O WhatsApp vai ser uma ferramenta 100% paga para quem usa para fins comerciais.
+55:1355 minutos e 13 segundosTipo assim, Candelin, eu mando um carro para você, eu tô passando eu e você.
+55:1755 minutos e 17 segundosAntigamente não dava nada, mas vai chegar o momento que vai bloquear, porque aquilo é uma comunicação que ela tem que ser para sei, eu sei, eu tô entendendo. O que eu quero saber é como
+55:2455 minutos e 24 segundosé que tem tá resolvendo isso, não é? Ó, o bloqueio, o processo aí é diminuir o bloqueio minimizar o mar, porque bloqueio pode ocorrer até mesmo com apicial.
+55:3455 minutos e 34 segundosÉ certo.
+55:3655 minutos e 36 segundosSó que aí por dentro a gente vai fazer o seguinte, a gente vai fazer lista de transmissão com os contatos que já tem e não vai bloquear, vai pagar por essa lista, vai ser pago, mas não vai
+55:4455 minutos e 44 segundosbloquear, né? E os novos contatos que a gente não tiver, a gente vai ter que fazer por campanha. Aí adiciona e ele filtra para ele entender que é uma campanha paga.
+55:5455 minutos e 54 segundosResumindo, você tá eh prestando esclarecimentos à meta, pedindo autorização para ela para você publicar. Isso.
+56:0256 minutos e 2 segundosEntão o processo agora é esse. Então as meninas do comercial estão mandando os cards. Então assim com a ferramenta ele vai est integrado ao API oficial, vai
+56:1056 minutos e 10 segundosbater lá, o Facebook vai validar, vai te dar um retorno e você vai poder soltar, entendeu? Sim. Fação de segundo, né?
+56:1856 minutos e 18 segundosÉ sim. Nem sempre.
+56:2056 minutos e 20 segundosNem sempre. Eu sempre que a gente já tinha experiência com a meta, né? Meta às vezes trava trava trava a publicação, né? Uhum. Não é tão rápido, mas tipo o chat em si, a troca de conversa é automático. É automático.
+56:3156 minutos e 31 segundosPerguntou, ele respondeu. Você pode configurar até um tempinho ali de resposta para não ficar tão claro que é uma I que tá conversando, mas geralmente o tempo de resposta é praticamente
+56:3956 minutos e 39 segundosinstantâneo. Se perguntou ali, se tiver dentro do período de tempo configurado, eh, ele ele atende de boa.
+56:4756 minutos e 47 segundosHum.
+56:4856 minutos e 48 segundosEntão, tipo, aqui aqui no painel para cada agente, eu chamei essa aqui de de CIA, por exemplo, dá para ver aí eu tenho três tipos de configurações aqui,
+56:5756 minutos e 57 segundosque é a pessoa, a base de conhecimento, que são todos os documentos que você tem sobre determinado tema, e os guardios, que é tipo o que que ele não pode fazer.
+57:0657 minutos e 6 segundosPor exemplo, uma um chat de vendas, eu não posso oferecer promoção porque o espertinho vai lá e faz o produto é R$
+57:1357 minutos e 13 segundos10. Falou: "Eu quero por R$ 1." Ah, tome então os guardios são esse tipo de bloqueio, tipo não falar de política, não falar de futebol, não falar, não
+57:2157 minutos e 21 segundosfugir do assunto. Tudo isso tem que ser configurado aqui. E aí você diz o peso, então tipo assim, você configura tudo e
+57:2957 minutos e 29 segundosaí ele vai te mostrar que a partir da configuração você vai fazendo os texos e refinando, né?
+57:3357 minutos e 33 segundosSim. Mas tipo, o atendimento aqui é bem humanizado, né? Você pode deixar o mais humanizado possível, né? É o refino, né?
+57:4057 minutos e 40 segundosDiferente daquele que você tá trabalhando, que é um fluxograma.
+57:4457 minutos e 44 segundosPerguntou aqui, vem para cá, perguntou, vem para cá, perguntou, vem para cá. Ele é um atendimento como f pessoa mesmo. E se ela, se a pessoa pedir para falar com atendente, já direciona para um
+57:5257 minutos e 52 segundosatendente humano. Fal, eu não quero falar com alguém.
+57:5557 minutos e 55 segundosE é do horário, se tiver especificado horário, você consegue isso. E se dentro do do do treinamento você colocar um fluxo, ele também segue.
+58:0158 minutos e 1 segundoSegue também. Inclusive, esse aqui ele foi treinado a partir do fluxo que que me passou. Então, tipo, eu ensinei ele a partir daquele fluxo. E aí quando você
+58:1058 minutos e 10 segundoscomeça a conversar com ele, esse fluxo aí o funil. O funil. O do funil. Isso.
+58:1558 minutos e 15 segundosDeixa eu ver se tem um aqui algumas coisas que eu conversei aqui. Eh, eu falei que eu tenho em torno de 80.000 para farmácia. Aí ele pergunta aqui se
+58:2358 minutos e 23 segundoseu já tenho experiência. Isso aqui tá configurado no IA. Isso.
+58:2858 minutos e 28 segundosSe eu já tenho alguma experiência ou não para saberem que eu posso te ajudar. Mas eu tenho sim, eu possuo duas farmácias.
+58:3358 minutos e 33 segundosAí ele fala assim: "Que incrível ter duas farmácias, uma grande conquista".
+58:3658 minutos e 36 segundosAí ele fala: "E quanto que você quer investir?" Aí eu falo que eu tenho 30.000. Aí ele fala que tem um material.
+58:4158 minutos e 41 segundosEu não negoci os materiais, mas se ele tivesse um material ele ia mandar para mim tambémção. Sim.
+58:4658 minutos e 46 segundosAí eu falei que eu vou ler e retorno assim que eu tiver mais informações. Aí ele agradeceu aqui, ficou feliz. Só que aqui dentro aqui dentro do mecanismo que
+58:5458 minutos e 54 segundoseu queria do funil, ele já vai direcionando pr pra etapa que é no etapa de vocês. Aí só vai conseguir entender.
+59:0159 minutos e 1 segundoAgora a gente também tem que entender o seguinte, talvez a gente tenha que cadastrar os os celulares comercial e tal na plataforma do Meta para as ações comerciais fora boot.
+59:1359 minutos e 13 segundosSim, né? Tem isso também é uma outra coisa que a gente vai ter que parar para estudar e fazer.
+59:1859 minutos e 18 segundosEh, como tô falando, vamos pensar por por parte. Isso aqui seria só para atendimento.
+59:2859 minutos e 28 segundosSim.
+59:2859 minutos e 28 segundosTô vendo aí mais para o funil, talvez para os analistas. Isso.
+59:3259 minutos e 32 segundosPara os analistas, porque os analistas o cara pode querer marcar uma reunião ou tô precisando disso e ele já te retornam alguma coisa, né? Até o cara olhar.
+59:4359 minutos e 43 segundosAí pode ter a agenda dos analistas coisinagem automátic treinar. É, mas os jornalistas não bloqueiam porque ele tá
+59:5059 minutos e 50 segundoso tempo todo com conversa real. Então isso isso mostra que a ferramenta tá com outro.
+59:5559 minutos e 55 segundosMas quando ele tá na reunião que ele não tá atendendo, aí ele aciona o boot, né? Tem essa possibilidade si de trabalhar.
+1:00:031 hora e 3 segundosVocê pode, você pode assumir a conversa no mesma conversa aqui. Você pode assumir, entendeu? que um produto analista que gera um um desgaste, tá com quatro reuniões.
+1:00:121 hora e 12 segundosO cara o cara tá com a reunião aqui a manhã inteira, o cara tá de lá ligando, [ __ ] o cara ou bem o cara atende ou bem faz reunião. Veli, é, e vocês aí
+1:00:211 hora e 21 segundosenxergou corretamente? Questão é que a gente precisa encaixar os telefones do comercial isso
+1:00:281 hora e 28 segundosaí para ele ficar amparado para não bloquear, entendeu? São geram quantos usuários aí por essa?
+1:00:351 hora e 35 segundosPorque eu preciso só no total nós temos nove usuários de telefones aqui. Uhum.
+1:00:401 hora e 40 segundosTalvez 10, que aí depende do do 10, não tem até mais, porque ele fala do da analista per tem 13.
+1:00:451 hora e 45 segundosEntão a gente precisa botar os 13 aí e amparar a comunicação e parar com os bloqueios, entendeu? Não necessariamente ativo, um primeiro passo.
+1:00:531 hora e 53 segundosÉ, não precisa ativar a IA agora, eu acho. Uhum. Entendi.
+1:00:571 hora e 57 segundosEu acho que aí a a gente pode fazer numa próxima etapa, ou seja, parametrizar deles. Para fazer com o funil, a gente começa.
+1:01:041 hora, 1 minuto e 4 segundosNão, não. Funil tudo bem, porque o funil até é parecido com o zap, então o C já entende muito lá. Eu tô falando no analista de performance, a gente tem que olhar,
+1:01:121 hora, 1 minuto e 12 segundosnão. Aí depois a gente tem que debruçar, mas eu tô falando, a gente tem que começar por algum lugar.
+1:01:171 hora, 1 minuto e 17 segundosSim, né? Sim.
+1:01:191 hora, 1 minuto e 19 segundosComercial um capítulo à parte, a gente vai ter que entender qual a demanda do comercial.
+1:01:231 hora, 1 minuto e 23 segundosSim. Criar até um agente do comercial, não é isso? Agente do comercial. Exato.
+1:01:261 hora, 1 minuto e 26 segundosE entender o que que a gente vai botar como lista de transmissão, como disparo. Mas é isso.
+1:01:321 hora, 1 minuto e 32 segundosMe diga uma coisa, cada cada usuário aqui, cada telefone vai ter acessar a plataforma assim ou vai ser uma um ambiente só com os usuários?
+1:01:391 hora, 1 minuto e 39 segundosNão, cada usuário vai ver o seu.
+1:01:411 hora, 1 minuto e 41 segundosVocê o seu, né? Aí a comunicação ele tem que fazer aqui. Tem alguém, tem alguém que consegue ver tudo ver isso?
+1:01:481 hora, 1 minuto e 48 segundosNão, ele pode ver pelo seu número também, né? Se ele tiver o business no celular dele.
+1:01:511 hora, 1 minuto e 51 segundosPode ver. Mas aí eu lembro que eu lembro que eh Guilherme me falou que que tinha uma questão de você se comunicar quando tá amparado pelo pela
+1:01:591 hora, 1 minuto e 59 segundosAP oficial, se comunicar preferencialmente por um lugar ou por outro. Tipo assim, se você for mandar um card, tem que usar isso aí a plataforma.
+1:02:071 hora, 2 minutos e 7 segundosSe for um chat pode ser pelo celular, não pelo pelo Eu fiz os dois testes e ótimo. Maravilha, maravilha.
+1:02:131 hora, 2 minutos e 13 segundosQue Vand fala tem um gestor geral, entendeu? Geral para ver tudo e para ver individualizado. Dá para dá para separar. Dá para separar.
+1:02:221 hora, 2 minutos e 22 segundosPorque aí tinha naquela ferramenta que cara, né?
+1:02:261 hora, 2 minutos e 26 segundosGuilherme, Guilherme, ó, tem aqui Ctia, Daniela, Daniel, Evandro é o gestor, né? E eu sou o gestor de Evandro e Vanderlei, enfim, exato.
+1:02:361 hora, 2 minutos e 36 segundosDá para fazer, dá. E e as conversas elas foi memorizada depende de tá no celular, depende de Não, elas ficam no banco de dados aqui.
+1:02:441 hora, 2 minutos e 44 segundosBanco de dados. Tipo, aqui eu já paguei do meu celular.
+1:02:461 hora, 2 minutos e 46 segundosQue rodar aí, né? No que rodar no direto não vai saber, né? Não, também vai pass tá vinculado. É como se fosse passo aqui, aparece no meu no meu computador,
+1:02:551 hora, 2 minutos e 55 segundosné? Que eu tô que eu tô tô conectado.
+1:02:581 hora, 2 minutos e 58 segundosEssas conversas aqui aí bom, né? Porque até se o cara falar por fora não é isso?
+1:03:041 hora, 3 minutos e 4 segundosIsso. Essa conversa eu já paguei do meu WhatsApp Business aqui. Tá no banco de dados. Sim.
+1:03:091 hora, 3 minutos e 9 segundosNão perco mais. Entendeu? Eh, outra coisa bicho que é importante, eu tive informação e sempre disse se tem um papo ou não, que você precisaria de telefones
+1:03:191 hora, 3 minutos e 19 segundosnovos para fazer essa essa esse amparo no API oficial, porque parece que a meta não permite. Por exemplo, o telefone de
+1:03:271 hora, 3 minutos e 27 segundosCíntnia, por exemplo, foi bloqueado e a gente não consegue amparar ela no meta porque aquele telefone já tá bloqueado.
+1:03:341 hora, 3 minutos e 34 segundosEla ela tá ficou bloqueando várias vezes. Bloqueio.
+1:03:391 hora, 3 minutos e 39 segundoscomo se o número dela tivesse na lista, o aparelho tá na lista negra.
+1:03:421 hora, 3 minutos e 42 segundosFoi, foi o cara que me falou que, tipo assim, que teria que ser um novo telefone, um novo contato. Mas a gente pediria números novos, né?
+1:03:491 hora, 3 minutos e 49 segundosNão é isso. Eu tô só entendendo chipes novos e chipes novos porque depois vai ser usuário, não vai ter, você pode ser o número que for, é, vai ser usuário agora. Exato.
+1:03:581 hora, 3 minutos e 58 segundosVanderlei. Vanderlei Fernandes, igual Telegram, né?
+1:04:011 hora, 4 minutos e 1 segundoAcabou. Não, mas assim, mas precisa, que o ideal é não, eu tô falando que o ideal é não fazer isso porque assim
+1:04:091 hora, 4 minutos e 9 segundoshistória comunica entendeu? O ideal é não per você perde toda história comunicação que esses
+1:04:171 hora, 4 minutos e 17 segundosnúmeros já estão é os números já estão na black. Tô falando que se você botar e der problema tem que ter outro.
+1:04:241 hora, 4 minutos e 24 segundosNão, eu sei. É por isso que eu tô falando assim, eu acho que vale a pena.
+1:04:261 hora, 4 minutos e 26 segundosTem que fazer o backup das conversas só a gente testar com os números que estão e aí averiguar e já sabe deixar bloqueando
+1:04:331 hora, 4 minutos e 33 segundospara você faz o backup. Mas com troca de número não na merda. Trocar de número backup. É isso também. Pronto.
+1:04:431 hora, 4 minutos e 43 segundosTá. Então eu vou eu vou subir esse esse sistema na nuvem para vocês testarem.
+1:04:481 hora, 4 minutos e 48 segundosVocê pode estressar a vontade aí, por favor. Pode e eu colocar essa questão da hierarquia também, tá?
+1:04:541 hora, 4 minutos e 54 segundosPara vocês terem a visão individualizada do individual, do do hierárquico.
+1:04:591 hora, 4 minutos e 59 segundosE com relação à à indexação com com o painel da meta para os despaos, eu
+1:05:071 hora, 5 minutos e 7 segundosvocê já chegou, mas já chegou, já olharam sobre isso. Uhum.
+1:05:111 hora, 5 minutos e 11 segundosAí tem a questão de tipo tamanho de mensagem por causa da questão dos custos, né? Tamanho de mensagem, a quantidade de gente que vai receber.
+1:05:171 hora, 5 minutos e 17 segundosAí a gente tem que entender aqui a necessidade de cada setor para poder adequar isso aí.
+1:05:211 hora, 5 minutos e 21 segundosPara poder adequar agora assim, os custos, vamos lá, são, vamos supor que sejam nove linhas, 10 linhas. Uhum.
+1:05:291 hora, 5 minutos e 29 segundosQual é o custo para fazer esse processo? Não, aí vai, aí é por demanda. É por demanda.
+1:05:331 hora, 5 minutos e 33 segundosPor lista de permissão, é por tamanho de mensagem, tudo é demanda.
+1:05:381 hora, 5 minutos e 38 segundosSim. Vai ser tipo igual o Google lá, você tem que ter um crédito lá e vai cartão de crédito, deixa o cartão lá e e vai consumindo, né?
+1:05:451 hora, 5 minutos e 45 segundosIsso do Google, né?
+1:05:461 hora, 5 minutos e 46 segundosDo met não, do meta agora vai ser do meta. Do meta do meta, como era o Google, né? Que a gente sim.
+1:05:531 hora, 5 minutos e 53 segundosE e você, Cío, quanto ao a ao sistema, como é como é seu custo, como é?
+1:06:001 hora e 6 minutosÉ isso. A minha ideia inicial, quando vocês comentaram, eu tava desenvolvendo esse sistema, né? A minha ideia é criar um site mesmo, né?
+1:06:061 hora, 6 minutos e 6 segundosTipo, vender o serviço, né? uma plataforma de serviço, mas ainda não fechei a questão mensal. A ideia é uma plataforma mensal mesmo de de serviço, mas sempre fechar passo para
+1:06:151 hora, 6 minutos e 15 segundosvocês qual era qual é a minha ideia de de valores para saber se é atrativo também para vocês, né? Mas a minha ideia é uma plataforma de de serviço mensal
+1:06:231 hora, 6 minutos e 23 segundosmensalidade pra gente ativar esse Sim. Mentalidade é porque você precisa da manutenção tudo, você não vai, você não vai vender e nunca mais e nunca mais
+1:06:321 hora, 6 minutos e 32 segundosmexer não vai funcionar pra gente ativar com você. Eh, e aí fazendo, indo fazendo esses testes já com alguns números aqui.
+1:06:401 hora, 6 minutos e 40 segundosSim.
+1:06:411 hora, 6 minutos e 41 segundosComo é que a gente poderia fazer? O que é que você precisa?
+1:06:441 hora, 6 minutos e 44 segundosNão, isso. Eu só vou disponibilizar a plataforma e vocês vão configurar os números lá e testar. Configuração é questões.
+1:06:521 hora, 6 minutos e 52 segundosÉ tranquilo. Eu vou fazer os manuais também que aí vou orientar também. Tranquilo, tranquilão.
+1:06:581 hora, 6 minutos e 58 segundosComeçaria por onde? Começa de imediato cadastrando, como você falou, todos esses telefone para ver se para mais o bloqueio e depois a gente vai.
+1:07:061 hora, 7 minutos e 6 segundosTem custo para cadastrar? Não tem, né? É só o custo da mensagem. É só o custo da mensagem.
+1:07:111 hora, 7 minutos e 11 segundosAí a gente alimenta um cartão, aí bota o cartão. O fato já tá com a melhor bagunça, não.
+1:07:161 hora, 7 minutos e 16 segundosTodo mundo usando e você nesse crédito aí. Eu acho que eu acho que que tipo assim pegar no comercial mapear quais são os telefones que estão
+1:07:251 hora, 7 minutos e 25 segundosbloqueando, não é isso?
+1:07:271 hora, 7 minutos e 27 segundosMas nem tudo consegue fazer automático não para cobrar, viu? Tem coisas que tem que fazer pelo painel do meta.
+1:07:341 hora, 7 minutos e 34 segundosPa painel do meta. E aí só quem tem acesso hoje ao painel do meta, eu, Lavos e Rogério. Exato.
+1:07:401 hora, 7 minutos e 40 segundosNão, eu sei, mas eu tô entendendo assim são as campanhas, né? Ele deu ideia. Eu faço aqui, eu faço aqui eh cadastro todo
+1:07:481 hora, 7 minutos e 48 segundosmundo para poder ver se diminuir o bloqueio. Beleza, mas a gente vai começar usar onde? No funil.
+1:07:551 hora, 7 minutos e 55 segundosNão, nós tem que usar, tem que usar em todos e todos, pô. Tem que usar comercial para testar e ver, experimentar, mas não tem tempo para fazer isso aqui
+1:08:031 hora, 8 minutos e 3 segundostudo para criar o agente e não, a gente não, ele não vai criar o agente nesse momento, entendeu? Val, ele vai usar a plataforma como se fosse o WhatsApp Business, não é isso? e se
+1:08:121 hora, 8 minutos e 12 segundoscomunicar, se comunicar. É tipo assim, eu vou fazer uma proteção pro telefone e ele vai fazer isso.
+1:08:161 hora, 8 minutos e 16 segundosIsso. A gente tem que fazer também um um trabalho Sim. Mas que a gente não bota o funil para rodar aqui?
+1:08:211 hora, 8 minutos e 21 segundosNão, é porque o funil hoje tá integrado com com o Isa. Eu acho que é melhor. O funil é o o raciocínio do funcionamento
+1:08:291 hora, 8 minutos e 29 segundosé muito parecido com o ISAP. É a mesma coisa.
+1:08:321 hora, 8 minutos e 32 segundosAí o que que eu acho? Testa no comercial, pega os analistas de de pega a fábrica que teve. Então pega o jornalista para poder a gente começa com
+1:08:411 hora, 8 minutos e 41 segundosuma coisa só, não começa com 10 coisas que não funciona. Uhum.
+1:08:461 hora, 8 minutos e 46 segundosSe se o tempó é botar os telefones para tentar criar uma blindagem, perfeito, bota todo mundo.
+1:08:521 hora, 8 minutos e 52 segundosMas quem vai começar a usar como atendimento aí, se for o caso, a gente bota o os
+1:08:591 hora, 8 minutos e 59 segundosanalistas, já que o funil por enquanto tá rodando.
+1:09:031 hora, 9 minutos e 3 segundosQuando a gente vê que funcionou, caiura, entendeu? Mas já que lá tá rad, mas você tá falando atendimento com o quê? Com I?
+1:09:101 hora, 9 minutos e 10 segundosÉ o atendimento chato problema, alguém liga, você não atende. Esse não é o nosso problema.
+1:09:171 hora, 9 minutos e 17 segundosSim, né? Sim.
+1:09:191 hora, 9 minutos e 19 segundosLá no funil é sábado, é fora de horário, é hora que a menina tá no banheiro. Esse é o nosso problema. Aqui tem o mesmo
+1:09:261 hora, 9 minutos e 26 segundosproblema, porque os caras estão em reunião, tão tão tão tão vendo um vídeo, tão tão fazendo um um planejamento, não
+1:09:331 hora, 9 minutos e 33 segundospode ficar farando e gera eh eh inclusive pra gente saber, ó, fulano me ligou, não retornou, tal, né? Então
+1:09:411 hora, 9 minutos e 41 segundosé esse aqui. Então a gente pega e implanta aqui, começa no cuidado do associado, porque o cuidado associado não tem ferramenta nenhuma com relação a isso.
+1:09:511 hora, 9 minutos e 51 segundosLá já tem o funil. Então depois que a gente vê que funcionou aqui, que tá bacana, a gente vai substituir lá e vai colocando pros outros pros outros
+1:09:581 hora, 9 minutos e 58 segundossetores tudo aí vai entendendo no comercial, no marketing que precisa e vai botando.
+1:10:031 hora, 10 minutos e 3 segundosE o comercial só vai est amparado e e se comunicando normal chat, o WhatsApp, eu vou andar com o celular deles na mão,
+1:10:101 hora, 10 minutos e 10 segundosné? Só vai tá, só vai tá aqui, linkcado aqui. Aí se alguém precisar ver uma conversa, uma coisa vai vir aqui.
+1:10:161 hora, 10 minutos e 16 segundosE e a gente precisa fazer uma campanha comercial também para que todo mundo comercial conversa, salve os contatos. Isso é importante.
+1:10:241 hora, 10 minutos e 24 segundosAí ele vai trazendo as duas práticas, né? Sil.
+1:10:271 hora, 10 minutos e 27 segundosPorque quando a pessoa tem o nosso contato salvo, ele aí o negócio é botar os telefones, né?
+1:10:321 hora, 10 minutos e 32 segundosSe ele vai fazer as configurações, aí a gente vê, né? essa coisa do do usuário. Basta ter pelo menos um usuário por enquanto. Sim.
+1:10:411 hora, 10 minutos e 41 segundosUm usuário que consiga ver tudo. Fica aqui uma senha aqui na mão da gente aqui, tá?
+1:10:461 hora, 10 minutos e 46 segundosNé? Para ver tudo. Depois se tiver que criar hier elaquia se cria. Mas a princípio para poder a gente ver quem tá usando, o que é que tá acontecendo, né?
+1:10:551 hora, 10 minutos e 55 segundosE a gente começa a implantação no cuidado associado. Pronto. Aí a gente vai vendo a evolução e aí ele vai
+1:11:021 hora, 11 minutos e 2 segundosdizendo essa coisa de boas práticas. Tem que salvar, tem que fazer isso aí, tem que ir catalogando e fazendo mais com os telefones que nós temos
+1:11:111 hora, 11 minutos e 11 segundosaté nas reuniões de apresentação dos setores do associado já vai salva esse contato agora já já entrou já entrou isso e isso.
+1:11:191 hora, 11 minutos e 19 segundosVocês agora já t isso aqui disponível ou então tem que obrigatoriedade de fazer isso aqui, entendeu? Porque isso não é um processo assim que vai,
+1:11:261 hora, 11 minutos e 26 segundosné? Então é criar criar primeiro criar primeiro o os o a
+1:11:341 hora, 11 minutos e 34 segundosproteção, amparar os números, amparar os números, mapear os números primeiro, né? MAR os números mapear, amparar os números, né?
+1:11:431 hora, 11 minutos e 43 segundosDepois a gente vai implantar no cuidado do associado
+1:11:491 hora, 11 minutos e 49 segundospara ver a evolução e criar pelo menos um usuário master que fique na mão da gente que a gente vai acompanhando que isso ajuda até a
+1:11:571 hora, 11 minutos e 57 segundosdesenvolver e né se tiver que hierarquizar mais aí ele faz depois.
+1:12:031 hora, 12 minutos e 3 segundosE aí a questão das boas práticas não precisa e você dá uma ideia de custo, entendeu?
+1:12:061 hora, 12 minutos e 6 segundosVocê você dá uma ideia de custo aí pra gente mensal, né? mensagem que você falou ver também.
+1:12:131 hora, 12 minutos e 13 segundosSim. É para vocês fazer uma calculadora de de projeção de cústola isso, né?
+1:12:181 hora, 12 minutos e 18 segundosDe saber que vai mandar simar com mensagem média pra gente ter uma ideia tudo até para evitar otimizar, evitar desperdício, uma série coisa, né?
+1:12:281 hora, 12 minutos e 28 segundosUhum. Isso.
+1:12:291 hora, 12 minutos e 29 segundosE hoje hoje como tô falando, ninguém faz conta disso porque manda Bangu, né? Mas quando for pago, mesmo que seja centavos, quando é pago, você começa a fazer volume.
+1:12:391 hora, 12 minutos e 39 segundosSim.
+1:12:401 hora, 12 minutos e 40 segundosAté se a gente tiver depois uma um uma páginazinha, uma coisa que a gente, por exemplo, suba lá os cards do dia Uhum.
+1:12:491 hora, 12 minutos e 49 segundosE aí faz um disparo com os links, o comercial, por exemplo, do dia.
+1:12:531 hora, 12 minutos e 53 segundosAí lá dentro desse link o cara clica, ele vai ver lá todas as OLS. Eu não vou pagar tipo 10 pagar.
+1:13:001 hora e 13 minutosAh, sim, entendi. Ali, já cobri aqui. Ô, não, deixa. É, você já economizaça.
+1:13:071 hora, 13 minutos e 7 segundosIsso. Você entendeu, man? Porque, por exemplo, se eu tiver 10 ols e eu vou fazer esse disparo para 250 pessoas, eu vou pagar 10 vezes. Sim.
+1:13:151 hora, 13 minutos e 15 segundosAí eu tenho um canal lá que Ciro bota, a gente sobe os cards organizados, eu disparo com só ofertas do dia, a
+1:13:221 hora, 13 minutos e 22 segundosmultimaria as olas viram tudo, o cara abriu, carou tudo. Eu custo só e também pro cara com saco receber toda hora
+1:13:311 hora, 13 minutos e 31 segundostodo dia uma coisa que as meninas subam card rapidinho, simples, né? Sim, não tem nada visual assim que fique lá uma sequência um carrocelzinho.
+1:13:401 hora, 13 minutos e 40 segundosUm carrocelzinho. É, a gente tem que pensar nessas nessas coisas aí despesa.
+1:13:441 hora, 13 minutos e 44 segundosÉ, tá. Então anotei aqui, viu?
+1:13:461 hora, 13 minutos e 46 segundosPorque se nós missão aí. Então vamos lá mapear os números dos bloqueios com bloqueios pro setor, né? Pelos por setores.
+1:13:541 hora, 13 minutos e 54 segundosEh, eh, amparar.
+1:13:571 hora, 13 minutos e 57 segundosMas por que não bota logo todos os telefone? Qual a dificuldade que tem uma piada? Não diz que é ilimitado.
+1:14:041 hora, 14 minutos e 4 segundosÉ porque assim eu prefiro ter mais assim ter mais controle, entendeu? Assim vai botar e acompanha. É, eu vou por
+1:14:121 hora, 14 minutos e 12 segundosexemplo, eu vou pegar C S C vai ser a focal, eu vou botar em todos lá com bloqueio, mas ela vai ser a focal ou ela vai ficar acompanhando mais de perto aí junto comigo e que ela vai me passando, me reportando as coisas.
+1:14:221 hora, 14 minutos e 22 segundosEh, o cuidado associado tá aqui comigo, com Fábio Zeda, a gente pode botar aqui no marketing também, né? É que a gente não tem bloque falou, a gente vai a
+1:14:291 hora, 14 minutos e 29 segundosgente vai você tá querendo pegar só os cfões que estão sendo bloqueados. Primeiro resolver o bloqueio. Primeiro resolver os bloqueios.
+1:14:361 hora, 14 minutos e 36 segundosOs marketing a gente não tem bloqueio porque a gente não faz disparo e todos.
+1:14:411 hora, 14 minutos e 41 segundosEntão não vamos definir para não ficar vai levantar o celular não.
+1:14:451 hora, 14 minutos e 45 segundosTodos os celular do comercial do do televendas e do da expansão é quem
+1:14:541 hora, 14 minutos e 54 segundosnão. Expansão não precisa, tá? Não é, não é lá que tá bloqueando não, não, mas ainda não, ainda não, não. Vamos testar a ferramenta primeiro.
+1:15:031 hora, 15 minutos e 3 segundosSim.
+1:15:031 hora, 15 minutos e 3 segundosNão, moça, eu tô falando bloqueio lá tá bloqueio de Daniela, bloqueio de Cíntia, bloqueio de todo mundo. Não é isso que você tá falando?
+1:15:081 hora, 15 minutos e 8 segundosEntão, então vamos lá. Então, cancela o zap e faz o teste com ele. É isso?
+1:15:121 hora, 15 minutos e 12 segundosNão, moço. Não é porque não tem como os dois estarem amparados, não. Lá já tá todo mundo. E por que tá bloqueiando? Porque o API é não oficial.
+1:15:191 hora, 15 minutos e 19 segundosNão oficial. É, entendeu? O dele é oficial. Se você quiser, cancela e faz o teste.
+1:15:261 hora, 15 minutos e 26 segundosEntão não vai resolver o problema. Se tá blindando e vai largar lá bloqueando, não tá resolvendo problema.
+1:15:331 hora, 15 minutos e 33 segundosTodos celulares do comercial e expansão vou cancelar o zapel e Fabiane, sei lá quem é que faz disparo e cuidado social
+1:15:411 hora, 15 minutos e 41 segundosde ser até mais fácil a gente configurar já aqui.
+1:15:431 hora, 15 minutos e 43 segundosSó não precisa botar por enquanto os analistas, eles não fazem disparo assim, não estão sendo bloqueados. Só o grupo do disparo que eles têm ali.
+1:15:501 hora, 15 minutos e 50 segundosEu tenho um grupo do disparo que a gente só as informações que a gente tem que entender aí se é um telefone abate. É, não, não sei qual é o número.
+1:15:591 hora, 15 minutos e 59 segundosNão, não é o número de Fábio de Fábio é de Fábio. Alguns de tem de Fábio tem o de Fábio Bou Fábi bloqueou de Ed
+1:16:071 hora, 16 minutos e 7 segundosbloqueou de Bruninha bloqueou de Daniela, bloqueou de Cíntia.
+1:16:111 hora, 16 minutos e 11 segundosÉ aí por causa do funil Lavzi é até melhor pra gente treinar aí que não o funil quem bloqueia. Quem bloqueia é as ações que faz de convite,
+1:16:191 hora, 16 minutos e 19 segundosde convite de evento, essas por Uhum.
+1:16:241 hora, 16 minutos e 24 segundosEntão, pronto. O o Zap eu já vou, eu falo para não ficar quebrado. Quais são os telefones? Vão ser todos lá do Televendas. Uhum.
+1:16:311 hora, 16 minutos e 31 segundosTodos os do da expansão e da operação aqui, menos cuidado da E aí todos esses de convite, Mandel, que são números que não não tem contato direto, vai ter que ser via.
+1:16:421 hora, 16 minutos e 42 segundosToda vez que tiver expansão, faz a lista e aí faz como anúncio. Você falou operacional o quê aqui?
+1:16:501 hora, 16 minutos e 50 segundosMenos cuidado associado.
+1:16:521 hora, 16 minutos e 52 segundosMenos o os analist os analistas. Tá sim. Os analistas todo mundo aqui faz espa né Bruninho?
+1:16:581 hora, 16 minutos e 58 segundosQue acho que não. Mas mas você não falou que a gente ia fazer os testes já com os meninos? Por que que não falam tudo?
+1:17:041 hora, 17 minutos e 4 segundosAh, sim. Não, eu tá falando, eu tô falando de de blindagem de celular. Não, a blindagem ela vai ter que ser porque a blindagem é a primeira a primeira etapa.
+1:17:121 hora, 17 minutos e 12 segundosÉ isso. Eu tava excluindo os meninos porque eles não estão tendo problema de bloqueio, mas se a gente vai fazer o teste com ele, tem que incluir, né?
+1:17:191 hora, 17 minutos e 19 segundosEntão, pronto, é todo o cuidado do associado e todo televenda lá.
+1:17:241 hora, 17 minutos e 24 segundosMais expansão que a expansão já vou solicitar o assim que você você faz a integração.
+1:17:301 hora, 17 minutos e 30 segundosO exap só serve pra gente para isso, para blindar.
+1:17:331 hora, 17 minutos e 33 segundosÉ para blindar que não tá blindando, porque não é, então passa logo para cá, tá bom? Não, não, não tem nenhuma finalidade outra lá por enquanto,
+1:17:411 hora, 17 minutos e 41 segundosné? Passa logo para cá, pelo menos vai ficar oficial para ver se diminui o bloqueio ou se vai ter que trocar número que [ __ ] vai conseguir. Aí esse da expansão
+1:17:481 hora, 17 minutos e 48 segundostu me dá o start só deixar. Vou ver se eu precisa com 13.
+1:17:511 hora, 17 minutos e 51 segundosE da expansão se você pode entender o funil porque o o zap eu não sei se ele tá funcionando, mas a ideia é que tipo
+1:17:581 hora, 17 minutos e 58 segundosassim ele já o atendimento do lead ele já movesse o lead para para ele para se acompanhar
+1:18:071 hora, 18 minutos e 7 segundosque aquilo já tinha iniciado convers deu fluxo. É ele já falou que tem um módulo do funiletriza. Eu não sei.
+1:18:141 hora, 18 minutos e 14 segundosA gente já começa com o funil e com o o o o É porque quem já que vai tirar com a, né?
+1:18:221 hora, 18 minutos e 22 segundosHum.
+1:18:221 hora, 18 minutos e 22 segundosTem que integrar com a integra, né? Que foi aquela PI lá que a gente usou, né?
+1:18:281 hora, 18 minutos e 28 segundosDo formulariozinho da expansão. Vocês entram com o menino lá? Com o Guilherme um foi?
+1:18:351 hora, 18 minutos e 35 segundosFoi. É que ele já caia no funil lá no formulário. Isso consegue integrar, né? Topi e consegue.
+1:18:421 hora, 18 minutos e 42 segundosPronto, eu já então vamos começar o teste já com o funil porque já que vai tirar o zap não tem por atrasar, a gente
+1:18:491 hora, 18 minutos e 49 segundosjá começa o agente do funil que ele já tem o módulo e o módulo dos analistas que a gente vai desenvolver. Aí já começa com dois,
+1:18:581 hora, 18 minutos e 58 segundosdepois a gente vai pro comercial e pro resto da empresa.
+1:19:031 hora, 19 minutos e 3 segundosBeleza? Acho que eu ten que fazer o plano de treinamento da ferramenta. Hum.
+1:19:111 hora, 19 minutos e 11 segundosTem que fazer o treinamento da da ferramenta para casa.
+1:19:141 hora, 19 minutos e 14 segundosPrimeiro é bloquear. Aí bloqueou. Aí vai treinamento. Não, treinamento.
+1:19:191 hora, 19 minutos e 19 segundosBlindar, ó. Blindar é só inserir os números.
+1:19:221 hora, 19 minutos e 22 segundosÉ, mas ele falou que vai usar a pessoa vai ficar usando o telefone normal. É, eu quero blindar o telefone. Blindou. Aí vamos lá. E expansão, treinamento, né?
+1:19:311 hora, 19 minutos e 31 segundosAí nas etapas. vai entender como faz e ver aqui, sentar aqui quais são os parâmetros que falou: "Ó, não pode falar disso, não pode falar daquilo, não pode
+1:19:381 hora, 19 minutos e 38 segundosisso, não pode isso, a gente faz aqui junto, tá isso?", entendeu? A gente marca aí, vai marcando uma reunião por semana e
+1:19:461 hora, 19 minutos e 46 segundosfazendo e determinando e testando, entendeu? Sim.
+1:19:501 hora, 19 minutos e 50 segundosMas o pessoal vai continuar usando, então a gente vai ver o que eles estão respondendo. Não vai ser o agente ainda, né?
+1:19:561 hora, 19 minutos e 56 segundosSó vai, ele só vai tá sendo alimentado.
+1:20:001 hora e 20 minutosEle vai tá sendo alimentado para depois a gente soltar el a gente vai soltando ele aos poucos, né? Isso aí.
+1:20:071 hora, 20 minutos e 7 segundosPerfeito. Começa com exposição agora. Veja se você uma noção, né, de de de custo pra gente. E aí a gente tem que
+1:20:141 hora, 20 minutos e 14 segundosavaliar e o custo e o e também o custo do dessa coisa, né, do disparo para entender. Tem valor fixo entender.
+1:20:231 hora, 20 minutos e 23 segundosComo é que paga no valor fixo pr meta?
+1:20:251 hora, 20 minutos e 25 segundosNão, é dinâmico mesmo.
+1:20:261 hora, 20 minutos e 26 segundosNão, mas você não tipo não paga mensalidade à meta, né? Só é só propost. Nesse caso eu deixei o cartão lá.
+1:20:321 hora, 20 minutos e 32 segundosInclusive eles já estão já estão separando o tipo de mensagem.
+1:20:361 hora, 20 minutos e 36 segundosJá tô começando na classe é do esse negócio do bloqueio imediato, né? Como é isso? Só passar os números de telefone, como é isso?
+1:20:421 hora, 20 minutos e 42 segundosÉ aí você me fala, viu? C tá que você só me fala eu preciso os números e e eu te passo e digo passo
+1:20:511 hora, 20 minutos e 51 segundospro setor, o nome das pessoas, tudo certinho, tá? Aí como não tem valor fixo que o pessoal faz, geralmente eu tenho um cartão virtual com valor mediano, que é
+1:20:591 hora, 20 minutos e 59 segundosse extrapolar ele bloqueia, né? Então a mensalidade é tipo o saldo do cartão, né? Você cria um virtual, sei lá, R$ 500.
+1:21:061 hora, 21 minutos e 6 segundosAgora o chat tá cobrando, né?
+1:21:091 hora, 21 minutos e 9 segundosSe a só se usar o atendimento automático.
+1:21:111 hora, 21 minutos e 11 segundosUsar o atendimento automático. Outra coisa que é isso, Vir rapidinho. O chat com a interação humana ainda não tá sendo cobrado, mas a partir do momento que
+1:21:201 hora, 21 minutos e 20 segundosativar a IA, o chat começa a cobrar na API.
+1:21:251 hora, 21 minutos e 25 segundosÉ isso. Mas a gente não vai ativar, a gente vai primeiro botar, a gente vai treinar, né? Continua atendendo. Depois a gente vai soltar, né? Depois a gente vai é obrigatório botar logo o crédito?
+1:21:361 hora, 21 minutos e 36 segundosNão, não, né? Só depois que ativar o chat, né? Só depois que ativar.
+1:21:391 hora, 21 minutos e 39 segundosÉ, quando a gente vê, por exemplo, vai ativar ali o funil. Aí tem que ver como é.
+1:21:451 hora, 21 minutos e 45 segundosE o pagamento desses números para ser individual número a número como é? Ou você pode deixar no no pode fazer no no
+1:21:521 hora, 21 minutos e 52 segundosmeta ou você usa linca os usuários, os telefones. É, mas vai linkar com a foto não faz uma conta de faz uma conta
+1:22:001 hora e 22 minutosprincipal, entendeu? A, inclusive, inclusive essa conta de anúncio do meta do WhatsApp pode ser separada do trafa, não tem problema não.
+1:22:091 hora, 22 minutos e 9 segundosPara não dar Sim, é isso. Fiquei preocupado com isso.
+1:22:121 hora, 22 minutos e 12 segundosEntão, seja, dá para fazer uma alternativa e e botar todos os os números numa conta só que aí o cartão vai resolver a vida de todo mundo aqui.
+1:22:201 hora, 22 minutos e 20 segundosÉ, vamos ter que fazer n contas, é n contas. Tá beleza, rapaz. Tá, tá, tá indo. Agora só você me passar vendo que
+1:22:271 hora, 22 minutos e 27 segundosvocê precisa, tá? Eu vou assim que eu publicar essa semana já, aí eu ajudo para vocês para edição todo mundo. Então, de graça aí,
+
+

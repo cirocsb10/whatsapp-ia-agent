@@ -11,6 +11,7 @@ import {
   applyHandoffCreated,
 } from "@/features/inbox/api/queries";
 import { useTypingStore } from "@/features/inbox/model/typing.store";
+import { useStreamStore } from "@/features/inbox/model/stream.store";
 
 const WS_URL = (process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:3002") + "/events";
 
@@ -105,16 +106,53 @@ export function useSocket() {
       sock.on("event", (event: { type: string; payload: unknown }) => {
         const qc = cbRef.current.queryClient;
         const typing = useTypingStore.getState();
+        const stream = useStreamStore.getState();
         switch (event.type) {
-          case "new_message":
-            applyNewMessage(qc, event.payload as Parameters<typeof applyNewMessage>[1]);
+          case "new_message": {
+            const payload = event.payload as Parameters<typeof applyNewMessage>[1] & {
+              conversationId: string;
+              direction?: string;
+              isFromAi?: boolean;
+            };
+            applyNewMessage(qc, payload);
+            // Mensagem final da IA chegou — remove balão efêmero de stream.
+            if (payload.direction === "outbound" && payload.isFromAi !== false) {
+              stream.clear(payload.conversationId);
+              typing.stop(payload.conversationId);
+            }
             break;
+          }
           case "ai_typing_started":
             typing.start((event.payload as { conversationId: string }).conversationId);
             break;
           case "ai_typing_stopped":
             typing.stop((event.payload as { conversationId: string }).conversationId);
             break;
+          case "ai_stream_started": {
+            const p = event.payload as { conversationId: string; streamId: string };
+            typing.stop(p.conversationId);
+            stream.start(p.conversationId, p.streamId);
+            break;
+          }
+          case "ai_stream_token": {
+            const p = event.payload as {
+              conversationId: string;
+              streamId: string;
+              token: string;
+            };
+            stream.appendToken(p.conversationId, p.streamId, p.token);
+            break;
+          }
+          case "ai_stream_ended": {
+            const p = event.payload as {
+              conversationId: string;
+              streamId: string;
+              status?: "ok" | "replaced" | "error";
+              text?: string;
+            };
+            stream.end(p.conversationId, p.streamId, p.status ?? "ok", p.text);
+            break;
+          }
           case "conversation_status":
           case "conversation_status_changed":
             applyConversationStatus(qc, event.payload as Parameters<typeof applyConversationStatus>[1]);
