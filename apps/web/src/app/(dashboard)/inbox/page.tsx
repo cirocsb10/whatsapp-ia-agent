@@ -1,6 +1,5 @@
 "use client";
 import { Header } from "@/components/layout/Header";
-import { useSocket } from "@/hooks/useSocket";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import { ChatInputBar } from "@/components/chat/ChatInputBar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
@@ -64,7 +63,7 @@ export default function InboxPage() {
 }
 
 function InboxContent() {
-  useSocket();
+  // Socket agora vive no RealtimeProvider (layout do dashboard) — S7.
   const router = useRouter();
   const searchParams = useSearchParams();
   const convFromUrl = searchParams.get("conv");

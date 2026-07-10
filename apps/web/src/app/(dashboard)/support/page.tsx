@@ -1,6 +1,5 @@
 "use client";
 import { Header } from "@/components/layout/Header";
-import { useSocket } from "@/hooks/useSocket";
 import { useApi } from "@/lib/hooks/useApi";
 import { useInboxStore } from "@/lib/store/inbox.store";
 import {
@@ -60,7 +59,7 @@ const STATS = [
 ] as const;
 
 export default function SupportPage() {
-  useSocket();
+  // Socket agora vive no RealtimeProvider (layout do dashboard) — S7.
   const router = useRouter();
   const { apiFetch } = useApi();
   const conversations = useInboxStore((s) => s.conversations);
