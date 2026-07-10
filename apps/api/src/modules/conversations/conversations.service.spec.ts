@@ -102,4 +102,86 @@ describe("ConversationsService", () => {
     expect(msgs[0]!.direction).toBe("outbound");
     expect(msgs[0]!.messageStatus).toBe("delivered");
   });
+
+  describe("findMessagesPage", () => {
+    function row(id: string, sentAt: Date) {
+      return {
+        id,
+        conversationId: "c-1",
+        waMessageId: null,
+        direction: "INBOUND",
+        type: "TEXT",
+        text: id,
+        imageUrl: null,
+        audioUrl: null,
+        documentUrl: null,
+        documentName: null,
+        sentAt,
+        isFromAi: false,
+        deliveredAt: null,
+        readAt: null,
+        failedAt: null,
+      };
+    }
+
+    it("throws when conversation is outside tenant", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue(null);
+      await expect(
+        service.findMessagesPage("t-1", "bad", { limit: 10 }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("retorna página em ordem asc, hasMore=false quando não há mais", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({ id: "c-1" });
+      // limit=2 → pede take=3 (limit+1). Só 2 vieram → não há mais.
+      mockPrisma.message.findMany.mockResolvedValue([
+        row("m-2", new Date("2026-01-02")),
+        row("m-1", new Date("2026-01-01")),
+      ]);
+
+      const page = await service.findMessagesPage("t-1", "c-1", { limit: 2 });
+
+      expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { sentAt: "desc" }, take: 3 }),
+      );
+      expect(page.hasMore).toBe(false);
+      expect(page.nextCursor).toBeNull();
+      expect(page.messages.map((m) => m.id)).toEqual(["m-1", "m-2"]);
+    });
+
+    it("detecta hasMore e emite nextCursor da mais antiga da página", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({ id: "c-1" });
+      // limit=2 → take=3; 3 vieram → há mais. A 3ª (mais antiga) é descartada.
+      mockPrisma.message.findMany.mockResolvedValue([
+        row("m-3", new Date("2026-01-03")),
+        row("m-2", new Date("2026-01-02")),
+        row("m-1", new Date("2026-01-01")),
+      ]);
+
+      const page = await service.findMessagesPage("t-1", "c-1", { limit: 2 });
+
+      expect(page.hasMore).toBe(true);
+      // página = 2 mais recentes [m-3, m-2]; asc → [m-2, m-3]; cursor = m-2 (mais antiga da página).
+      expect(page.messages.map((m) => m.id)).toEqual(["m-2", "m-3"]);
+      expect(page.nextCursor).toBe(new Date("2026-01-02").toISOString());
+    });
+
+    it("aplica filtro sentAt < before quando cursor é passado", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({ id: "c-1" });
+      mockPrisma.message.findMany.mockResolvedValue([]);
+
+      await service.findMessagesPage("t-1", "c-1", {
+        limit: 10,
+        before: "2026-01-02T00:00:00.000Z",
+      });
+
+      expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            sentAt: { lt: new Date("2026-01-02T00:00:00.000Z") },
+          }),
+        }),
+      );
+    });
+  });
 });

@@ -5,6 +5,24 @@ import { CrmProgressionService } from "../crm/crm-progression.service";
 
 const META_GRAPH_API = "https://graph.facebook.com/v21.0";
 
+interface MessageRow {
+  id: string;
+  conversationId: string;
+  waMessageId: string | null;
+  direction: string;
+  type: string;
+  text: string | null;
+  imageUrl: string | null;
+  audioUrl: string | null;
+  documentUrl: string | null;
+  documentName: string | null;
+  sentAt: Date;
+  isFromAi: boolean;
+  deliveredAt: Date | null;
+  readAt: Date | null;
+  failedAt: Date | null;
+}
+
 @Injectable()
 export class ConversationsService {
   constructor(
@@ -42,36 +60,26 @@ export class ConversationsService {
     });
   }
 
-  async findMessages(tenantId: string, conversationId: string) {
-    const conversation = await this.prisma.conversation.findFirst({
-      where: { id: conversationId, tenantId },
-      select: { id: true },
-    });
-    if (!conversation) throw new NotFoundException("Conversation not found");
+  private static readonly MESSAGE_SELECT = {
+    id: true,
+    conversationId: true,
+    waMessageId: true,
+    direction: true,
+    type: true,
+    text: true,
+    imageUrl: true,
+    audioUrl: true,
+    documentUrl: true,
+    documentName: true,
+    sentAt: true,
+    isFromAi: true,
+    deliveredAt: true,
+    readAt: true,
+    failedAt: true,
+  } as const;
 
-    const messages = await this.prisma.message.findMany({
-      where: { conversationId, tenantId },
-      orderBy: { sentAt: "asc" },
-      select: {
-        id: true,
-        conversationId: true,
-        waMessageId: true,
-        direction: true,
-        type: true,
-        text: true,
-        imageUrl: true,
-        audioUrl: true,
-        documentUrl: true,
-        documentName: true,
-        sentAt: true,
-        isFromAi: true,
-        deliveredAt: true,
-        readAt: true,
-        failedAt: true,
-      },
-    });
-
-    return messages.map((m) => ({
+  private mapMessage(m: MessageRow) {
+    return {
       ...m,
       direction: m.direction.toLowerCase() as "inbound" | "outbound",
       type: m.type.toLowerCase(),
@@ -82,10 +90,78 @@ export class ConversationsService {
       deliveredAt: undefined,
       readAt: undefined,
       failedAt: undefined,
-      messageStatus: m.direction === "OUTBOUND"
-        ? (m.failedAt ? "failed" : m.readAt ? "read" : m.deliveredAt ? "delivered" : "sent")
-        : undefined,
-    }));
+      messageStatus:
+        m.direction === "OUTBOUND"
+          ? m.failedAt
+            ? "failed"
+            : m.readAt
+              ? "read"
+              : m.deliveredAt
+                ? "delivered"
+                : "sent"
+          : undefined,
+    };
+  }
+
+  private async assertConversation(tenantId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { id: conversationId, tenantId },
+      select: { id: true },
+    });
+    if (!conversation) throw new NotFoundException("Conversation not found");
+  }
+
+  async findMessages(tenantId: string, conversationId: string) {
+    await this.assertConversation(tenantId, conversationId);
+
+    const messages = await this.prisma.message.findMany({
+      where: { conversationId, tenantId },
+      orderBy: { sentAt: "asc" },
+      select: ConversationsService.MESSAGE_SELECT,
+    });
+
+    return messages.map((m) => this.mapMessage(m));
+  }
+
+  /**
+   * Paginação por cursor (B2): retorna as `limit` mensagens mais recentes anteriores
+   * ao cursor `before` (sentAt), em ordem ascendente para exibição. `nextCursor` é o
+   * `sentAt` da mais antiga desta página (para buscar o lote anterior); `hasMore`
+   * indica se há mensagens mais antigas. Empates exatos de `sentAt` são raros no
+   * WhatsApp e ignorados por ora (refino futuro: tiebreaker por id).
+   */
+  async findMessagesPage(
+    tenantId: string,
+    conversationId: string,
+    opts: { limit: number; before?: string },
+  ) {
+    await this.assertConversation(tenantId, conversationId);
+
+    const limit = Math.min(Math.max(Math.trunc(opts.limit) || 30, 1), 100);
+    const beforeDate = opts.before ? new Date(opts.before) : undefined;
+
+    const rows = await this.prisma.message.findMany({
+      where: {
+        conversationId,
+        tenantId,
+        ...(beforeDate ? { sentAt: { lt: beforeDate } } : {}),
+      },
+      orderBy: { sentAt: "desc" },
+      take: limit + 1,
+      select: ConversationsService.MESSAGE_SELECT,
+    });
+
+    const hasMore = rows.length > limit;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const oldest = pageRows[pageRows.length - 1] as { sentAt: Date } | undefined;
+    const nextCursor = hasMore && oldest ? oldest.sentAt.toISOString() : null;
+
+    const messages = pageRows
+      .slice()
+      .reverse()
+      .map((m) => this.mapMessage(m));
+
+    return { messages, hasMore, nextCursor };
   }
 
   async assumeConversation(tenantId: string, conversationId: string, userId: string) {
