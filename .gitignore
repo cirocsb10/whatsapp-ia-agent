@@ -21,6 +21,7 @@ dist/
 .next/
 .output/
 build/
+*.tsbuildinfo
 apps/api/build-info.json
 apps/channel-service/build-info.json
 
