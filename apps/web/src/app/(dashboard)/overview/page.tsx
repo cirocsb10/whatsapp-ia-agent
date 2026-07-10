@@ -7,12 +7,7 @@ import { HandoffReasons } from "@/components/analytics/HandoffReasons";
 import { DashboardSetupBanner } from "@/components/analytics/DashboardSetupBanner";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
-  useKpis,
-  useKpiTrends,
-  useConversationsChart,
-  useSetupStatus,
-  useFunnel,
-  useHandoffReasons,
+  useDashboard,
   type Kpis,
   type KpiTrends,
   type ChartPoint,
@@ -72,29 +67,19 @@ const POLL_MS = 30_000;
 export default function OverviewPage() {
   const [chartDays, setChartDays] = useState(30);
 
-  // Server-state via TanStack Query: cache + dedupe (kpis compartilhado com /analytics)
-  // + revalidação por foco/visibilidade automática (substitui o setInterval manual).
-  const kpisQuery = useKpis(POLL_MS);
-  const trendsQuery = useKpiTrends(POLL_MS);
-  const chartQuery = useConversationsChart(chartDays, POLL_MS);
-  const setupQuery = useSetupStatus(POLL_MS);
-  const funnelQuery = useFunnel(30, POLL_MS);
-  const handoffQuery = useHandoffReasons(30, POLL_MS);
+  // 1 request agregado (F2 §3.4) com cache + revalidação por foco/visibilidade
+  // (o TanStack Query pausa o intervalo com a aba oculta).
+  const dashboardQuery = useDashboard(chartDays, POLL_MS);
+  const data = dashboardQuery.data;
 
-  const kpis: Kpis = kpisQuery.data ?? {};
-  const trends: KpiTrends = trendsQuery.data ?? {};
-  const chart: ChartPoint[] = chartQuery.data ?? [];
-  const setupStatus: SetupStatusData | null = setupQuery.data ?? null;
-  const funnel: FunnelData | null = funnelQuery.data ?? null;
-  const handoffReasons: HandoffReasonsData | null = handoffQuery.data ?? null;
-  const loading =
-    kpisQuery.isPending ||
-    trendsQuery.isPending ||
-    chartQuery.isPending ||
-    setupQuery.isPending ||
-    funnelQuery.isPending ||
-    handoffQuery.isPending;
-  const lastUpdated = kpisQuery.dataUpdatedAt ? new Date(kpisQuery.dataUpdatedAt) : null;
+  const kpis: Kpis = data?.kpis ?? {};
+  const trends: KpiTrends = data?.trends ?? {};
+  const chart: ChartPoint[] = data?.chart ?? [];
+  const setupStatus: SetupStatusData | null = data?.setupStatus ?? null;
+  const funnel: FunnelData | null = data?.funnel ?? null;
+  const handoffReasons: HandoffReasonsData | null = data?.handoffReasons ?? null;
+  const loading = dashboardQuery.isPending;
+  const lastUpdated = dashboardQuery.dataUpdatedAt ? new Date(dashboardQuery.dataUpdatedAt) : null;
 
   const date = new Date().toLocaleDateString("pt-BR", {
     weekday: "long", day: "numeric", month: "long",

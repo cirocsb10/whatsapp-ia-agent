@@ -8,6 +8,11 @@ import { CurrentTenantId } from "../../common/decorators/current-tenant.decorato
 export class AnalyticsController {
   constructor(private readonly service: AnalyticsService) {}
 
+  @Get("dashboard")
+  getDashboard(@CurrentTenantId() tenantId: string, @Query("days") days?: string) {
+    return this.service.getDashboard(tenantId, Number(days ?? 30));
+  }
+
   @Get("kpis")
   getKpis(@CurrentTenantId() tenantId: string) {
     return this.service.getKpis(tenantId);

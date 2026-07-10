@@ -131,6 +131,23 @@ export class AnalyticsService {
     };
   }
 
+  /**
+   * Endpoint agregado do overview (F2 §3.4): 1 request em vez de 6.
+   * Compõe os métodos já cacheados em Redis, então em cache-hit é praticamente free.
+   */
+  async getDashboard(tenantId: string, days = 30) {
+    const [kpis, trends, chart, setupStatus, funnel, handoffReasons] = await Promise.all([
+      this.getKpis(tenantId),
+      this.getKpiTrends(tenantId),
+      this.getConversationsChart(tenantId, days),
+      this.getSetupStatus(tenantId),
+      this.getFunnel(tenantId, 30),
+      this.getHandoffReasons(tenantId, 30),
+    ]);
+
+    return { kpis, trends, chart, setupStatus, funnel, handoffReasons };
+  }
+
   getConversationsChart(tenantId: string, days = 30) {
     return this.cached(`analytics:${tenantId}:conv-chart:${days}`, TTL_AGG, () =>
       this.computeConversationsChart(tenantId, days),

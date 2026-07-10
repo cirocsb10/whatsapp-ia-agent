@@ -32,6 +32,15 @@ export interface HeatmapBucket {
   value: number;
 }
 
+export interface DashboardData {
+  kpis: Kpis;
+  trends: KpiTrends;
+  chart: ChartPoint[];
+  setupStatus: SetupStatusData;
+  funnel: FunnelData;
+  handoffReasons: HandoffReasonsData;
+}
+
 /**
  * Hooks de server-state do domínio analytics (F1 §3.3/§3.5).
  *
@@ -45,6 +54,15 @@ export interface HeatmapBucket {
  */
 function poll(refetchInterval?: number) {
   return refetchInterval !== undefined ? { refetchInterval } : {};
+}
+
+/** Agregado do overview (F2 §3.4): 1 request cobre kpis+trends+chart+setup+funnel+handoffs. */
+export function useDashboard(days: number, refetchInterval?: number) {
+  return useQuery({
+    queryKey: ["analytics", "dashboard", days],
+    queryFn: () => api.get<DashboardData>(`/analytics/dashboard?days=${days}`),
+    ...poll(refetchInterval),
+  });
 }
 
 export function useKpis(refetchInterval?: number) {
