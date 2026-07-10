@@ -23,7 +23,7 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
     <div className="product-card">
       <div className="product-card-image">
         {product.imageUrls[0] ? (
-          <img src={product.imageUrls[0]} alt={product.name} />
+          <img src={product.imageUrls[0]} alt={product.name} loading="lazy" decoding="async" />
         ) : (
           <Package className="w-8 h-8" style={{ color: "#334155" }} />
         )}

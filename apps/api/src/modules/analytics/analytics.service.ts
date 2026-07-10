@@ -1,11 +1,44 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
+import { Redis } from "ioredis";
 import { PrismaService } from "../../common/prisma/prisma.service";
+
+/**
+ * TTLs curtos: o dashboard é near-real-time, não precisa ser ao segundo.
+ * Resolve B1 na raiz (analytics recalculava ~30 queries por load, sem cache).
+ */
+const TTL_KPIS = 30;
+const TTL_TRENDS = 45;
+const TTL_AGG = 60;
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject("REDIS_CLIENT") private readonly redis: Redis,
+  ) {}
 
-  async getKpis(tenantId: string): Promise<Record<string, number | null>> {
+  /** Cache-aside sobre Redis. Falhas de cache degradam para o cálculo direto. */
+  private async cached<T>(key: string, ttlSeconds: number, compute: () => Promise<T>): Promise<T> {
+    try {
+      const hit = await this.redis.get(key);
+      if (hit) return JSON.parse(hit) as T;
+    } catch {
+      /* cache indisponível → recalcula */
+    }
+    const value = await compute();
+    try {
+      await this.redis.set(key, JSON.stringify(value), "EX", ttlSeconds);
+    } catch {
+      /* ignora erros de escrita no cache */
+    }
+    return value;
+  }
+
+  getKpis(tenantId: string): Promise<Record<string, number | null>> {
+    return this.cached(`analytics:${tenantId}:kpis`, TTL_KPIS, () => this.computeKpis(tenantId));
+  }
+
+  private async computeKpis(tenantId: string): Promise<Record<string, number | null>> {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -98,7 +131,13 @@ export class AnalyticsService {
     };
   }
 
-  async getConversationsChart(tenantId: string, days = 30) {
+  getConversationsChart(tenantId: string, days = 30) {
+    return this.cached(`analytics:${tenantId}:conv-chart:${days}`, TTL_AGG, () =>
+      this.computeConversationsChart(tenantId, days),
+    );
+  }
+
+  private async computeConversationsChart(tenantId: string, days = 30) {
     const since = new Date(Date.now() - days * 86400000);
 
     type Row = { day: Date; total: bigint; ai_resolved: bigint; handoffs: bigint };
@@ -134,7 +173,13 @@ export class AnalyticsService {
     }));
   }
 
-  async getKpiTrends(tenantId: string): Promise<Record<string, { change: number; trend: "up" | "down" | "neutral" }>> {
+  getKpiTrends(tenantId: string): Promise<Record<string, { change: number; trend: "up" | "down" | "neutral" }>> {
+    return this.cached(`analytics:${tenantId}:kpi-trends`, TTL_TRENDS, () => this.computeKpiTrends(tenantId));
+  }
+
+  private async computeKpiTrends(
+    tenantId: string,
+  ): Promise<Record<string, { change: number; trend: "up" | "down" | "neutral" }>> {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
@@ -265,7 +310,13 @@ export class AnalyticsService {
     };
   }
 
-  async getFunnel(tenantId: string, days = 30) {
+  getFunnel(tenantId: string, days = 30) {
+    return this.cached(`analytics:${tenantId}:funnel:${days}`, TTL_AGG, () =>
+      this.computeFunnel(tenantId, days),
+    );
+  }
+
+  private async computeFunnel(tenantId: string, days = 30) {
     const since = new Date(Date.now() - days * 86400000);
     const [conversations, catalogViewed, cartStarted, paymentGenerated, paymentConfirmed] =
       await Promise.all([
@@ -285,7 +336,13 @@ export class AnalyticsService {
     };
   }
 
-  async getHeatmap(tenantId: string, days = 30) {
+  getHeatmap(tenantId: string, days = 30) {
+    return this.cached(`analytics:${tenantId}:heatmap:${days}`, TTL_AGG, () =>
+      this.computeHeatmap(tenantId, days),
+    );
+  }
+
+  private async computeHeatmap(tenantId: string, days = 30) {
     const since = new Date(Date.now() - days * 86400000);
     const messages = await this.prisma.message.findMany({
       where: { tenantId, sentAt: { gte: since } },
@@ -306,7 +363,13 @@ export class AnalyticsService {
     return buckets;
   }
 
-  async getHandoffReasons(tenantId: string, days = 30) {
+  getHandoffReasons(tenantId: string, days = 30) {
+    return this.cached(`analytics:${tenantId}:handoff-reasons:${days}`, TTL_AGG, () =>
+      this.computeHandoffReasons(tenantId, days),
+    );
+  }
+
+  private async computeHandoffReasons(tenantId: string, days = 30) {
     const since = new Date(Date.now() - days * 86400000);
     const rows = await this.prisma.handoffEvent.groupBy({
       by: ["reason"],

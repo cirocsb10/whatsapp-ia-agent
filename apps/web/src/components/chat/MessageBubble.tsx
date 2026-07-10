@@ -2,7 +2,7 @@
 import { getEmojiOnlyVariant } from "@/lib/emoji";
 import { cn } from "@/lib/utils";
 import { Bot, FileText, Download } from "lucide-react";
-import { useState } from "react";
+import { memo, useState } from "react";
 
 function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
   return (
@@ -37,7 +37,7 @@ function AudioPlayer({ src }: { src: string }) {
   );
 }
 
-export function MessageBubble({
+function MessageBubbleComponent({
   direction, type, text, imageUrl, audioUrl, documentUrl, documentName, isFromAi, sentAt, messageStatus,
 }: {
   direction: "inbound" | "outbound";
@@ -105,6 +105,8 @@ export function MessageBubble({
               <img
                 src={imageUrl}
                 alt="imagem"
+                loading="lazy"
+                decoding="async"
                 className="w-full rounded-[5px] cursor-pointer object-cover max-h-[280px]"
                 onClick={() => setLightbox(imageUrl)}
               />
@@ -187,3 +189,9 @@ export function MessageBubble({
     </div>
   );
 }
+
+/**
+ * Memoizado (plano §3.2): cada mensagem nova via socket re-renderiza só o balão novo,
+ * não a lista inteira. Props são primitivas/estáveis por mensagem.
+ */
+export const MessageBubble = memo(MessageBubbleComponent);

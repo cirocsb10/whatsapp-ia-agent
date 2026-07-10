@@ -19,15 +19,27 @@ const mockPrisma = {
   agentConfig: { findUnique: jest.fn() },
 };
 
+// get => null força cache-miss em todos os testes (sempre recalcula via Prisma).
+const mockRedis = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue("OK"),
+};
+
 describe("AnalyticsService", () => {
   let service: AnalyticsService;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      providers: [AnalyticsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AnalyticsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: "REDIS_CLIENT", useValue: mockRedis },
+      ],
     }).compile();
     service = module.get(AnalyticsService);
     jest.clearAllMocks();
+    mockRedis.get.mockResolvedValue(null);
+    mockRedis.set.mockResolvedValue("OK");
   });
 
   describe("getKpis", () => {

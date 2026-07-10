@@ -7,7 +7,7 @@ import { MessageBubble } from "@/components/chat/MessageBubble";
 import { useApi } from "@/lib/hooks/useApi";
 import { MessageSquare, Search, Phone, Inbox, UserCheck, RotateCcw, PauseCircle, RefreshCw, SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 function getInitials(name?: string, phone?: string): string {
   if (name && name.trim()) {
@@ -76,9 +76,17 @@ function InboxContent() {
   const setMessages = useInboxStore((s) => s.setMessages);
   const setActive = useInboxStore((s) => s.setActiveConversation);
   const markAsRead = useInboxStore((s) => s.markAsRead);
+  const addOptimisticMessage = useInboxStore((s) => s.addOptimisticMessage);
+  const markMessageFailed = useInboxStore((s) => s.markMessageFailed);
   const socketStatus = useInboxStore((s) => s.socketStatus);
-  const activeMessages = activeId ? (messages[activeId] ?? []) : [];
-  const activeConv = conversations.find((c) => c.id === activeId);
+  const activeMessages = useMemo(
+    () => (activeId ? (messages[activeId] ?? []) : []),
+    [activeId, messages],
+  );
+  const activeConv = useMemo(
+    () => conversations.find((c) => c.id === activeId),
+    [conversations, activeId],
+  );
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState("");
@@ -88,7 +96,7 @@ function InboxContent() {
   const [sending, setSending] = useState(false);
   const handledConvRef = useRef<string | null>(null);
 
-  async function loadConversations() {
+  const loadConversations = useCallback(async () => {
     setLoading(true);
     try {
       const res = await apiFetch("/conversations");
@@ -96,11 +104,11 @@ function InboxContent() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [apiFetch, setConversations]);
 
   useEffect(() => {
     void loadConversations();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadConversations]);
 
   useEffect(() => {
     if (!convFromUrl || loading) return;
@@ -127,40 +135,49 @@ function InboxContent() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages.length]);
 
-  const filtered = conversations.filter((c) => {
-    const matchSearch =
-      !search ||
-      (c.contact.name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      c.contact.phone.includes(search);
-    const matchFilter =
-      filter === "all" ||
-      (filter === "ai" && !c.isHandoff) ||
-      (filter === "handoff" && c.isHandoff);
-    return matchSearch && matchFilter;
-  });
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return conversations.filter((c) => {
+      const matchSearch =
+        !search ||
+        (c.contact.name ?? "").toLowerCase().includes(q) ||
+        c.contact.phone.includes(search);
+      const matchFilter =
+        filter === "all" ||
+        (filter === "ai" && !c.isHandoff) ||
+        (filter === "handoff" && c.isHandoff);
+      return matchSearch && matchFilter;
+    });
+  }, [conversations, search, filter]);
 
-  async function handleSelectConv(id: string) {
-    setActive(id);
-    markAsRead(id);
-    setDraft("");
-    if (messages[id]?.length) return;
-    const res = await apiFetch(`/conversations/${id}/messages`);
-    if (res.ok) setMessages(id, await res.json());
-  }
+  const handleSelectConv = useCallback(
+    async (id: string) => {
+      setActive(id);
+      markAsRead(id);
+      setDraft("");
+      if (useInboxStore.getState().messages[id]?.length) return;
+      const res = await apiFetch(`/conversations/${id}/messages`);
+      if (res.ok) setMessages(id, await res.json());
+    },
+    [apiFetch, markAsRead, setActive, setMessages],
+  );
 
-  async function handleAssume() {
+  const handleAssume = useCallback(async () => {
     if (!activeId) return;
     await apiFetch(`/conversations/${activeId}/assume`, { method: "PATCH" });
-  }
+  }, [activeId, apiFetch]);
 
-  async function handleRelease() {
+  const handleRelease = useCallback(async () => {
     if (!activeId) return;
     await apiFetch(`/conversations/${activeId}/release`, { method: "PATCH" });
-  }
+  }, [activeId, apiFetch]);
 
-  async function handleSend() {
+  const handleSend = useCallback(async () => {
     if (!activeId || !draft.trim() || sending) return;
     const text = draft.trim();
+    // Optimistic: o balão aparece na hora; o echo do socket reconcilia depois.
+    const tempId = addOptimisticMessage(activeId, text);
+    setDraft("");
     setSending(true);
     try {
       const res = await apiFetch(`/conversations/${activeId}/messages`, {
@@ -168,23 +185,27 @@ function InboxContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (res.ok) {
-        setDraft("");
-      } else {
-        const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+      if (!res.ok) {
+        markMessageFailed(activeId, tempId);
+        const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
         console.error("[handleSend] erro:", res.status, body);
-        alert(`Erro ao enviar: ${res.status} — ${(body["message"] as string) ?? "erro desconhecido"}`);
       }
+    } catch (err) {
+      markMessageFailed(activeId, tempId);
+      console.error("[handleSend] falha de rede:", err);
     } finally {
       setSending(false);
     }
-  }
+  }, [activeId, draft, sending, apiFetch, addOptimisticMessage, markMessageFailed]);
 
-  const tabs: { key: FilterTab; label: string; count: number }[] = [
-    { key: "all", label: "Todas", count: conversations.length },
-    { key: "ai", label: "IA Ativa", count: conversations.filter((c) => !c.isHandoff).length },
-    { key: "handoff", label: "Handoff", count: conversations.filter((c) => c.isHandoff).length },
-  ];
+  const tabs: { key: FilterTab; label: string; count: number }[] = useMemo(
+    () => [
+      { key: "all", label: "Todas", count: conversations.length },
+      { key: "ai", label: "IA Ativa", count: conversations.filter((c) => !c.isHandoff).length },
+      { key: "handoff", label: "Handoff", count: conversations.filter((c) => c.isHandoff).length },
+    ],
+    [conversations],
+  );
 
   return (
     <div className="flex h-full flex-col">

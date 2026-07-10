@@ -2,13 +2,27 @@
 
 import { Header } from "@/components/layout/Header";
 import { KpiCard } from "@/components/analytics/KpiCard";
-import { ConversationsChart } from "@/components/analytics/ConversationsChart";
 import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
 import { DashboardSetupBanner } from "@/components/analytics/DashboardSetupBanner";
+import { Skeleton } from "@/shared/ui/Skeleton";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useApi } from "@/lib/hooks/useApi";
 import { useEffect, useMemo, useState } from "react";
+
+// recharts é pesado e eager: carrega sob demanda (client-only) com skeleton (plano §3.9).
+const ConversationsChart = dynamic(
+  () => import("@/components/analytics/ConversationsChart").then((m) => m.ConversationsChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="chart-panel">
+        <Skeleton className="h-[320px] w-full" />
+      </div>
+    ),
+  },
+);
 import {
   MessageSquare, Zap, DollarSign, PhoneCall,
   Users, ShoppingCart, TrendingUp, Clock,
@@ -90,8 +104,18 @@ export default function OverviewPage() {
     }
 
     void load();
-    const id = setInterval(() => void load(), 30_000);
-    return () => clearInterval(id);
+    // Revalidação por visibilidade: não queima CPU/rede com a aba oculta (plano §3.9, A5).
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") void load();
+    }, 30_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [chartDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const date = new Date().toLocaleDateString("pt-BR", {
