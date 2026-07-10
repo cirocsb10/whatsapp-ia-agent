@@ -36,10 +36,17 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({
+  children,
+  initialUser = null,
+}: {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(initialUser);
+  // Se o RSC já injetou o usuário, a UI não espera round-trip client (isLoaded true de cara).
+  const [isLoaded, setIsLoaded] = useState(initialUser !== null);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -57,8 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Só busca no client quando o servidor não injetou nada (páginas públicas ou
+    // edge do token recém-renovado pelo middleware). Caso comum: sem fetch bloqueante.
+    if (initialUser) return;
     void refreshUser();
-  }, [refreshUser]);
+  }, [initialUser, refreshUser]);
 
   const signOut = useCallback(async () => {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });

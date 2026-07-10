@@ -6,10 +6,23 @@ import { FunnelChart } from "@/components/analytics/FunnelChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
 import { DashboardSetupBanner } from "@/components/analytics/DashboardSetupBanner";
 import { Skeleton } from "@/shared/ui/Skeleton";
+import {
+  useKpis,
+  useKpiTrends,
+  useConversationsChart,
+  useSetupStatus,
+  useFunnel,
+  useHandoffReasons,
+  type Kpis,
+  type KpiTrends,
+  type ChartPoint,
+  type SetupStatusData,
+  type FunnelData,
+  type HandoffReasonsData,
+} from "@/features/analytics/api/queries";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useApi } from "@/lib/hooks/useApi";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 // recharts é pesado e eager: carrega sob demanda (client-only) com skeleton (plano §3.9).
 const ConversationsChart = dynamic(
@@ -54,69 +67,34 @@ const QUICK_ACTIONS = [
   { href: "/settings", label: "Configurações", icon: Settings, color: "#94a3b8" },
 ];
 
-interface SetupStatus {
-  whatsappConnected: boolean;
-  agentConfigured: boolean;
-  setupComplete: boolean;
-}
-
-interface FunnelData {
-  conversations: number;
-  catalog_viewed: number;
-  cart_started: number;
-  payment_generated: number;
-  payment_confirmed: number;
-}
+const POLL_MS = 30_000;
 
 export default function OverviewPage() {
-  const { apiFetch } = useApi();
-  const [kpis, setKpis] = useState<Record<string, number | null>>({});
-  const [chart, setChart] = useState<any[]>([]);
-  const [trends, setTrends] = useState<Record<string, { change: number; trend: "up" | "down" | "neutral" }>>({});
-  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [chartDays, setChartDays] = useState(30);
-  const [funnel, setFunnel] = useState<FunnelData | null>(null);
-  const [handoffReasons, setHandoffReasons] = useState<Record<string, number> | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [kpiRes, chartRes, trendsRes, setupRes, funnelRes, handoffRes] = await Promise.all([
-          apiFetch("/analytics/kpis"),
-          apiFetch(`/analytics/conversations-chart?days=${chartDays}`),
-          apiFetch("/analytics/kpi-trends"),
-          apiFetch("/analytics/setup-status"),
-          apiFetch("/analytics/funnel?days=30"),
-          apiFetch("/analytics/handoff-reasons?days=30"),
-        ]);
-        if (kpiRes.ok) setKpis(await kpiRes.json());
-        if (chartRes.ok) setChart(await chartRes.json());
-        if (trendsRes.ok) setTrends(await trendsRes.json());
-        if (setupRes.ok) setSetupStatus(await setupRes.json());
-        if (funnelRes.ok) setFunnel(await funnelRes.json());
-        if (handoffRes.ok) setHandoffReasons(await handoffRes.json());
-        setLastUpdated(new Date());
-      } finally {
-        setLoading(false);
-      }
-    }
+  // Server-state via TanStack Query: cache + dedupe (kpis compartilhado com /analytics)
+  // + revalidação por foco/visibilidade automática (substitui o setInterval manual).
+  const kpisQuery = useKpis(POLL_MS);
+  const trendsQuery = useKpiTrends(POLL_MS);
+  const chartQuery = useConversationsChart(chartDays, POLL_MS);
+  const setupQuery = useSetupStatus(POLL_MS);
+  const funnelQuery = useFunnel(30, POLL_MS);
+  const handoffQuery = useHandoffReasons(30, POLL_MS);
 
-    void load();
-    // Revalidação por visibilidade: não queima CPU/rede com a aba oculta (plano §3.9, A5).
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible") void load();
-    }, 30_000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") void load();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [chartDays]); // eslint-disable-line react-hooks/exhaustive-deps
+  const kpis: Kpis = kpisQuery.data ?? {};
+  const trends: KpiTrends = trendsQuery.data ?? {};
+  const chart: ChartPoint[] = chartQuery.data ?? [];
+  const setupStatus: SetupStatusData | null = setupQuery.data ?? null;
+  const funnel: FunnelData | null = funnelQuery.data ?? null;
+  const handoffReasons: HandoffReasonsData | null = handoffQuery.data ?? null;
+  const loading =
+    kpisQuery.isPending ||
+    trendsQuery.isPending ||
+    chartQuery.isPending ||
+    setupQuery.isPending ||
+    funnelQuery.isPending ||
+    handoffQuery.isPending;
+  const lastUpdated = kpisQuery.dataUpdatedAt ? new Date(kpisQuery.dataUpdatedAt) : null;
 
   const date = new Date().toLocaleDateString("pt-BR", {
     weekday: "long", day: "numeric", month: "long",

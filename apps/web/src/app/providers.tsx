@@ -1,17 +1,23 @@
 "use client";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider, type AuthUser } from "@/contexts/auth-context";
 import { QueryProvider } from "@/shared/api/query-provider";
 import { WebVitals } from "@/shared/monitoring/web-vitals";
 
 const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialUser = null,
+}: {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}) {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <QueryProvider>
-        <AuthProvider>
+        <AuthProvider initialUser={initialUser}>
           <WebVitals />
           {children}
         </AuthProvider>

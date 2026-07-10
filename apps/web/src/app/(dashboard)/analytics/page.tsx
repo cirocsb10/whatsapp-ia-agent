@@ -5,8 +5,17 @@ import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversionFunnel } from "@/components/analytics/FunnelChart";
 import { ActivityHeatmap } from "@/components/analytics/HeatmapChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
-import { useApi } from "@/lib/hooks/useApi";
-import { useEffect, useState } from "react";
+import {
+  useKpis,
+  useFunnel,
+  useHeatmap,
+  useHandoffReasons,
+  type Kpis,
+  type FunnelData,
+  type HandoffReasonsData,
+  type HeatmapBucket,
+} from "@/features/analytics/api/queries";
+import { useState } from "react";
 import {
   Target, Users, ShoppingCart, DollarSign, Clock, Zap,
   CalendarDays, Star, Cpu, BarChart2,
@@ -44,34 +53,20 @@ const PERIODS = [
 ];
 
 export default function AnalyticsPage() {
-  const { apiFetch } = useApi();
   const [period, setPeriod] = useState(30);
-  const [kpis, setKpis] = useState<Record<string, number | null>>({});
-  const [funnel, setFunnel] = useState(EMPTY_FUNNEL);
-  const [heatmap, setHeatmap] = useState(EMPTY_HEATMAP);
-  const [handoffs, setHandoffs] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [kpiRes, funnelRes, heatmapRes, handoffRes] = await Promise.all([
-          apiFetch("/analytics/kpis"),
-          apiFetch(`/analytics/funnel?days=${period}`),
-          apiFetch(`/analytics/heatmap?days=${period}`),
-          apiFetch(`/analytics/handoff-reasons?days=${period}`),
-        ]);
-        if (kpiRes.ok) setKpis(await kpiRes.json());
-        if (funnelRes.ok) setFunnel(await funnelRes.json());
-        if (heatmapRes.ok) setHeatmap(await heatmapRes.json());
-        if (handoffRes.ok) setHandoffs(await handoffRes.json());
-      } finally {
-        setLoading(false);
-      }
-    }
-    void load();
-  }, [period]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Mesmos hooks do overview: `useKpis` compartilha cache (dedupe), demais keyed por período.
+  const kpisQuery = useKpis();
+  const funnelQuery = useFunnel(period);
+  const heatmapQuery = useHeatmap(period);
+  const handoffQuery = useHandoffReasons(period);
+
+  const kpis: Kpis = kpisQuery.data ?? {};
+  const funnel: FunnelData = funnelQuery.data ?? EMPTY_FUNNEL;
+  const heatmap: HeatmapBucket[] = heatmapQuery.data ?? EMPTY_HEATMAP;
+  const handoffs: HandoffReasonsData = handoffQuery.data ?? {};
+  const loading =
+    kpisQuery.isPending || funnelQuery.isPending || heatmapQuery.isPending || handoffQuery.isPending;
 
   function formatCard(card: (typeof KPI_CARDS)[number]) {
     if ("csat" in card && card.csat) {
