@@ -5,9 +5,9 @@ import { OrderDetailModal } from "@/components/orders/OrderDetailModal";
 import { UpdateStatusModal } from "@/components/orders/UpdateStatusModal";
 import { CancelOrderModal } from "@/components/orders/CancelOrderModal";
 import { CreateOrderModal } from "@/components/orders/CreateOrderModal";
-import { useApi } from "@/lib/hooks/useApi";
+import { useOrders } from "@/features/orders/api/queries";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ShoppingCart, Search, SlidersHorizontal,
   TrendingUp, DollarSign, Clock,
@@ -16,16 +16,6 @@ import {
 } from "lucide-react";
 
 type StatusFilter = "all" | "pending" | "processing" | "delivered" | "cancelled";
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  status: string;
-  totalCents: number;
-  createdAt: string;
-  contact?: { phone: string; name?: string };
-  items?: Array<{ productName: string; quantity: number }>;
-}
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
   pending: { label: "Pendente", color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)", icon: Clock },
@@ -57,35 +47,20 @@ function money(cents: number) {
 }
 
 export default function OrdersPage() {
-  const { apiFetch } = useApi();
   const router = useRouter();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
-  const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
   const [updateOrder, setUpdateOrder] = useState<{ id: string; status: string } | null>(null);
   const [cancelOrder, setCancelOrder] = useState<{ id: string; orderNumber: string } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/orders?page=${page}&limit=20`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.items ?? []);
-        setTotalPages(data.totalPages ?? 1);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch, page]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { void loadOrders(); }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ordersQuery = useOrders(page);
+  const orders = useMemo(() => ordersQuery.data?.items ?? [], [ordersQuery.data]);
+  const totalPages = ordersQuery.data?.totalPages ?? 1;
+  const loading = ordersQuery.isPending;
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -333,7 +308,7 @@ export default function OrdersPage() {
       <CreateOrderModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => { setCreateOpen(false); void loadOrders(); }}
+        onCreated={() => setCreateOpen(false)}
       />
       <OrderDetailModal
         open={!!detailOrderId}
@@ -343,14 +318,12 @@ export default function OrdersPage() {
       <UpdateStatusModal
         open={!!updateOrder}
         onClose={() => setUpdateOrder(null)}
-        onUpdated={() => void loadOrders()}
         orderId={updateOrder?.id ?? null}
         currentStatus={updateOrder?.status ?? "DRAFT"}
       />
       <CancelOrderModal
         open={!!cancelOrder}
         onClose={() => setCancelOrder(null)}
-        onCancelled={() => void loadOrders()}
         order={cancelOrder}
       />
     </div>

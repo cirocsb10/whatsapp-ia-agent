@@ -1,40 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ShoppingCart, User, Package, CreditCard } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { useApi } from "@/lib/hooks/useApi";
-
-interface OrderDetail {
-  id: string;
-  orderNumber: string;
-  status: string;
-  subtotalCents: number;
-  discountCents: number;
-  shippingCents: number;
-  totalCents: number;
-  notes: string | null;
-  createdAt: string;
-  confirmedAt: string | null;
-  deliveredAt: string | null;
-  cancelledAt: string | null;
-  contact: { phone: string; name: string | null };
-  items: Array<{
-    id: string;
-    productName: string;
-    quantity: number;
-    priceCents: number;
-    subtotalCents: number;
-  }>;
-  payments: Array<{
-    id: string;
-    method: string;
-    status: string;
-    amountCents: number;
-    pixCopyPaste: string | null;
-    paidAt: string | null;
-  }>;
-}
+import { useOrderDetail } from "@/features/orders/api/queries";
 
 interface Props {
   open: boolean;
@@ -54,18 +22,9 @@ const PAYMENT_STATUS_LABEL: Record<string, string> = {
 };
 
 export function OrderDetailModal({ open, onClose, orderId }: Props) {
-  const { apiFetch } = useApi();
-  const [order, setOrder] = useState<OrderDetail | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!open || !orderId) return;
-    setLoading(true);
-    apiFetch(`/orders/${orderId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setOrder(data))
-      .finally(() => setLoading(false));
-  }, [open, orderId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const orderQuery = useOrderDetail(open ? orderId : null);
+  const order = orderQuery.data ?? null;
+  const loading = orderQuery.isPending && !!orderId;
 
   return (
     <Modal

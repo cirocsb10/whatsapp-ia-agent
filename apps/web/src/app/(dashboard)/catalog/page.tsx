@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Eye,
   Grid3X3,
@@ -16,19 +17,26 @@ import { ProductCard } from "@/components/catalog/ProductCard";
 import { ProductListRow } from "@/components/catalog/ProductListRow";
 import { ProductFormModal } from "@/components/catalog/ProductFormModal";
 import { DeleteProductModal } from "@/components/catalog/DeleteProductModal";
-import { ImportProductsModal } from "@/components/catalog/ImportProductsModal";
 import { AdvancedFilterPanel } from "@/components/catalog/AdvancedFilterPanel";
-import { useApi } from "@/lib/hooks/useApi";
+import {
+  useProductStats,
+  useProducts,
+  useCategories,
+  type ProductListParams,
+} from "@/features/catalog/api/queries";
 import {
   Product,
-  ProductStats,
-  ProductsResponse,
   ProductStatus,
   AdvancedFilters,
-  Category,
   DEFAULT_ADVANCED_FILTERS,
   countActiveFilters,
 } from "@/types/product";
+
+// xlsx só é carregado quando o modal de importação abre (fora do bundle inicial).
+const ImportProductsModal = dynamic(
+  () => import("@/components/catalog/ImportProductsModal").then((m) => m.ImportProductsModal),
+  { ssr: false },
+);
 
 type ViewMode = "grid" | "list";
 type FilterTab = "all" | "active" | "inactive" | "out_of_stock";
@@ -50,26 +58,13 @@ const FILTER_LABELS: Record<FilterTab, string> = {
 const PAGE_SIZE = 20;
 
 export default function CatalogPage() {
-  const { apiFetch } = useApi();
-
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [advFilters, setAdvFilters] = useState<AdvancedFilters>(DEFAULT_ADVANCED_FILTERS);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-
-  const [stats, setStats] = useState<ProductStats>({
-    total: 0,
-    active: 0,
-    inactive: 0,
-    outOfStock: 0,
-  });
-  const [products, setProducts] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loadingStats, setLoadingStats] = useState(true);
-  const [loadingProducts, setLoadingProducts] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -78,94 +73,52 @@ export default function CatalogPage() {
 
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
-  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const loadStats = useCallback(async () => {
-    setLoadingStats(true);
-    try {
-      const res = await apiFetch("/products/stats");
-      if (res.ok) setStats(await res.json());
-    } finally {
-      setLoadingStats(false);
-    }
-  }, [apiFetch]);
-
-  const loadProducts = useCallback(
-    async (p: number, q: string, tab: FilterTab, filters: AdvancedFilters) => {
-      setLoadingProducts(true);
-      try {
-        const params = new URLSearchParams({
-          page: String(p),
-          limit: String(PAGE_SIZE),
-        });
-        if (q.trim()) params.set("search", q.trim());
-        const status = STATUS_MAP[tab];
-        if (status) params.set("status", status);
-        if (filters.minPriceCents !== undefined) {
-          params.set("minPriceCents", String(filters.minPriceCents));
-        }
-        if (filters.maxPriceCents !== undefined) {
-          params.set("maxPriceCents", String(filters.maxPriceCents));
-        }
-        if (filters.minStock !== undefined) params.set("minStock", String(filters.minStock));
-        if (filters.categoryId) params.set("categoryId", filters.categoryId);
-        if (filters.sortBy) params.set("sortBy", filters.sortBy);
-        if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
-
-        const res = await apiFetch(`/products?${params}`);
-        if (res.ok) {
-          const data: ProductsResponse = await res.json();
-          setProducts(data.items);
-          setTotal(data.total);
-        }
-      } finally {
-        setLoadingProducts(false);
-      }
-    },
-    [apiFetch],
+  const listParams = useMemo<ProductListParams>(
+    () => ({
+      page,
+      limit: PAGE_SIZE,
+      search: debouncedSearch.trim() || undefined,
+      status: STATUS_MAP[filterTab],
+      minPriceCents: advFilters.minPriceCents,
+      maxPriceCents: advFilters.maxPriceCents,
+      minStock: advFilters.minStock,
+      categoryId: advFilters.categoryId,
+      sortBy: advFilters.sortBy,
+      sortOrder: advFilters.sortOrder,
+    }),
+    [page, debouncedSearch, filterTab, advFilters],
   );
 
-  useEffect(() => {
-    void loadStats();
-  }, [loadStats]);
+  const statsQuery = useProductStats();
+  const productsQuery = useProducts(listParams);
+  const categoriesQuery = useCategories();
 
+  const stats = statsQuery.data ?? { total: 0, active: 0, inactive: 0, outOfStock: 0 };
+  const loadingStats = statsQuery.isPending;
+  const products = productsQuery.data?.items ?? [];
+  const total = productsQuery.data?.total ?? 0;
+  const loadingProducts = productsQuery.isPending;
+  const categories = categoriesQuery.data ?? [];
+
+  // Debounce da busca (300ms) → alimenta o queryKey via listParams.
   useEffect(() => {
-    async function loadCategories() {
-      try {
-        const res = await apiFetch("/categories");
-        if (res.ok) {
-          const data: Category[] = await res.json();
-          setCategories(data);
-        }
-      } catch {
-        // categories are optional — fail silently
-      }
-    }
-    void loadCategories();
-  }, [apiFetch]);
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   useEffect(() => {
     setPage(1);
-  }, [advFilters]);
-
-  useEffect(() => {
-    void loadProducts(page, search, filterTab, advFilters);
-    // search debounce handles typing; page/filterTab trigger immediate reload
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filterTab, advFilters, loadProducts]);
+  }, [advFilters, filterTab]);
 
   function handleSearchChange(value: string) {
     setSearch(value);
-    setPage(1);
-    if (searchDebounce.current) clearTimeout(searchDebounce.current);
-    searchDebounce.current = setTimeout(() => {
-      void loadProducts(1, value, filterTab, advFilters);
-    }, 300);
   }
 
   function handleTabChange(tab: FilterTab) {
     setFilterTab(tab);
-    setPage(1);
   }
 
   useEffect(() => {
@@ -175,22 +128,18 @@ export default function CatalogPage() {
   }, [toast]);
 
   function onSaved() {
-    void loadStats();
-    void loadProducts(page, search, filterTab, advFilters);
     setToast({ type: "success", msg: "Produto salvo com sucesso!" });
   }
 
   function onDeleted() {
-    void loadStats();
-    void loadProducts(page, search, filterTab, advFilters);
     setToast({ type: "success", msg: "Produto excluído." });
   }
 
   function onImported() {
-    void loadStats();
-    void loadProducts(1, "", "all", DEFAULT_ADVANCED_FILTERS);
     setSearch("");
+    setDebouncedSearch("");
     setFilterTab("all");
+    setAdvFilters(DEFAULT_ADVANCED_FILTERS);
     setPage(1);
   }
 

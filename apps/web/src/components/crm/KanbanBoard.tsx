@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
   PointerSensor, useSensor, useSensors, closestCorners,
 } from "@dnd-kit/core";
-import { useCrmStore } from "@/lib/store/crm.store";
-import { useApi } from "@/lib/hooks/useApi";
+import { useStages, useDeals, useMoveDeal } from "@/features/crm/api/queries";
 import { Deal } from "@/types/crm";
 import { KanbanColumn } from "./KanbanColumn";
 import { DealCard } from "./DealCard";
@@ -18,15 +17,11 @@ interface Props {
 }
 
 export function KanbanBoard({ onAddDeal, onEditDeal, onDeleteDeal }: Props) {
-  const { apiFetch } = useApi();
-  const stages         = useCrmStore((s) => s.stages);
-  const deals          = useCrmStore((s) => s.deals);
-  const optimisticMove = useCrmStore((s) => s.optimisticMove);
-  const revertMove     = useCrmStore((s) => s.revertMove);
-  const updateDeal     = useCrmStore((s) => s.updateDeal);
+  const stages = useStages().data ?? [];
+  const deals = useDeals().data ?? [];
+  const moveDeal = useMoveDeal();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
-  const dragOriginStageId = useRef<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -34,13 +29,10 @@ export function KanbanBoard({ onAddDeal, onEditDeal, onDeleteDeal }: Props) {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const deal = deals.find((d) => d.id === event.active.id);
-    if (deal) {
-      setActiveDeal(deal);
-      dragOriginStageId.current = deal.stageId;
-    }
+    if (deal) setActiveDeal(deal);
   }, [deals]);
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     setActiveDeal(null);
     const { active, over } = event;
     if (!over) return;
@@ -55,21 +47,9 @@ export function KanbanBoard({ onAddDeal, onEditDeal, onDeleteDeal }: Props) {
 
     if (!targetStageId || targetStageId === draggedDeal.stageId) return;
 
-    const originStageId = dragOriginStageId.current!;
-    optimisticMove(draggedDeal.id, targetStageId);
-
-    try {
-      const res = await apiFetch(`/crm/deals/${draggedDeal.id}/stage`, {
-        method: "PATCH",
-        body: JSON.stringify({ stageId: targetStageId }),
-      });
-      if (!res.ok) throw new Error("Falha ao mover negócio");
-      const updated: Deal = await res.json();
-      updateDeal(updated);
-    } catch {
-      revertMove(draggedDeal.id, originStageId);
-    }
-  }, [deals, stages, apiFetch, optimisticMove, revertMove, updateDeal]);
+    // Optimistic move + rollback vivem no hook useMoveDeal.
+    moveDeal.mutate({ dealId: draggedDeal.id, stageId: targetStageId });
+  }, [deals, stages, moveDeal]);
 
   return (
     <DndContext

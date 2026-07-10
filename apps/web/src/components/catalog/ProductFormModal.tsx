@@ -7,7 +7,8 @@ import { FormSelect } from "@/components/ui/FormSelect";
 import { DecimalInput } from "@/components/ui/DecimalInput";
 import { NumericInput } from "@/components/ui/NumericInput";
 import { Product, ProductStatus, STATUS_COLOR, STATUS_LABEL } from "@/types/product";
-import { useApi } from "@/lib/hooks/useApi";
+import { useSaveProduct } from "@/features/catalog/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 import { centsToMaskedPrice, maskedPriceToCents } from "@/lib/decimal-mask";
 
 const STATUS_OPTIONS: ProductStatus[] = ["ACTIVE", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED"];
@@ -60,10 +61,10 @@ function productToForm(p: Product): FormState {
 }
 
 export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
-  const { apiFetch } = useApi();
+  const saveProduct = useSaveProduct();
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const saving = saveProduct.isPending;
 
   const isEditing = !!product;
 
@@ -80,7 +81,6 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
 
     const priceCents = maskedPriceToCents(form.priceReais);
@@ -90,39 +90,30 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
 
     if (priceCents === null || priceCents < 0) {
       setError("Preço inválido.");
-      setSaving(false);
       return;
     }
 
-    const body = {
-      name: form.name.trim(),
-      description: form.description.trim() || undefined,
-      sku: form.sku.trim() || undefined,
-      priceCents,
-      comparePriceCents: comparePriceCents ?? undefined,
-      stockQty: parseInt(form.stockQty, 10) || 0,
-      lowStockThreshold: parseInt(form.lowStockThreshold, 10) || 5,
-      status: form.status,
-      tags: form.tags
-        ? form.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [],
-    };
-
     try {
-      const res = await apiFetch(
-        isEditing ? `/products/${product!.id}` : "/products",
-        { method: isEditing ? "PUT" : "POST", body: JSON.stringify(body) },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message ?? "Erro ao salvar produto.");
-      }
+      await saveProduct.mutateAsync({
+        ...(isEditing ? { id: product!.id } : {}),
+        input: {
+          name: form.name.trim(),
+          description: form.description.trim() || undefined,
+          sku: form.sku.trim() || undefined,
+          priceCents,
+          comparePriceCents: comparePriceCents ?? undefined,
+          stockQty: parseInt(form.stockQty, 10) || 0,
+          lowStockThreshold: parseInt(form.lowStockThreshold, 10) || 5,
+          status: form.status,
+          tags: form.tags
+            ? form.tags.split(",").map((t) => t.trim()).filter(Boolean)
+            : [],
+        },
+      });
       onSaved();
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSaving(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao salvar produto.");
     }
   }
 

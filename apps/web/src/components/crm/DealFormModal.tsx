@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Kanban } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { DecimalInput } from "@/components/ui/DecimalInput";
-import { useApi } from "@/lib/hooks/useApi";
-import { useCrmStore } from "@/lib/store/crm.store";
-import { Deal, ContactSearchResult } from "@/types/crm";
+import { useStages, useContactSearch, useSaveDeal } from "@/features/crm/api/queries";
+import { Deal } from "@/types/crm";
+import { ApiError } from "@/shared/api/fetcher";
 import { centsToMaskedPrice, maskedPriceToCents } from "@/lib/decimal-mask";
 
 interface Props {
@@ -39,19 +39,19 @@ function dealToForm(d: Deal): FormState {
 }
 
 export function DealFormModal({ open, onClose, onSaved, deal, initialStageId }: Props) {
-  const { apiFetch } = useApi();
-  const stages     = useCrmStore((s) => s.stages);
-  const addDeal    = useCrmStore((s) => s.addDeal);
-  const updateDeal = useCrmStore((s) => s.updateDeal);
+  const stages = useStages().data ?? [];
+  const saveDeal = useSaveDeal();
 
   const [form,          setForm]          = useState<FormState>(EMPTY);
-  const [saving,        setSaving]        = useState(false);
   const [error,         setError]         = useState<string | null>(null);
-  const [contacts,      setContacts]      = useState<ContactSearchResult[]>([]);
   const [contactSearch, setContactSearch] = useState("");
-  const [contactLoading, setContactLoading] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const isEditing = !!deal;
+  const saving = saveDeal.isPending;
+
+  const contactsQuery = useContactSearch(debouncedSearch, open);
+  const contactLoading = contactsQuery.isFetching;
 
   useEffect(() => {
     if (!open) return;
@@ -61,26 +61,14 @@ export function DealFormModal({ open, onClose, onSaved, deal, initialStageId }: 
     setForm(base);
     setError(null);
     setContactSearch("");
-    if (deal?.contact) {
-      setContacts([{ id: deal.contact.id, name: deal.contact.name, phone: deal.contact.phone }]);
-    } else {
-      setContacts([]);
-    }
+    setDebouncedSearch("");
   }, [open, deal, initialStageId, stages]);
 
   useEffect(() => {
     if (!open) return;
-    const timer = setTimeout(async () => {
-      setContactLoading(true);
-      try {
-        const res = await apiFetch(`/crm/contacts/search?q=${encodeURIComponent(contactSearch)}`);
-        if (res.ok) setContacts(await res.json());
-      } finally {
-        setContactLoading(false);
-      }
-    }, 250);
+    const timer = setTimeout(() => setDebouncedSearch(contactSearch), 250);
     return () => clearTimeout(timer);
-  }, [contactSearch, open, apiFetch]);
+  }, [contactSearch, open]);
 
   const setField = useCallback(<K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -92,39 +80,37 @@ export function DealFormModal({ open, onClose, onSaved, deal, initialStageId }: 
       setError("Título e etapa são obrigatórios.");
       return;
     }
-    setSaving(true);
     setError(null);
 
     const valueCents = form.valueReais.trim() ? (maskedPriceToCents(form.valueReais) ?? 0) : 0;
-    const body = {
-      title:     form.title.trim(),
-      stageId:   form.stageId,
-      valueCents,
-      notes:     form.notes.trim() || undefined,
-      contactId: form.contactId || undefined,
-    };
 
     try {
-      const res = await apiFetch(
-        isEditing ? `/crm/deals/${deal!.id}` : "/crm/deals",
-        { method: isEditing ? "PUT" : "POST", body: JSON.stringify(body) },
-      );
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { message?: string })?.message ?? "Erro ao salvar negócio.");
-      }
-      const saved: Deal = await res.json();
-      isEditing ? updateDeal(saved) : addDeal(saved);
+      await saveDeal.mutateAsync({
+        ...(isEditing ? { id: deal!.id } : {}),
+        input: {
+          title: form.title.trim(),
+          stageId: form.stageId,
+          valueCents,
+          notes: form.notes.trim() || undefined,
+          contactId: form.contactId || undefined,
+        },
+      });
       onSaved();
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSaving(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao salvar negócio.");
     }
   }
 
   const stageOptions = stages.map((s) => ({ value: s.id, label: s.name, color: s.color }));
+  const contacts = useMemo(() => {
+    const fromQuery = contactsQuery.data ?? [];
+    // Preserva o contato já vinculado ao negócio em edição, mesmo fora da busca.
+    if (deal?.contact && !fromQuery.some((c) => c.id === deal.contact!.id)) {
+      return [{ id: deal.contact.id, name: deal.contact.name, phone: deal.contact.phone }, ...fromQuery];
+    }
+    return fromQuery;
+  }, [contactsQuery.data, deal]);
   const contactOptions = [
     { value: "", label: "Nenhum contato" },
     ...contacts.map((c) => ({

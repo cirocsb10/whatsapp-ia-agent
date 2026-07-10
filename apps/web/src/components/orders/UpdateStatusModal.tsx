@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { useApi } from "@/lib/hooks/useApi";
+import { useUpdateOrderStatus } from "@/features/orders/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 
 const STATUS_OPTIONS = [
   { value: "DRAFT", label: "Rascunho" },
@@ -20,16 +21,15 @@ const STATUS_OPTIONS = [
 interface Props {
   open: boolean;
   onClose: () => void;
-  onUpdated: () => void;
   orderId: string | null;
   currentStatus: string;
 }
 
-export function UpdateStatusModal({ open, onClose, onUpdated, orderId, currentStatus }: Props) {
-  const { apiFetch } = useApi();
+export function UpdateStatusModal({ open, onClose, orderId, currentStatus }: Props) {
+  const updateStatus = useUpdateOrderStatus();
   const [selected, setSelected] = useState(currentStatus);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const saving = updateStatus.isPending;
 
   useEffect(() => {
     if (open) setSelected(currentStatus);
@@ -37,20 +37,12 @@ export function UpdateStatusModal({ open, onClose, onUpdated, orderId, currentSt
 
   async function handleSave() {
     if (!orderId || selected === currentStatus) { onClose(); return; }
-    setSaving(true);
     setError(null);
     try {
-      const res = await apiFetch(`/orders/${orderId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: selected }),
-      });
-      if (!res.ok) throw new Error("Erro ao atualizar status.");
-      onUpdated();
+      await updateStatus.mutateAsync({ orderId, status: selected });
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSaving(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao atualizar status.");
     }
   }
 

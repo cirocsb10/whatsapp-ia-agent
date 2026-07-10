@@ -5,7 +5,8 @@ import * as XLSX from "xlsx";
 import { Download, FileSpreadsheet, Upload, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { ImportProductItem, ImportResult, formatPrice } from "@/types/product";
-import { useApi } from "@/lib/hooks/useApi";
+import { useImportProducts } from "@/features/catalog/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 
 interface ImportPreviewRow {
   rowNumber: number;
@@ -121,15 +122,15 @@ function parseSheetPreview(file: File): Promise<ImportPreviewRow[]> {
 }
 
 export function ImportProductsModal({ open, onClose, onImported }: Props) {
-  const { apiFetch } = useApi();
+  const importProducts = useImportProducts();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewRows, setPreviewRows] = useState<ImportPreviewRow[]>([]);
   const [dragging, setDragging] = useState(false);
   const [parsing, setParsing] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const importing = importProducts.isPending;
 
   const validRows = previewRows.filter((row) => row.isValid);
   const invalidCount = previewRows.length - validRows.length;
@@ -172,30 +173,16 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
 
   async function handleImport() {
     if (validRows.length === 0) return;
-    setImporting(true);
     setParseError(null);
     setResult(null);
 
     try {
       const products = validRows.map(previewRowToItem);
-
-      const res = await apiFetch("/products/import", {
-        method: "POST",
-        body: JSON.stringify({ products }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.message ?? "Erro ao importar produtos.");
-      }
-
-      const data: ImportResult = await res.json();
+      const data = await importProducts.mutateAsync(products);
       setResult(data);
       if (data.imported > 0) onImported();
     } catch (err) {
-      setParseError((err as Error).message);
-    } finally {
-      setImporting(false);
+      setParseError(err instanceof ApiError ? err.message : "Erro ao importar produtos.");
     }
   }
 

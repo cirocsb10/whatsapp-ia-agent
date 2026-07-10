@@ -3,33 +3,28 @@
 import { useState } from "react";
 import { XCircle } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { useApi } from "@/lib/hooks/useApi";
+import { useCancelOrder } from "@/features/orders/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCancelled: () => void;
   order: { id: string; orderNumber: string } | null;
 }
 
-export function CancelOrderModal({ open, onClose, onCancelled, order }: Props) {
-  const { apiFetch } = useApi();
-  const [loading, setLoading] = useState(false);
+export function CancelOrderModal({ open, onClose, order }: Props) {
+  const cancelOrder = useCancelOrder();
   const [error, setError] = useState<string | null>(null);
+  const loading = cancelOrder.isPending;
 
   async function handleCancel() {
     if (!order) return;
-    setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch(`/orders/${order.id}/cancel`, { method: "PATCH" });
-      if (!res.ok) throw new Error("Erro ao cancelar pedido.");
-      onCancelled();
+      await cancelOrder.mutateAsync(order.id);
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao cancelar pedido.");
     }
   }
 

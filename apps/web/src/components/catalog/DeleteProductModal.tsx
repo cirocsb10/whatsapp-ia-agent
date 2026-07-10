@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Product } from "@/types/product";
-import { useApi } from "@/lib/hooks/useApi";
+import { useDeleteProduct } from "@/features/catalog/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 
 interface Props {
   open: boolean;
@@ -14,23 +15,19 @@ interface Props {
 }
 
 export function DeleteProductModal({ open, onClose, onDeleted, product }: Props) {
-  const { apiFetch } = useApi();
-  const [deleting, setDeleting] = useState(false);
+  const deleteProduct = useDeleteProduct();
   const [error, setError] = useState<string | null>(null);
+  const deleting = deleteProduct.isPending;
 
   async function handleDelete() {
     if (!product) return;
-    setDeleting(true);
     setError(null);
     try {
-      const res = await apiFetch(`/products/${product.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erro ao excluir produto.");
+      await deleteProduct.mutateAsync(product.id);
       onDeleted();
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setDeleting(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao excluir produto.");
     }
   }
 

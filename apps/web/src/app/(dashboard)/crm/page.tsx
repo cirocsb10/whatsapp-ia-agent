@@ -1,26 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Kanban, TrendingUp, LayoutGrid, DollarSign } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { KanbanBoard } from "@/components/crm/KanbanBoard";
 import { DealFormModal } from "@/components/crm/DealFormModal";
-import { useApi } from "@/lib/hooks/useApi";
-import { useCrmStore } from "@/lib/store/crm.store";
-import { Deal, CrmStats, formatBRL } from "@/types/crm";
+import { useStages, useDeals, useCrmStats, useDeleteDeal } from "@/features/crm/api/queries";
+import { Deal, formatBRL } from "@/types/crm";
 
 export default function CrmPage() {
-  const { apiFetch } = useApi();
+  const stagesQuery = useStages();
+  const dealsQuery = useDeals();
+  const statsQuery = useCrmStats();
+  const deleteDeal = useDeleteDeal();
 
-  const setStages       = useCrmStore((s) => s.setStages);
-  const setDeals        = useCrmStore((s) => s.setDeals);
-  const setStats        = useCrmStore((s) => s.setStats);
-  const setLoading      = useCrmStore((s) => s.setLoading);
-  const setStatsLoading = useCrmStore((s) => s.setStatsLoading);
-  const removeDeal      = useCrmStore((s) => s.removeDeal);
-  const stats           = useCrmStore((s) => s.stats);
-  const loading         = useCrmStore((s) => s.loading);
-  const statsLoading    = useCrmStore((s) => s.statsLoading);
+  const stages = stagesQuery.data ?? [];
+  const stats = statsQuery.data ?? null;
+  const loading = stagesQuery.isPending || dealsQuery.isPending;
+  const statsLoading = statsQuery.isPending;
 
   const [formOpen,       setFormOpen]       = useState(false);
   const [editDeal,       setEditDeal]       = useState<Deal | null>(null);
@@ -28,32 +25,6 @@ export default function CrmPage() {
   const [toast,          setToast]          = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [deleteTarget,   setDeleteTarget]   = useState<Deal | null>(null);
   const [deleting,       setDeleting]       = useState(false);
-
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [stagesRes, dealsRes] = await Promise.all([
-        apiFetch("/crm/stages"),
-        apiFetch("/crm/deals"),
-      ]);
-      if (stagesRes.ok) setStages(await stagesRes.json());
-      if (dealsRes.ok)  setDeals(await dealsRes.json());
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch, setStages, setDeals, setLoading]);
-
-  const loadStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const res = await apiFetch("/crm/stats");
-      if (res.ok) setStats(await res.json() as CrmStats);
-    } finally {
-      setStatsLoading(false);
-    }
-  }, [apiFetch, setStats, setStatsLoading]);
-
-  useEffect(() => { void loadAll(); void loadStats(); }, [loadAll, loadStats]);
 
   useEffect(() => {
     if (!toast) return;
@@ -76,7 +47,6 @@ export default function CrmPage() {
   }
 
   function handleSaved() {
-    void loadStats();
     setToast({ type: "success", msg: isEditing ? "Negócio atualizado!" : "Negócio criado!" });
   }
 
@@ -84,10 +54,7 @@ export default function CrmPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const res = await apiFetch(`/crm/deals/${deleteTarget.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erro ao excluir.");
-      removeDeal(deleteTarget.id);
-      void loadStats();
+      await deleteDeal.mutateAsync(deleteTarget.id);
       setToast({ type: "success", msg: "Negócio excluído." });
     } catch {
       setToast({ type: "error", msg: "Falha ao excluir o negócio." });
@@ -121,7 +88,7 @@ export default function CrmPage() {
             <button
               type="button"
               className="catalog-add-btn"
-              onClick={() => openCreate(useCrmStore.getState().stages[0]?.id ?? "")}
+              onClick={() => openCreate(stages[0]?.id ?? "")}
             >
               + Novo negócio
             </button>

@@ -3,13 +3,8 @@
 import { useEffect, useState } from "react";
 import { Trash2, ShoppingCart, Search } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { useApi } from "@/lib/hooks/useApi";
-
-interface ProductResult {
-  id: string;
-  name: string;
-  priceCents: number;
-}
+import { useProductSearch, useCreateOrder, type ProductResult } from "@/features/orders/api/queries";
+import { ApiError } from "@/shared/api/fetcher";
 
 interface CartEntry {
   product: ProductResult;
@@ -27,32 +22,29 @@ function money(cents: number) {
 }
 
 export function CreateOrderModal({ open, onClose, onCreated }: Props) {
-  const { apiFetch } = useApi();
+  const createOrder = useCreateOrder();
   const [contactPhone, setContactPhone] = useState("");
   const [productSearch, setProductSearch] = useState("");
-  const [results, setResults] = useState<ProductResult[]>([]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const saving = createOrder.isPending;
+
+  const resultsQuery = useProductSearch(debouncedSearch, open);
+  const results = resultsQuery.data ?? [];
 
   useEffect(() => {
     if (!open) {
-      setContactPhone(""); setProductSearch(""); setResults([]); setCart([]); setNotes(""); setError(null);
+      setContactPhone(""); setProductSearch(""); setDebouncedSearch(""); setCart([]); setNotes(""); setError(null);
     }
   }, [open]);
 
   useEffect(() => {
-    if (!productSearch.trim()) { setResults([]); return; }
-    const t = setTimeout(async () => {
-      const res = await apiFetch(`/products?search=${encodeURIComponent(productSearch)}&limit=5&status=ACTIVE`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults((data.items ?? []).map((p: ProductResult) => ({ id: p.id, name: p.name, priceCents: p.priceCents })));
-      }
-    }, 300);
+    if (!open) return;
+    const t = setTimeout(() => setDebouncedSearch(productSearch), 300);
     return () => clearTimeout(t);
-  }, [productSearch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productSearch, open]);
 
   function addToCart(product: ProductResult) {
     setCart((prev) => {
@@ -61,7 +53,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
       return [...prev, { product, quantity: 1 }];
     });
     setProductSearch("");
-    setResults([]);
+    setDebouncedSearch("");
   }
 
   function setQty(productId: string, qty: number) {
@@ -74,27 +66,17 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
   async function handleCreate() {
     if (!contactPhone.trim()) { setError("Informe o telefone do cliente."); return; }
     if (cart.length === 0) { setError("Adicione pelo menos um produto."); return; }
-    setSaving(true);
     setError(null);
     try {
-      const res = await apiFetch("/orders", {
-        method: "POST",
-        body: JSON.stringify({
-          contactPhone: contactPhone.trim(),
-          items: cart.map((e) => ({ productId: e.product.id, quantity: e.quantity })),
-          notes: notes.trim() || undefined,
-        }),
+      await createOrder.mutateAsync({
+        contactPhone: contactPhone.trim(),
+        items: cart.map((e) => ({ productId: e.product.id, quantity: e.quantity })),
+        notes: notes.trim() || undefined,
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { message?: string })?.message ?? "Erro ao criar pedido.");
-      }
       onCreated();
       onClose();
     } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSaving(false);
+      setError(err instanceof ApiError ? err.message : "Erro ao criar pedido.");
     }
   }
 
@@ -148,7 +130,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
               style={{ width: "100%", padding: "8px 12px 8px 32px", background: "rgba(15,23,42,0.8)", border: "1px solid rgba(51,65,85,0.6)", borderRadius: 8, fontSize: 13, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }}
             />
           </div>
-          {results.length > 0 && (
+          {productSearch.trim() && results.length > 0 && (
             <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "#0f172a", border: "1px solid rgba(51,65,85,0.8)", borderRadius: 10, padding: "4px 0", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
               {results.map((p) => (
                 <button
