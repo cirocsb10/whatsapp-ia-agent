@@ -1058,12 +1058,12 @@
     top: calc(100% + 6px);
     right: 0;
     min-width: 200px;
-    background: #111827;
-    border: 1px solid rgba(99,102,241,0.18);
+    background: #ffffff;
+    border: 1px solid var(--c-border);
     border-radius: 10px;
     padding: 6px;
     z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    box-shadow: 0 12px 32px rgba(15,23,42,0.16);
   }
   .header-user-dropdown-info {
     padding: 6px 8px 8px;
@@ -1074,7 +1074,7 @@
   .header-user-dropdown-name {
     font-size: 12px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: #0f172a;
   }
   .header-user-dropdown-email {
     font-size: 11px;
@@ -1085,7 +1085,7 @@
   }
   .header-user-dropdown-divider {
     height: 1px;
-    background: rgba(99,102,241,0.1);
+    background: var(--c-border);
     margin: 4px 0;
   }
   .header-user-dropdown-item {
@@ -1100,12 +1100,12 @@
     cursor: pointer;
     background: transparent;
     border: none;
-    color: #94a3b8;
+    color: #64748b;
     transition: background 120ms, color 120ms;
     text-align: left;
   }
-  .header-user-dropdown-item:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
-  .header-user-dropdown-item-danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
+  .header-user-dropdown-item:hover { background: rgba(15,23,42,0.05); color: #0f172a; }
+  .header-user-dropdown-item-danger:hover { background: rgba(239,68,68,0.08); color: #dc2626; }
 
   .header-search-btn {
     display: none;

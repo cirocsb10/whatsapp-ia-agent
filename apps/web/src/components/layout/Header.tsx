@@ -87,7 +87,7 @@ export function Header({ title, subtitle }: { title: string; subtitle?: string }
         <button type="button" aria-label="Notificações" className="header-icon-btn relative">
           <Bell {...ICON} />
           {unread > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 ring-2 ring-[#0c1526]" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500 ring-2 ring-white" />
           )}
         </button>
         <UserMenu />
