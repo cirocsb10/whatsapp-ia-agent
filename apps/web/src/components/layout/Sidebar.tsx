@@ -57,7 +57,7 @@ export function Sidebar() {
   return (
     <aside
       style={{ width }}
-      className="relative flex flex-col h-screen shrink-0 bg-[#070d1a] border-r border-[#1a2d47] transition-[width] duration-200 overflow-hidden"
+      className="relative flex flex-col h-screen shrink-0 bg-white border-r border-slate-200 transition-[width] duration-200 overflow-hidden"
     >
       {/* Brand */}
       <Link
@@ -114,7 +114,7 @@ export function Sidebar() {
       </nav>
 
       {/* Status footer */}
-      <div className={cn("border-t border-[#1a2d47] py-3 shrink-0", collapsed ? "px-0 flex justify-center" : "px-3")}>
+      <div className={cn("border-t border-slate-200 py-3 shrink-0", collapsed ? "px-0 flex justify-center" : "px-3")}>
         {collapsed ? (
           <span className="relative flex h-1.5 w-1.5" title="WhatsApp conectado">
             <span className="absolute inset-0 rounded-full bg-green-400 opacity-50 pulse-dot" />
@@ -127,9 +127,9 @@ export function Sidebar() {
               <span className="relative rounded-full h-1.5 w-1.5 bg-green-500" />
             </span>
             <div className="min-w-0">
-              <p className="text-[11px] text-[#94a3b8] font-medium leading-none truncate">WhatsApp conectado</p>
-              <p className="text-[10px] text-[#334155] mt-0.5 leading-none">Meta Cloud API</p>
-              <p className="text-[10px] text-[#334155] mt-1.5 leading-none truncate">
+              <p className="text-[11px] text-slate-500 font-medium leading-none truncate">WhatsApp conectado</p>
+              <p className="text-[10px] text-slate-400 mt-0.5 leading-none">Meta Cloud API</p>
+              <p className="text-[10px] text-slate-400 mt-1.5 leading-none truncate">
                 v{process.env.NEXT_PUBLIC_APP_VERSION}
                 {process.env.NEXT_PUBLIC_BUILD_COMMIT && ` · ${process.env.NEXT_PUBLIC_BUILD_COMMIT}`}
                 {apiVersion && ` · API v${apiVersion}`}
