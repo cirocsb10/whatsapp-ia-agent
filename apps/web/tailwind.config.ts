@@ -5,7 +5,7 @@ const config: Config = {
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
-      fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
+      fontFamily: { sans: ["Outfit", "sans-serif"] },
       colors: {
         border: "var(--border-default)",
         background: "var(--bg-base)",

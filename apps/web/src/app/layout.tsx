@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Fraunces } from "next/font/google";
+import { Outfit, Fraunces } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Providers } from "./providers";
 import { getServerUser } from "@/server/auth";
 import "./globals.css";
 
-const plusJakarta = Plus_Jakarta_Sans({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-outfit",
 });
 
 const fraunces = Fraunces({
@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${plusJakarta.variable} ${fraunces.variable} bg-[#020617] font-sans text-slate-50 antialiased`}>
+      <body className={`${outfit.variable} ${fraunces.variable} bg-[#f8fafc] font-sans text-slate-900 antialiased`}>
         <NextTopLoader color="#22C55E" height={2} showSpinner={false} />
         <Providers initialUser={initialUser}>{children}</Providers>
       </body>

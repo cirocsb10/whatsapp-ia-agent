@@ -1,27 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap');
 @import "tailwindcss";
 
 /* ─── Design tokens ─────────────────────────────────────────── */
 @layer base {
   :root {
-    --c-base:    #070d1a;
-    --c-s1:      #0c1526;
-    --c-s2:      #111e32;
-    --c-s3:      #1a2d47;
-    --c-border:  #1a2d47;
+    --c-base:    #f8fafc;
+    --c-s1:      #ffffff;
+    --c-s2:      #f8fafc;
+    --c-s3:      #cbd5e1;
+    --c-border:  #e2e8f0;
     --c-green:   #22c55e;
     --c-indigo:  #6366f1;
-    --c-text:    #e2e8f0;
+    --c-text:    #0f172a;
     --c-muted:   #64748b;
-    --c-subtle:  #334155;
+    --c-subtle:  #94a3b8;
   }
 
-  html { color-scheme: dark; scroll-behavior: smooth; }
+  html { color-scheme: light; scroll-behavior: smooth; }
 
   body {
     background: var(--c-base);
     color: var(--c-text);
-    font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     font-feature-settings: 'cv02','cv03','cv04','cv11','ss01';
   }
