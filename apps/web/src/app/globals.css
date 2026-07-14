@@ -42,7 +42,7 @@
 
   /* ── KPI Card ─────────────────────────────────────────────── */
   .kpi {
-    background: rgba(12,21,38,0.75);
+    background: #ffffff;
     border: 1px solid var(--c-border);
     border-radius: 12px;
     padding: 16px 16px 14px;
@@ -97,7 +97,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15,23,42,0.5);
+    background: #f8fafc;
     border: 1px solid var(--c-border);
     transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
   }

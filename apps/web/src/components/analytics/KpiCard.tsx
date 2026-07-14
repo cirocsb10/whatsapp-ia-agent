@@ -65,7 +65,7 @@ export function KpiCard({
       <div className="flex items-center justify-between relative z-10">
         <span
           className="text-[10px] font-600 uppercase tracking-widest"
-          style={{ color: "#475569", letterSpacing: "0.08em" }}
+          style={{ color: "#64748b", letterSpacing: "0.08em" }}
         >
           {title}
         </span>
