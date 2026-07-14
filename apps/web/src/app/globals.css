@@ -4085,8 +4085,8 @@
     padding: 7px 12px 7px 32px;
     border-radius: 8px;
     font-size: 12px;
-    color: #e2e8f0;
-    background: rgba(0,0,0,0.25);
+    color: #0f172a;
+    background: rgba(15,23,42,0.04);
     border: 1px solid var(--c-border);
     outline: none;
     transition: border-color 160ms ease, background 160ms ease;
@@ -4095,7 +4095,7 @@
   .support-search-input:hover { border-color: var(--c-s3); }
   .support-search-input:focus {
     border-color: rgba(99,102,241,0.45);
-    background: rgba(0,0,0,0.35);
+    background: rgba(15,23,42,0.06);
     box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
   }
 
@@ -4104,7 +4104,7 @@
     gap: 4px;
     padding: 3px;
     border-radius: 10px;
-    background: rgba(0,0,0,0.25);
+    background: rgba(15,23,42,0.04);
     border: 1px solid var(--c-border);
   }
   .support-tab {
@@ -4122,15 +4122,15 @@
     border: none;
     white-space: nowrap;
   }
-  .support-tab:hover { color: #cbd5e1; background: rgba(255,255,255,0.04); }
+  .support-tab:hover { color: #0f172a; background: rgba(15,23,42,0.04); }
   .support-tab:focus-visible {
     outline: 2px solid var(--c-indigo);
     outline-offset: 1px;
   }
   .support-tab-active {
-    color: #f1f5f9;
+    color: #0f172a;
     background: var(--c-s2);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 4px rgba(15,23,42,0.12);
   }
   .support-tab-count {
     min-width: 18px;
@@ -4142,13 +4142,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.06);
-    color: #94a3b8;
+    background: rgba(15,23,42,0.06);
+    color: #64748b;
     font-variant-numeric: tabular-nums;
   }
   .support-tab-count-active {
     background: rgba(245,158,11,0.2);
-    color: #fbbf24;
+    color: #a16207;
   }
 
   /* Empty state */
