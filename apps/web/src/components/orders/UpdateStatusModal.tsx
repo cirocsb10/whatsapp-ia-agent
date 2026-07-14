@@ -61,7 +61,7 @@ export function UpdateStatusModal({ open, onClose, orderId, currentStatus }: Pro
             onClick={handleSave}
             disabled={saving}
             type="button"
-            style={{ height: 34, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(99,102,241,0.15)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer" }}
+            style={{ height: 34, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(99,102,241,0.15)", color: "#4f46e5", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer" }}
           >
             {saving ? "Salvando…" : "Salvar"}
           </button>
@@ -72,14 +72,14 @@ export function UpdateStatusModal({ open, onClose, orderId, currentStatus }: Pro
         {STATUS_OPTIONS.map((opt) => (
           <label
             key={opt.value}
-            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, background: selected === opt.value ? "rgba(99,102,241,0.1)" : "transparent", border: `1px solid ${selected === opt.value ? "rgba(99,102,241,0.3)" : "transparent"}`, cursor: "pointer", fontSize: 13, color: selected === opt.value ? "#a5b4fc" : "#94a3b8" }}
+            style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, background: selected === opt.value ? "rgba(99,102,241,0.1)" : "transparent", border: `1px solid ${selected === opt.value ? "rgba(99,102,241,0.3)" : "transparent"}`, cursor: "pointer", fontSize: 13, color: selected === opt.value ? "#4f46e5" : "#64748b" }}
           >
             <input type="radio" name="status" value={opt.value} checked={selected === opt.value} onChange={() => setSelected(opt.value)} style={{ accentColor: "#6366f1" }} />
             {opt.label}
           </label>
         ))}
       </div>
-      {error && <p style={{ marginTop: 10, fontSize: 12, color: "#f87171" }}>{error}</p>}
+      {error && <p style={{ marginTop: 10, fontSize: 12, color: "#dc2626" }}>{error}</p>}
     </Modal>
   );
 }
