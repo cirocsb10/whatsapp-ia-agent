@@ -199,7 +199,7 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
       title="Importar produtos"
       subtitle="Importe vários produtos de uma vez via planilha Excel"
       size={previewRows.length > 0 ? "xl" : "md"}
-      headerLeading={<FileSpreadsheet className="w-5 h-5 text-green-400" />}
+      headerLeading={<FileSpreadsheet className="w-5 h-5 text-green-600" />}
       footer={
         <>
           <button onClick={handleClose} className="btn-ghost" type="button">
@@ -236,7 +236,7 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>Template Excel</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a" }}>Template Excel</div>
             <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
               Baixe o modelo com as colunas corretas
             </div>
@@ -254,7 +254,7 @@ export function ImportProductsModal({ open, onClose, onImported }: Props) {
               fontSize: 11,
               fontWeight: 600,
               background: "rgba(99,102,241,0.12)",
-              color: "#818cf8",
+              color: "#4f46e5",
               border: "1px solid rgba(99,102,241,0.25)",
               cursor: "pointer",
             }}
