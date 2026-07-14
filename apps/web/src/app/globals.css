@@ -3931,8 +3931,7 @@
     gap: 14px;
     padding: 16px 18px;
     border-radius: 12px;
-    background: rgba(12,21,38,0.85);
-    backdrop-filter: blur(12px);
+    background: #ffffff;
     border: 1px solid var(--c-border);
     overflow: hidden;
     transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
@@ -3963,7 +3962,7 @@
   .support-stat-card:hover {
     border-color: var(--stat-border, var(--c-s3));
     background: var(--c-s2);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 24px rgba(15,23,42,0.12);
   }
   .support-stat-card:hover .support-stat-glow { opacity: 1; }
   .support-stat-icon {
@@ -3986,7 +3985,7 @@
   .support-stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.03em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -4425,15 +4424,14 @@
     position: relative;
     padding: 18px 20px;
     border-radius: 14px;
-    background: rgba(12,21,38,0.75);
-    backdrop-filter: blur(12px);
+    background: #ffffff;
     border: 1px solid var(--c-border);
     overflow: hidden;
     transition: border-color 200ms ease, box-shadow 200ms ease;
   }
   .support-info-card:hover {
     border-color: var(--c-s3);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(15,23,42,0.1);
   }
   .support-info-card-glow {
     position: absolute;
