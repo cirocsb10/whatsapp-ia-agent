@@ -6740,11 +6740,11 @@
     border: 1px solid rgba(99,102,241,0.4);
     cursor: pointer;
     transition: background 180ms ease, transform 120ms ease, box-shadow 180ms ease;
-    box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+    box-shadow: 0 2px 8px rgba(99,102,241,0.2);
   }
   .btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
-    box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.3);
   }
   .btn-primary:active:not(:disabled) { transform: scale(0.98); }
   .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -6757,13 +6757,13 @@
     border-radius: 8px;
     font-size: 12px;
     font-weight: 500;
-    color: #94a3b8;
+    color: #64748b;
     background: transparent;
     border: 1px solid transparent;
     cursor: pointer;
     transition: color 160ms ease, background 160ms ease;
   }
-  .btn-ghost:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
+  .btn-ghost:hover { color: #0f172a; background: rgba(15,23,42,0.04); }
 
   /* ── Modal ────────────────────────────────────────────────── */
   .modal-overlay {
