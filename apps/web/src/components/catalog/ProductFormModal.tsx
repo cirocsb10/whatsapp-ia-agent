@@ -124,7 +124,7 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
       title={isEditing ? "Editar produto" : "Novo produto"}
       subtitle={isEditing ? `Editando: ${product?.name}` : "Preencha os dados do produto"}
       size="md"
-      headerLeading={<Package className="w-5 h-5 text-indigo-400" />}
+      headerLeading={<Package className="w-5 h-5 text-indigo-600" />}
       footer={
         <>
           <button onClick={onClose} className="btn-ghost" type="button">

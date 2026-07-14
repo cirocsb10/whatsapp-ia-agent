@@ -33,7 +33,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
       title={order ? order.orderNumber : "Detalhes do pedido"}
       {...(order ? { subtitle: `Criado em ${new Date(order.createdAt).toLocaleDateString("pt-BR")}` } : {})}
       size="lg"
-      headerLeading={<ShoppingCart className="w-5 h-5 text-indigo-400" />}
+      headerLeading={<ShoppingCart className="w-5 h-5 text-indigo-600" />}
     >
       {loading && <p style={{ fontSize: 13, color: "#64748b", textAlign: "center", padding: "24px 0" }}>Carregando...</p>}
 

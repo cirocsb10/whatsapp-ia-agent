@@ -53,7 +53,7 @@ export function UpdateStatusModal({ open, onClose, orderId, currentStatus }: Pro
       title="Atualizar status"
       subtitle="Selecione o novo status do pedido"
       size="sm"
-      headerLeading={<RefreshCw className="w-5 h-5 text-indigo-400" />}
+      headerLeading={<RefreshCw className="w-5 h-5 text-indigo-600" />}
       footer={
         <>
           <button onClick={onClose} className="btn-ghost" type="button">Cancelar</button>

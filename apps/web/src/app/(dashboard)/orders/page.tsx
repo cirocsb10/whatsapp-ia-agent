@@ -282,7 +282,7 @@ export default function OrdersPage() {
           <div className="support-info-card">
             <div className="support-info-card-header">
               <div className="support-info-icon" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}>
-                <ShoppingCart className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+                <ShoppingCart className="w-3.5 h-3.5 text-indigo-600" strokeWidth={1.8} />
               </div>
               <span className="text-[12px] font-semibold text-[#e2e8f0]">Como os pedidos funcionam</span>
             </div>

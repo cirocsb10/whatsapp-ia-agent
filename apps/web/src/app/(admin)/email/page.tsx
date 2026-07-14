@@ -176,7 +176,7 @@ export default function PlatformEmailPage() {
         {/* Formulário SMTP */}
         <div className="super-admin-table-wrap p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-[var(--c-border)] pb-3">
-            <Server className="w-4 h-4 text-indigo-400" aria-hidden />
+            <Server className="w-4 h-4 text-indigo-600" aria-hidden />
             <h3 className="text-sm font-semibold text-white">Credenciais do servidor</h3>
           </div>
 
@@ -285,7 +285,7 @@ export default function PlatformEmailPage() {
         {/* Enviar email de teste */}
         <div className="super-admin-table-wrap p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-[var(--c-border)] pb-3">
-            <Mail className="w-4 h-4 text-indigo-400" aria-hidden />
+            <Mail className="w-4 h-4 text-indigo-600" aria-hidden />
             <h3 className="text-sm font-semibold text-white">Enviar e-mail de teste</h3>
           </div>
           <p className="text-[12px] text-slate-500 -mt-1">

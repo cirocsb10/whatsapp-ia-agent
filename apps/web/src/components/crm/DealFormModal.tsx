@@ -126,7 +126,7 @@ export function DealFormModal({ open, onClose, onSaved, deal, initialStageId }: 
       title={isEditing ? "Editar negócio" : "Novo negócio"}
       subtitle={isEditing ? `Editando: ${deal?.title}` : "Preencha os dados do negócio"}
       size="md"
-      headerLeading={<Kanban className="w-5 h-5 text-indigo-400" />}
+      headerLeading={<Kanban className="w-5 h-5 text-indigo-600" />}
       footer={
         <>
           <button type="button" onClick={onClose} className="btn-ghost">Cancelar</button>

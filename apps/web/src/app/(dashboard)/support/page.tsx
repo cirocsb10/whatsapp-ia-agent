@@ -399,7 +399,7 @@ export default function SupportPage() {
             <div className="support-info-card-header">
               <div className="support-info-step">1</div>
               <div className="support-info-icon" style={{ background: "rgba(99,102,241,0.12)", borderColor: "rgba(99,102,241,0.25)" }}>
-                <Bot className="w-4 h-4 text-indigo-400" strokeWidth={1.8} />
+                <Bot className="w-4 h-4 text-indigo-600" strokeWidth={1.8} />
               </div>
               <span className="support-info-title">Como funciona o handoff</span>
             </div>

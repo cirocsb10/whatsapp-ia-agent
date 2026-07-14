@@ -44,7 +44,7 @@ const KPI_CONFIG = [
     label: "Conversas Total",
     key: "total_conversations" as const,
     icon: MessageSquare,
-    iconColor: "text-indigo-400",
+    iconColor: "text-indigo-600",
     accent: "#6366f1",
   },
 ];
