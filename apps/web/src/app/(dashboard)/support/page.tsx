@@ -152,8 +152,8 @@ export default function SupportPage() {
           <div className={`support-alert ${hasUrgent ? "support-alert--urgent" : ""}`}>
             <div className="support-alert-icon">
               {hasUrgent
-                ? <Zap className="w-4 h-4 text-amber-400" strokeWidth={2} />
-                : <AlertCircle className="w-4 h-4 text-amber-400" strokeWidth={2} />
+                ? <Zap className="w-4 h-4 text-amber-700" strokeWidth={2} />
+                : <AlertCircle className="w-4 h-4 text-amber-700" strokeWidth={2} />
               }
             </div>
             <div className="flex-1 min-w-0">
