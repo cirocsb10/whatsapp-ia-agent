@@ -4222,7 +4222,7 @@
     align-items: center;
     gap: 14px;
     padding: 16px 18px;
-    border-bottom: 1px solid rgba(26,45,71,0.5);
+    border-bottom: 1px solid var(--c-border);
   }
 
   /* Conversation rows */
@@ -4238,7 +4238,7 @@
     align-items: center;
     gap: 14px;
     padding: 14px 18px 14px 22px;
-    border-bottom: 1px solid rgba(26,45,71,0.55);
+    border-bottom: 1px solid var(--c-border);
     transition: background 180ms ease;
   }
   @media (max-width: 640px) {
@@ -4255,7 +4255,7 @@
     }
   }
   .support-conv-row:last-child { border-bottom: none; }
-  .support-conv-row:hover { background: rgba(255,255,255,0.025); }
+  .support-conv-row:hover { background: rgba(15,23,42,0.025); }
   .support-conv-row--clickable {
     cursor: pointer;
     transition: background 180ms ease, border-color 180ms ease;
@@ -4268,14 +4268,14 @@
     outline-offset: -2px;
   }
   .support-conv-row--clickable:hover .support-conv-chevron {
-    color: #a5b4fc;
+    color: #4f46e5;
     transform: translateX(2px);
   }
   .support-conv-row--urgent {
     background: linear-gradient(90deg, rgba(245,158,11,0.04) 0%, transparent 40%);
   }
   .support-conv-row--urgent:hover {
-    background: linear-gradient(90deg, rgba(245,158,11,0.07) 0%, rgba(255,255,255,0.02) 40%);
+    background: linear-gradient(90deg, rgba(245,158,11,0.07) 0%, rgba(15,23,42,0.02) 40%);
   }
   .support-conv-accent {
     position: absolute;
@@ -4315,7 +4315,7 @@
   .support-conv-name {
     font-size: 13px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.01em;
   }
   .support-urgency-tag {
@@ -4328,7 +4328,7 @@
     font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: #fbbf24;
+    color: #a16207;
     background: rgba(245,158,11,0.12);
     border: 1px solid rgba(245,158,11,0.25);
   }
@@ -4355,7 +4355,7 @@
   }
   @media (min-width: 641px) {
     .support-conv-aside--action {
-      border-left: 1px solid rgba(26,45,71,0.65);
+      border-left: 1px solid var(--c-border);
       padding-left: 16px;
       margin-left: 4px;
     }
