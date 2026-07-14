@@ -248,7 +248,7 @@ export function ProductFormModal({ open, onClose, onSaved, product }: Props) {
               background: "rgba(239,68,68,0.08)",
               border: "1px solid rgba(239,68,68,0.2)",
               borderRadius: 8,
-              color: "#fca5a5",
+              color: "#dc2626",
               fontSize: 12,
             }}
           >

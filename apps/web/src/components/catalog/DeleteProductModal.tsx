@@ -38,7 +38,7 @@ export function DeleteProductModal({ open, onClose, onDeleted, product }: Props)
       title="Excluir produto"
       subtitle="Esta ação não pode ser desfeita"
       size="sm"
-      headerLeading={<Trash2 className="w-5 h-5 text-red-400" />}
+      headerLeading={<Trash2 className="w-5 h-5 text-red-600" />}
       footer={
         <>
           <button onClick={onClose} className="btn-ghost" type="button">
@@ -55,7 +55,7 @@ export function DeleteProductModal({ open, onClose, onDeleted, product }: Props)
               fontSize: 12,
               fontWeight: 600,
               background: "rgba(239,68,68,0.15)",
-              color: "#f87171",
+              color: "#dc2626",
               border: "1px solid rgba(239,68,68,0.3)",
               cursor: "pointer",
             }}
@@ -65,13 +65,13 @@ export function DeleteProductModal({ open, onClose, onDeleted, product }: Props)
         </>
       }
     >
-      <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
         Tem certeza que deseja excluir{" "}
-        <strong style={{ color: "#e2e8f0" }}>{product?.name}</strong>?
+        <strong style={{ color: "#0f172a" }}>{product?.name}</strong>?
         Todos os dados do produto serão removidos permanentemente.
       </p>
       {error && (
-        <p style={{ marginTop: 10, fontSize: 12, color: "#f87171" }}>{error}</p>
+        <p style={{ marginTop: 10, fontSize: 12, color: "#dc2626" }}>{error}</p>
       )}
     </Modal>
   );
