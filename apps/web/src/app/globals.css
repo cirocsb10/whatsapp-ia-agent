@@ -5242,15 +5242,15 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #a5b4fc;
-    background: rgba(99,102,241,0.12);
+    color: #4f46e5;
+    background: rgba(99,102,241,0.1);
     border: 1px solid rgba(99,102,241,0.2);
     margin-bottom: 28px;
   }
   .orders-hero-title {
     font-size: 20px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.2;
   }
@@ -5296,7 +5296,7 @@
     padding: 0 16px;
     height: 38px;
     border-bottom: 1px solid var(--c-border);
-    background: rgba(255,255,255,0.02);
+    background: rgba(15,23,42,0.02);
     flex-shrink: 0;
   }
   .orders-th {
@@ -5316,12 +5316,12 @@
     align-items: center;
     padding: 0 16px;
     min-height: 52px;
-    border-bottom: 1px solid rgba(26,45,71,0.5);
+    border-bottom: 1px solid var(--c-border);
     transition: background 140ms ease;
     cursor: pointer;
   }
   .orders-tr:last-child { border-bottom: none; }
-  .orders-tr:hover { background: rgba(255,255,255,0.025); }
+  .orders-tr:hover { background: rgba(15,23,42,0.03); }
 
   .orders-td {
     font-size: 12px;
@@ -5378,7 +5378,7 @@
     position: absolute;
     inset: -8px;
     border-radius: 26px;
-    border: 1px solid rgba(26,45,71,0.6);
+    border: 1px solid var(--c-border);
     pointer-events: none;
   }
 
@@ -5430,7 +5430,7 @@
   .orders-ghost-btn:hover {
     color: var(--c-text);
     border-color: var(--c-s3);
-    background: rgba(255,255,255,0.04);
+    background: rgba(15,23,42,0.04);
   }
 
   .orders-btn {
@@ -5449,22 +5449,22 @@
   }
   .orders-btn:disabled { cursor: default; }
   .orders-btn-primary {
-    color: #4ade80;
-    background: rgba(34,197,94,0.08);
-    border: 1px solid rgba(34,197,94,0.2);
+    color: #15803d;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
   }
   .orders-btn-primary:hover:not(:disabled) {
-    background: rgba(34,197,94,0.14);
-    border-color: rgba(34,197,94,0.35);
+    background: rgba(34,197,94,0.16);
+    border-color: rgba(34,197,94,0.4);
   }
   .orders-btn-secondary {
-    color: #94a3b8;
-    background: rgba(255,255,255,0.02);
+    color: #64748b;
+    background: #f8fafc;
     border: 1px solid var(--c-border);
   }
   .orders-btn-secondary:hover:not(:disabled) {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
+    background: #f1f5f9;
     border-color: var(--c-s3);
   }
 
@@ -5491,18 +5491,18 @@
   }
   .orders-tab:hover {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.06);
+    background: rgba(15,23,42,0.04);
+    border-color: rgba(15,23,42,0.06);
   }
   .orders-tab-active {
-    color: #4ade80;
-    background: rgba(34,197,94,0.08);
-    border-color: rgba(34,197,94,0.2);
+    color: #15803d;
+    background: rgba(34,197,94,0.1);
+    border-color: rgba(34,197,94,0.25);
   }
   .orders-tab-active:hover {
-    color: #4ade80;
-    background: rgba(34,197,94,0.14);
-    border-color: rgba(34,197,94,0.35);
+    color: #15803d;
+    background: rgba(34,197,94,0.16);
+    border-color: rgba(34,197,94,0.4);
   }
 
   .orders-tool-btn {
@@ -5512,8 +5512,8 @@
     width: 34px;
     height: 34px;
     border-radius: 7px;
-    color: #94a3b8;
-    background: rgba(255,255,255,0.02);
+    color: #64748b;
+    background: #f8fafc;
     border: 1px solid var(--c-border);
     cursor: pointer;
     flex-shrink: 0;
@@ -5521,7 +5521,7 @@
   }
   .orders-tool-btn:hover {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
+    background: #f1f5f9;
     border-color: var(--c-s3);
   }
 
