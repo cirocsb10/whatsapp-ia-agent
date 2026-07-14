@@ -215,7 +215,7 @@ export default function CatalogPage() {
             <div
               key={s.label}
               style={{
-                background: "rgba(15,23,42,0.8)",
+                background: "#ffffff",
                 border: "1px solid var(--c-border)",
                 borderRadius: 10,
                 padding: "14px 16px",
@@ -239,7 +239,7 @@ export default function CatalogPage() {
                 <s.icon className="w-4 h-4" style={{ color: s.color }} />
               </div>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#e2e8f0" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>
                   {String(s.value)}
                 </div>
                 <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{s.label}</div>
@@ -316,7 +316,7 @@ export default function CatalogPage() {
               <div className="catalog-empty-icon">
                 <Package className="w-6 h-6" style={{ color: "#475569" }} />
               </div>
-              <p className="text-[15px] font-semibold text-[#e2e8f0]">
+              <p className="text-[15px] font-semibold text-[#0f172a]">
                 {search || filterTab !== "all" || activeFilterCount > 0
                   ? "Nenhum produto encontrado"
                   : "Nenhum produto cadastrado"}
