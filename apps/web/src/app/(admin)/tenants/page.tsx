@@ -30,14 +30,14 @@ const KPI_CONFIG = [
     label: "Total Tenants",
     key: "total_tenants" as const,
     icon: Building2,
-    iconColor: "text-orange-400",
+    iconColor: "text-orange-600",
     accent: "#f97316",
   },
   {
     label: "Tenants Ativos",
     key: "active_tenants" as const,
     icon: Users,
-    iconColor: "text-green-400",
+    iconColor: "text-green-600",
     accent: "#22c55e",
   },
   {
@@ -51,10 +51,10 @@ const KPI_CONFIG = [
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    ACTIVE: "bg-green-500/10 text-green-400 border-green-500/25",
-    TRIAL: "bg-amber-500/10 text-amber-400 border-amber-500/25",
-    SUSPENDED: "bg-red-500/10 text-red-400 border-red-500/25",
-    CANCELLED: "bg-slate-800/80 text-slate-500 border-slate-600/50",
+    ACTIVE: "bg-green-500/10 text-green-600 border-green-500/25",
+    TRIAL: "bg-amber-500/10 text-amber-700 border-amber-500/25",
+    SUSPENDED: "bg-red-500/10 text-red-600 border-red-500/25",
+    CANCELLED: "bg-slate-100 text-slate-500 border-slate-300",
   };
   const labels: Record<string, string> = {
     ACTIVE: "Ativo",
@@ -153,7 +153,7 @@ export default function TenantsPage() {
               <p className="text-[10px] uppercase tracking-wider text-slate-500 font-medium">
                 Taxa de ativação
               </p>
-              <p className="text-2xl font-bold text-white tabular-nums">
+              <p className="text-2xl font-bold text-slate-900 tabular-nums">
                 {kpis.total_tenants > 0
                   ? Math.round((kpis.active_tenants / kpis.total_tenants) * 100)
                   : 0}
@@ -187,7 +187,7 @@ export default function TenantsPage() {
             title="Nesta Página"
             value={pageLabel}
             icon={Building2}
-            iconColor="text-violet-400"
+            iconColor="text-violet-600"
             accent="#8b5cf6"
             loading={loading}
           />
@@ -196,7 +196,7 @@ export default function TenantsPage() {
         <div className="super-admin-table-wrap">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--c-border)]">
             <div>
-              <h3 className="text-sm font-semibold text-white">Todos os Tenants</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Todos os Tenants</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">
                 Ordenados por data de criação (mais recentes primeiro)
               </p>
@@ -221,7 +221,7 @@ export default function TenantsPage() {
                   <tr>
                     <td colSpan={6} className="px-4 py-16 text-center">
                       <Building2 className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                      <p className="text-sm text-slate-400">Nenhum tenant cadastrado</p>
+                      <p className="text-sm text-slate-500">Nenhum tenant cadastrado</p>
                     </td>
                   </tr>
                 ) : (
@@ -235,7 +235,7 @@ export default function TenantsPage() {
                     return (
                       <tr key={t.id} className="super-admin-table-row">
                         <td>
-                          <p className="font-medium text-white">{t.name}</p>
+                          <p className="font-medium text-slate-900">{t.name}</p>
                           <p className="text-xs text-slate-500 mt-0.5">
                             {t.slug}.whatsagent.com.br
                           </p>
@@ -244,7 +244,7 @@ export default function TenantsPage() {
                           </p>
                         </td>
                         <td>
-                          <span className="text-[11px] px-2.5 py-1 bg-indigo-500/10 text-indigo-300 rounded-full border border-indigo-500/20 font-medium">
+                          <span className="text-[11px] px-2.5 py-1 bg-indigo-500/10 text-indigo-600 rounded-full border border-indigo-500/20 font-medium">
                             {t.planType}
                           </span>
                         </td>
@@ -252,7 +252,7 @@ export default function TenantsPage() {
                           <span
                             className={`inline-flex items-center gap-1.5 text-xs font-medium ${
                               t.whatsappStatus === "CONNECTED"
-                                ? "text-green-400"
+                                ? "text-green-600"
                                 : "text-slate-500"
                             }`}
                           >
@@ -265,7 +265,7 @@ export default function TenantsPage() {
                           </span>
                         </td>
                         <td>
-                          <span className="text-xs text-slate-300 tabular-nums">
+                          <span className="text-xs text-slate-900 tabular-nums">
                             {msgs.toLocaleString("pt-BR")} / {limit.toLocaleString("pt-BR")}
                           </span>
                           <div className="super-admin-usage-track" title={`${Math.round(pct)}% do limite`}>
@@ -363,18 +363,18 @@ export default function TenantsPage() {
           aria-labelledby="confirm-title"
         >
           <div className="super-admin-confirm-dialog">
-            <h2 id="confirm-title" className="text-base font-semibold text-white">
+            <h2 id="confirm-title" className="text-base font-semibold text-slate-900">
               {pending.action === "suspend" ? "Suspender tenant" : "Reativar tenant"}
             </h2>
-            <p className="text-sm text-slate-400 mt-2 leading-relaxed">
+            <p className="text-sm text-slate-500 mt-2 leading-relaxed">
               {pending.action === "suspend" ? (
                 <>
-                  O tenant <strong className="text-slate-200">{pending.tenantName}</strong>{" "}
+                  O tenant <strong className="text-slate-900">{pending.tenantName}</strong>{" "}
                   perderá acesso ao painel e ao envio via WhatsApp até ser reativado.
                 </>
               ) : (
                 <>
-                  O tenant <strong className="text-slate-200">{pending.tenantName}</strong>{" "}
+                  O tenant <strong className="text-slate-900">{pending.tenantName}</strong>{" "}
                   voltará ao status ativo e poderá operar normalmente.
                 </>
               )}
@@ -383,7 +383,7 @@ export default function TenantsPage() {
               <button
                 type="button"
                 onClick={() => setPending(null)}
-                className="px-3 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-lg border border-[var(--c-border)] transition-colors cursor-pointer"
+                className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg border border-[var(--c-border)] transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
@@ -392,8 +392,8 @@ export default function TenantsPage() {
                 onClick={() => void confirmAction()}
                 className={`px-3 py-2 text-xs font-medium rounded-lg cursor-pointer transition-colors ${
                   pending.action === "suspend"
-                    ? "bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30"
-                    : "bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30"
+                    ? "bg-red-500/20 text-red-600 border border-red-500/30 hover:bg-red-500/30"
+                    : "bg-green-500/20 text-green-600 border border-green-500/30 hover:bg-green-500/30"
                 }`}
               >
                 {pending.action === "suspend" ? "Confirmar suspensão" : "Confirmar reativação"}
