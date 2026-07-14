@@ -44,7 +44,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
               <User className="w-3 h-3" style={{ display: "inline", marginRight: 4 }} />
               Cliente
             </p>
-            <p style={{ fontSize: 13, color: "#e2e8f0" }}>{order.contact.name ?? "—"}</p>
+            <p style={{ fontSize: 13, color: "#0f172a" }}>{order.contact.name ?? "—"}</p>
             <p style={{ fontSize: 12, color: "#64748b" }}>{order.contact.phone}</p>
           </section>
 
@@ -56,12 +56,12 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {order.items.map((item) => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                  <span style={{ color: "#e2e8f0" }}>{item.quantity}× {item.productName}</span>
-                  <span style={{ color: "#94a3b8" }}>{money(item.subtotalCents)}</span>
+                  <span style={{ color: "#0f172a" }}>{item.quantity}× {item.productName}</span>
+                  <span style={{ color: "#64748b" }}>{money(item.subtotalCents)}</span>
                 </div>
               ))}
             </div>
-            <div style={{ borderTop: "1px solid rgba(51,65,85,0.6)", marginTop: 10, paddingTop: 10 }}>
+            <div style={{ borderTop: "1px solid var(--c-border)", marginTop: 10, paddingTop: 10 }}>
               {order.discountCents > 0 && (
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#64748b", marginBottom: 4 }}>
                   <span>Desconto</span><span>-{money(order.discountCents)}</span>
@@ -72,7 +72,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
                   <span>Frete</span><span>{money(order.shippingCents)}</span>
                 </div>
               )}
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 600, color: "#e2e8f0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 600, color: "#0f172a" }}>
                 <span>Total</span><span>{money(order.totalCents)}</span>
               </div>
             </div>
@@ -85,7 +85,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
                 Pagamento
               </p>
               {order.payments.map((pay) => (
-                <div key={pay.id} style={{ fontSize: 13, color: "#e2e8f0", display: "flex", justifyContent: "space-between" }}>
+                <div key={pay.id} style={{ fontSize: 13, color: "#0f172a", display: "flex", justifyContent: "space-between" }}>
                   <span>{pay.method} — {PAYMENT_STATUS_LABEL[pay.status] ?? pay.status}</span>
                   <span>{money(pay.amountCents)}</span>
                 </div>
@@ -96,7 +96,7 @@ export function OrderDetailModal({ open, onClose, orderId }: Props) {
           {order.notes && (
             <section>
               <p style={{ fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Observações</p>
-              <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.5 }}>{order.notes}</p>
+              <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>{order.notes}</p>
             </section>
           )}
         </div>
