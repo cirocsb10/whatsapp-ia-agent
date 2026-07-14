@@ -39,7 +39,7 @@ const TABS: {
 }[] = [
   { key: "conta",        label: "Conta",        icon: User,       desc: "Perfil, loja e preferências da conta",     accent: "#6366f1" },
   { key: "notificacoes", label: "Notificações",  icon: Bell,       desc: "Alertas de conversas, pedidos e relatórios", accent: "#f59e0b" },
-  { key: "seguranca",    label: "Segurança",     icon: Shield,     desc: "Senha, 2FA e sessões ativas",                accent: "#818cf8" },
+  { key: "seguranca",    label: "Segurança",     icon: Shield,     desc: "Senha, 2FA e sessões ativas",                accent: "#4f46e5" },
   { key: "integracoes",  label: "Integrações",   icon: Plug,       desc: "WhatsApp, pagamentos e serviços conectados", accent: "#22c55e" },
   { key: "plano",        label: "Plano",         icon: CreditCard, desc: "Assinatura, uso e histórico de pagamentos",   accent: "#06b6d4" },
 ];
@@ -133,10 +133,10 @@ function TabConta() {
       <SectionPanel title="Perfil" description="Informações visíveis no painel e relatórios." accent="#6366f1">
         <div className="settings-avatar-row">
           <div className="settings-avatar">
-            <User className="w-8 h-8 text-slate-400" />
+            <User className="w-8 h-8 text-slate-500" />
           </div>
           <div>
-            <p className="text-[13px] font-medium text-[#e2e8f0]">Foto do perfil</p>
+            <p className="text-[13px] font-medium text-[#0f172a]">Foto do perfil</p>
             <p className="text-[11px] text-[#64748b] mt-1">Upload de avatar em breve.</p>
           </div>
         </div>
@@ -198,9 +198,9 @@ function TabConta() {
       {/* Danger zone */}
       <div className="settings-danger-zone">
         <div className="settings-danger-head">
-          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" strokeWidth={1.8} />
+          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" strokeWidth={1.8} />
           <div>
-            <p className="text-[13px] font-semibold text-[#f87171]">Zona de perigo</p>
+            <p className="text-[13px] font-semibold text-[#dc2626]">Zona de perigo</p>
             <p className="text-[11px] text-[#64748b] mt-0.5">Ações irreversíveis para a sua conta.</p>
           </div>
         </div>
@@ -333,7 +333,7 @@ function TabNotificacoes() {
               {i > 0 && <div className="settings-divider" />}
               <div className="settings-notif-row">
                 <div>
-                  <p className="text-[13px] font-medium text-[#e2e8f0]">{label}</p>
+                  <p className="text-[13px] font-medium text-[#0f172a]">{label}</p>
                   <p className="text-[11px] text-[#64748b] mt-0.5">{desc}</p>
                 </div>
                 <Toggle checked={prefs[key]} onChange={() => toggle(key)} />
@@ -411,7 +411,7 @@ function TabSeguranca() {
             <Shield className="w-5 h-5 text-indigo-600" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-medium text-[#e2e8f0]">Alterar senha</p>
+            <p className="text-[13px] font-medium text-[#0f172a]">Alterar senha</p>
             <p className="text-[11px] text-[#64748b] mt-0.5">
               Atualize sua senha de acesso ao painel
             </p>
@@ -473,8 +473,8 @@ function TabSeguranca() {
                   required
                 />
               </FieldRow>
-              {error && <p className="text-sm text-rose-400">{error}</p>}
-              {success && <p className="text-sm text-green-400">Senha alterada com sucesso!</p>}
+              {error && <p className="text-sm text-rose-600">{error}</p>}
+              {success && <p className="text-sm text-green-600">Senha alterada com sucesso!</p>}
               <button type="submit" className="settings-save-btn" disabled={saving}>
                 {saving ? "Salvando..." : "Salvar nova senha"}
               </button>
@@ -554,9 +554,9 @@ function TabIntegracoes() {
   ];
 
   const statusIcon = (s: ConnStatus) => {
-    if (s === "connected") return <CheckCircle2 className="w-3.5 h-3.5 text-green-400" strokeWidth={2} />;
+    if (s === "connected") return <CheckCircle2 className="w-3.5 h-3.5 text-green-600" strokeWidth={2} />;
     if (s === "pending") return <div className="w-3.5 h-3.5 rounded-full bg-amber-400/30 border border-amber-400 flex-shrink-0" />;
-    return <div className="w-3.5 h-3.5 rounded-full border border-[#334155] flex-shrink-0" />;
+    return <div className="w-3.5 h-3.5 rounded-full border border-[#cbd5e1] flex-shrink-0" />;
   };
 
   return (
@@ -577,13 +577,13 @@ function TabIntegracoes() {
                   {statusIcon(status)}
                   <span
                     className="text-[10px] font-medium"
-                    style={{ color: status === "connected" ? "#4ade80" : status === "pending" ? "#fbbf24" : "#475569" }}
+                    style={{ color: status === "connected" ? "#15803d" : status === "pending" ? "#a16207" : "#94a3b8" }}
                   >
                     {badge}
                   </span>
                 </div>
               </div>
-              <p className="text-[13px] font-semibold text-[#e2e8f0] mt-3">{name}</p>
+              <p className="text-[13px] font-semibold text-[#0f172a] mt-3">{name}</p>
               <p className="text-[11px] text-[#64748b] mt-1 leading-relaxed">{desc}</p>
               {actionLabel && onAction && (
                 <button
@@ -623,7 +623,7 @@ function TabIntegracoes() {
             <div className="settings-modal-head">
               <div className="flex items-start gap-3">
                 <div className="settings-modal-icon" style={{ background: "rgba(251,191,36,0.12)", borderColor: "rgba(251,191,36,0.25)" }}>
-                  <MessageSquare className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
+                  <MessageSquare className="w-4 h-4 text-amber-700" strokeWidth={1.8} />
                 </div>
                 <div>
                   <p className="settings-modal-title">Configurar Meta Cloud API</p>
@@ -720,11 +720,11 @@ function TabPlano() {
         <div className="settings-plan-glow" />
         <div className="settings-plan-header">
           <div className="settings-plan-icon">
-            <Sparkles className="w-5 h-5 text-green-400" strokeWidth={1.6} />
+            <Sparkles className="w-5 h-5 text-green-600" strokeWidth={1.6} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-[#4ade80] uppercase tracking-widest">Plano atual</p>
-            <p className="text-[22px] font-bold text-[#f1f5f9] leading-tight mt-0.5 tracking-tight">{planDisplay}</p>
+            <p className="text-[11px] font-semibold text-[#15803d] uppercase tracking-widest">Plano atual</p>
+            <p className="text-[22px] font-bold text-[#0f172a] leading-tight mt-0.5 tracking-tight">{planDisplay}</p>
           </div>
           <span className={`tag ml-auto shrink-0 ${sub?.status === "ACTIVE" ? "tag-green" : "tag-slate"}`}>
             {statusLabel}
@@ -732,21 +732,21 @@ function TabPlano() {
         </div>
 
         <div className="settings-plan-price">
-          <span className="text-[32px] font-bold text-[#f1f5f9] tracking-tight">{PLAN_PRICE[planName] ?? "—"}</span>
+          <span className="text-[32px] font-bold text-[#0f172a] tracking-tight">{PLAN_PRICE[planName] ?? "—"}</span>
           {planName !== "ENTERPRISE" && <span className="text-[13px] text-[#64748b]">/mês</span>}
         </div>
 
         <ul className="settings-plan-features">
           {(PLAN_FEATURES[planName] ?? []).map((f) => (
-            <li key={f} className="flex items-center gap-2 text-[12px] text-[#94a3b8]">
-              <Check className="w-3 h-3 text-green-400 shrink-0" strokeWidth={2.5} />
+            <li key={f} className="flex items-center gap-2 text-[12px] text-[#64748b]">
+              <Check className="w-3 h-3 text-green-600 shrink-0" strokeWidth={2.5} />
               {f}
             </li>
           ))}
         </ul>
 
         <div className="settings-plan-footer">
-          <p className="text-[11px] text-[#475569]">
+          <p className="text-[11px] text-[#94a3b8]">
             Próxima renovação: <span className="text-[#94a3b8]">{renewalDisplay}</span>
           </p>
           <button className="settings-plan-upgrade-btn">
@@ -765,7 +765,7 @@ function TabPlano() {
               <div key={key} className="settings-usage-row">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[12px] font-medium text-[#94a3b8]">{label}</span>
-                  <span className="text-[11px] text-[#475569] font-variant-numeric tabular-nums">
+                  <span className="text-[11px] text-[#94a3b8] font-variant-numeric tabular-nums">
                     {u.used} / {u.limit}
                   </span>
                 </div>
@@ -781,8 +781,8 @@ function TabPlano() {
       <SectionPanel title="Histórico de pagamentos" accent="#6366f1">
         {invoices.length === 0 ? (
           <div className="settings-billing-empty">
-            <CreditCard className="w-5 h-5 text-[#334155]" strokeWidth={1.5} />
-            <p className="text-[12px] text-[#475569]">Nenhum pagamento registrado ainda.</p>
+            <CreditCard className="w-5 h-5 text-[#94a3b8]" strokeWidth={1.5} />
+            <p className="text-[12px] text-[#94a3b8]">Nenhum pagamento registrado ainda.</p>
           </div>
         ) : (
           <div className="settings-invoice-list">
@@ -791,7 +791,7 @@ function TabPlano() {
                 <div className="settings-invoice-date">
                   <CreditCard className="w-3.5 h-3.5 text-indigo-600 shrink-0" strokeWidth={1.8} />
                   <div>
-                    <p className="text-[13px] font-medium text-[#e2e8f0]">
+                    <p className="text-[13px] font-medium text-[#0f172a]">
                       {new Date(inv.date).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                     <p className="text-[11px] text-[#64748b] mt-0.5">{inv.status ?? "Processado"}</p>
@@ -897,7 +897,7 @@ export default function SettingsPage() {
       fallback={
         <div className="fade-up flex flex-col h-screen overflow-hidden">
           <Header title="Configurações" subtitle="Gerencie sua conta, integrações e plano" />
-          <div className="flex flex-1 items-center justify-center text-slate-400">Carregando…</div>
+          <div className="flex flex-1 items-center justify-center text-slate-500">Carregando…</div>
         </div>
       }
     >
