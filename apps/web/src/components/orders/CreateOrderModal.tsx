@@ -87,7 +87,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
       title="Novo pedido manual"
       subtitle="Crie um pedido diretamente pelo painel"
       size="lg"
-      headerLeading={<ShoppingCart className="w-5 h-5 text-green-400" />}
+      headerLeading={<ShoppingCart className="w-5 h-5 text-green-600" />}
       footer={
         <>
           <button onClick={onClose} className="btn-ghost" type="button">Cancelar</button>
@@ -95,7 +95,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
             onClick={handleCreate}
             disabled={saving}
             type="button"
-            style={{ height: 34, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.3)", cursor: "pointer" }}
+            style={{ height: 34, padding: "0 16px", borderRadius: 8, fontSize: 12, fontWeight: 600, background: "rgba(34,197,94,0.15)", color: "#15803d", border: "1px solid rgba(34,197,94,0.3)", cursor: "pointer" }}
           >
             {saving ? "Criando…" : `Criar pedido${total ? ` — ${money(total)}` : ""}`}
           </button>
@@ -112,7 +112,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
             placeholder="+55 11 99999-9999"
             value={contactPhone}
             onChange={(e) => setContactPhone(e.target.value)}
-            style={{ width: "100%", padding: "8px 12px", background: "rgba(15,23,42,0.8)", border: "1px solid rgba(51,65,85,0.6)", borderRadius: 8, fontSize: 13, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", padding: "8px 12px", background: "#ffffff", border: "1px solid var(--c-border)", borderRadius: 8, fontSize: 13, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
           />
         </div>
 
@@ -127,21 +127,21 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
               placeholder="Nome do produto..."
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
-              style={{ width: "100%", padding: "8px 12px 8px 32px", background: "rgba(15,23,42,0.8)", border: "1px solid rgba(51,65,85,0.6)", borderRadius: 8, fontSize: 13, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "8px 12px 8px 32px", background: "#ffffff", border: "1px solid var(--c-border)", borderRadius: 8, fontSize: 13, color: "#0f172a", outline: "none", boxSizing: "border-box" }}
             />
           </div>
           {productSearch.trim() && results.length > 0 && (
-            <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "#0f172a", border: "1px solid rgba(51,65,85,0.8)", borderRadius: 10, padding: "4px 0", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
+            <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, background: "#ffffff", border: "1px solid var(--c-border)", borderRadius: 10, padding: "4px 0", boxShadow: "0 8px 32px rgba(15,23,42,0.16)" }}>
               {results.map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => addToCart(p)}
-                  style={{ width: "100%", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, display: "flex", justifyContent: "space-between", color: "#94a3b8" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)"; }}
+                  style={{ width: "100%", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, display: "flex", justifyContent: "space-between", color: "#64748b" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(15,23,42,0.05)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
                 >
-                  <span style={{ color: "#e2e8f0" }}>{p.name}</span>
+                  <span style={{ color: "#0f172a" }}>{p.name}</span>
                   <span>{money(p.priceCents)}</span>
                 </button>
               ))}
@@ -156,13 +156,13 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
             </label>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {cart.map((entry) => (
-                <div key={entry.product.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "rgba(15,23,42,0.6)", border: "1px solid rgba(51,65,85,0.5)", borderRadius: 8 }}>
-                  <span style={{ flex: 1, fontSize: 13, color: "#e2e8f0" }}>{entry.product.name}</span>
+                <div key={entry.product.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", background: "#f8fafc", border: "1px solid var(--c-border)", borderRadius: 8 }}>
+                  <span style={{ flex: 1, fontSize: 13, color: "#0f172a" }}>{entry.product.name}</span>
                   <span style={{ fontSize: 12, color: "#64748b", width: 80, textAlign: "right" }}>{money(entry.product.priceCents * entry.quantity)}</span>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <button type="button" onClick={() => setQty(entry.product.id, entry.quantity - 1)} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(51,65,85,0.5)", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
-                    <span style={{ fontSize: 13, color: "#e2e8f0", minWidth: 20, textAlign: "center" }}>{entry.quantity}</span>
-                    <button type="button" onClick={() => setQty(entry.product.id, entry.quantity + 1)} style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(51,65,85,0.5)", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
+                    <button type="button" onClick={() => setQty(entry.product.id, entry.quantity - 1)} style={{ width: 24, height: 24, borderRadius: 6, background: "#f1f5f9", border: "none", cursor: "pointer", color: "#475569", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>−</button>
+                    <span style={{ fontSize: 13, color: "#0f172a", minWidth: 20, textAlign: "center" }}>{entry.quantity}</span>
+                    <button type="button" onClick={() => setQty(entry.product.id, entry.quantity + 1)} style={{ width: 24, height: 24, borderRadius: 6, background: "#f1f5f9", border: "none", cursor: "pointer", color: "#475569", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>+</button>
                   </div>
                   <button type="button" onClick={() => setQty(entry.product.id, 0)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#475569" }}>
                     <Trash2 style={{ width: 13, height: 13 }} />
@@ -170,7 +170,7 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
                 </div>
               ))}
             </div>
-            <div style={{ textAlign: "right", fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginTop: 10 }}>
+            <div style={{ textAlign: "right", fontSize: 13, fontWeight: 600, color: "#0f172a", marginTop: 10 }}>
               Total: {money(total)}
             </div>
           </div>
@@ -184,11 +184,11 @@ export function CreateOrderModal({ open, onClose, onCreated }: Props) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            style={{ width: "100%", padding: "8px 12px", background: "rgba(15,23,42,0.8)", border: "1px solid rgba(51,65,85,0.6)", borderRadius: 8, fontSize: 13, color: "#e2e8f0", outline: "none", resize: "vertical", boxSizing: "border-box" }}
+            style={{ width: "100%", padding: "8px 12px", background: "#ffffff", border: "1px solid var(--c-border)", borderRadius: 8, fontSize: 13, color: "#0f172a", outline: "none", resize: "vertical", boxSizing: "border-box" }}
           />
         </div>
 
-        {error && <p style={{ fontSize: 12, color: "#f87171" }}>{error}</p>}
+        {error && <p style={{ fontSize: 12, color: "#dc2626" }}>{error}</p>}
       </div>
     </Modal>
   );
