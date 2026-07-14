@@ -9957,7 +9957,7 @@
   border-bottom: 1px solid var(--c-border);
   transition: background 0.1s;
 }
-.product-list-row:hover { background: rgba(15, 23, 42, 0.5); }
+.product-list-row:hover { background: rgba(15, 23, 42, 0.03); }
 .product-list-header {
   font-size: 10px;
   font-weight: 600;
@@ -9969,7 +9969,7 @@
   width: 36px;
   height: 36px;
   border-radius: 6px;
-  background: rgba(30, 41, 59, 0.6);
+  background: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9978,7 +9978,7 @@
   position: relative;
 }
 .product-list-thumb img { object-fit: cover; border-radius: 6px; }
-.product-list-name { font-size: 13px; font-weight: 500; color: #e2e8f0; }
+.product-list-name { font-size: 13px; font-weight: 500; color: #0f172a; }
 .product-list-sku { font-size: 10px; color: #64748b; font-family: monospace; margin-top: 2px; }
 .product-list-actions { display: flex; gap: 4px; }
 .product-list-action-btn {
@@ -9994,8 +9994,8 @@
   color: #64748b;
   transition: all 0.15s;
 }
-.product-list-action-btn:hover { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.3); }
-.product-list-action-btn.danger:hover { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.3); }
+.product-list-action-btn:hover { background: rgba(99,102,241,0.1); color: #4f46e5; border-color: rgba(99,102,241,0.3); }
+.product-list-action-btn.danger:hover { background: rgba(239,68,68,0.1); color: #dc2626; border-color: rgba(239,68,68,0.3); }
 
 /* ── Catalog Grid ─────────────────────────────────────── */
 .catalog-grid {
