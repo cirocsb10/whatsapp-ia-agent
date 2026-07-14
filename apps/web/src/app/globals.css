@@ -4180,12 +4180,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 24px rgba(15,23,42,0.1);
   }
   .support-empty-title {
     font-size: 15px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: #0f172a;
     position: relative;
   }
   .support-empty-desc {
@@ -4203,13 +4203,13 @@
     margin-top: 8px;
     font-size: 12px;
     font-weight: 500;
-    color: #818cf8;
+    color: #4f46e5;
     text-decoration: none;
     cursor: pointer;
     transition: color 160ms ease;
     position: relative;
   }
-  .support-empty-link:hover { color: #a5b4fc; }
+  .support-empty-link:hover { color: #4f46e5; }
 
   /* Skeleton */
   .support-skeleton-list {
