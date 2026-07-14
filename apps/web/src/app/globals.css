@@ -3762,7 +3762,7 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #a5b4fc;
+    color: #4f46e5;
     background: rgba(99,102,241,0.12);
     border: 1px solid rgba(99,102,241,0.2);
     margin-bottom: 10px;
@@ -3770,7 +3770,7 @@
   .support-hero-title {
     font-size: 20px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.2;
   }
@@ -3796,11 +3796,11 @@
     font-size: 11px;
     font-weight: 500;
     color: #64748b;
-    background: rgba(0,0,0,0.2);
+    background: rgba(15,23,42,0.04);
     border: 1px solid var(--c-border);
     backdrop-filter: blur(8px);
   }
-  .support-live-pill--on { color: #86efac; }
+  .support-live-pill--on { color: #15803d; }
   .support-live-dot {
     width: 7px;
     height: 7px;
@@ -3829,13 +3829,13 @@
     align-items: center;
     justify-content: center;
     color: #64748b;
-    background: rgba(0,0,0,0.2);
+    background: rgba(15,23,42,0.04);
     border: 1px solid var(--c-border);
     cursor: pointer;
     transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
   }
   .support-refresh-btn:hover {
-    color: #e2e8f0;
+    color: #0f172a;
     border-color: var(--c-s3);
     background: var(--c-s2);
   }
