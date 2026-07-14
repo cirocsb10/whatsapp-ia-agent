@@ -6884,10 +6884,10 @@
   .form-label {
     font-size: 11px;
     font-weight: 600;
-    color: #94a3b8;
+    color: #475569;
     letter-spacing: 0.02em;
   }
-  .form-label-hint { font-weight: 400; color: #475569; }
+  .form-label-hint { font-weight: 400; color: #94a3b8; }
   .form-input {
     width: 100%;
     min-width: 0;
@@ -6895,8 +6895,8 @@
     padding: 9px 12px;
     border-radius: 8px;
     font-size: 13px;
-    color: #e2e8f0;
-    background: rgba(17,30,50,0.8);
+    color: #0f172a;
+    background: #ffffff;
     border: 1px solid var(--c-border);
     outline: none;
     transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -6907,7 +6907,7 @@
     box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
   }
   .form-input-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-  .form-error { font-size: 11px; color: #f87171; }
+  .form-error { font-size: 11px; color: #dc2626; }
 
   /* ── Custom form select ───────────────────────────────────── */
   .form-select {
@@ -6923,15 +6923,15 @@
     padding: 9px 12px;
     border-radius: 8px;
     font-size: 13px;
-    color: #e2e8f0;
-    background: rgba(17, 30, 50, 0.8);
+    color: #0f172a;
+    background: #ffffff;
     border: 1px solid var(--c-border);
     cursor: pointer;
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
   }
   .form-select-trigger:hover:not(:disabled) {
     border-color: rgba(99, 102, 241, 0.35);
-    background: rgba(20, 34, 56, 0.9);
+    background: #f8fafc;
   }
   .form-select--open .form-select-trigger,
   .form-select-trigger:focus-visible {
@@ -6949,7 +6949,7 @@
     gap: 8px;
     min-width: 0;
   }
-  .form-select-placeholder { color: #64748b; }
+  .form-select-placeholder { color: #94a3b8; }
   .form-select-dot {
     width: 7px;
     height: 7px;
@@ -6965,7 +6965,7 @@
   }
   .form-select--open .form-select-chevron {
     transform: rotate(180deg);
-    color: #94a3b8;
+    color: #475569;
   }
   .form-select-menu {
     position: absolute;
@@ -6977,10 +6977,9 @@
     padding: 4px;
     list-style: none;
     border-radius: 10px;
-    background: rgba(12, 21, 38, 0.98);
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-    backdrop-filter: blur(12px);
+    background: #ffffff;
+    border: 1px solid var(--c-border);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
     animation: form-select-in 140ms ease-out;
   }
   @keyframes form-select-in {
@@ -6997,18 +6996,18 @@
     border: none;
     border-radius: 7px;
     background: transparent;
-    color: #cbd5e1;
+    color: #334155;
     font-size: 13px;
     cursor: pointer;
     transition: background 120ms ease, color 120ms ease;
   }
   .form-select-option:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #f1f5f9;
+    background: rgba(99, 102, 241, 0.08);
+    color: #0f172a;
   }
   .form-select-option--active {
-    background: rgba(99, 102, 241, 0.14);
-    color: #f8fafc;
+    background: rgba(99, 102, 241, 0.12);
+    color: #0f172a;
   }
   .form-select-option-label {
     display: flex;
@@ -7019,7 +7018,7 @@
   .form-select-check {
     width: 14px;
     height: 14px;
-    color: #818cf8;
+    color: #6366f1;
     flex-shrink: 0;
   }
 
@@ -7040,15 +7039,15 @@
     font-size: 12px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
-    color: #e2e8f0;
-    background: rgba(17, 30, 50, 0.85);
+    color: #0f172a;
+    background: #ffffff;
     border: 1px solid var(--c-border);
     cursor: pointer;
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease, opacity 160ms ease;
   }
   .form-time-trigger:hover:not(:disabled) {
     border-color: rgba(6, 182, 212, 0.35);
-    background: rgba(20, 34, 56, 0.95);
+    background: #f8fafc;
   }
   .form-time--open .form-time-trigger,
   .form-time-trigger:focus-visible {
@@ -7063,7 +7062,7 @@
   .form-time-icon {
     width: 13px;
     height: 13px;
-    color: #22d3ee;
+    color: #0891b2;
     flex-shrink: 0;
     opacity: 0.85;
   }
@@ -7076,10 +7075,9 @@
     min-width: 148px;
     padding: 8px;
     border-radius: 12px;
-    background: rgba(10, 18, 34, 0.98);
-    border: 1px solid rgba(6, 182, 212, 0.22);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-    backdrop-filter: blur(12px);
+    background: #ffffff;
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18);
     animation: form-time-in 140ms ease-out;
   }
   @keyframes form-time-in {
@@ -7112,12 +7110,12 @@
     text-transform: uppercase;
     text-align: center;
     color: #64748b;
-    background: rgba(10, 18, 34, 0.98);
+    background: #ffffff;
   }
   .form-time-col-divider {
     width: 1px;
     margin: 0 6px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--c-border);
     flex-shrink: 0;
   }
   .form-time-option {
@@ -7126,7 +7124,7 @@
     border: none;
     border-radius: 6px;
     background: transparent;
-    color: #94a3b8;
+    color: #475569;
     font-size: 12px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
@@ -7135,15 +7133,15 @@
   }
   .form-time-option:hover {
     background: rgba(6, 182, 212, 0.1);
-    color: #e2e8f0;
+    color: #0f172a;
   }
   .form-time-option--active {
-    background: rgba(6, 182, 212, 0.16);
-    color: #67e8f9;
+    background: rgba(6, 182, 212, 0.14);
+    color: #0e7490;
     box-shadow: inset 0 0 0 1px rgba(6, 182, 212, 0.28);
   }
 
-  .form-hint { font-size: 10px; color: #475569; }
+  .form-hint { font-size: 10px; color: #94a3b8; }
   .form-grid-2 {
     display: grid;
     grid-template-columns: 1fr;
