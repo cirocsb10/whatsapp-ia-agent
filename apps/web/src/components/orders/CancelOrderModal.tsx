@@ -41,7 +41,7 @@ export function CancelOrderModal({ open, onClose, order }: Props) {
       title="Cancelar pedido"
       subtitle="Esta ação não pode ser desfeita"
       size="sm"
-      headerLeading={<XCircle className="w-5 h-5 text-red-400" />}
+      headerLeading={<XCircle className="w-5 h-5 text-red-600" />}
       footer={
         <>
           <button onClick={handleClose} className="btn-ghost" type="button" disabled={loading}>
@@ -58,7 +58,7 @@ export function CancelOrderModal({ open, onClose, order }: Props) {
               fontSize: 12,
               fontWeight: 600,
               background: "rgba(239,68,68,0.15)",
-              color: "#f87171",
+              color: "#dc2626",
               border: "1px solid rgba(239,68,68,0.3)",
               cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.6 : 1,
@@ -69,13 +69,13 @@ export function CancelOrderModal({ open, onClose, order }: Props) {
         </>
       }
     >
-      <p style={{ fontSize: 13, color: "#94a3b8", lineHeight: 1.6 }}>
+      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6 }}>
         Tem certeza que deseja cancelar o pedido{" "}
-        <strong style={{ color: "#e2e8f0" }}>{order?.orderNumber}</strong>?
+        <strong style={{ color: "#0f172a" }}>{order?.orderNumber}</strong>?
         O status será alterado para cancelado e esta ação não poderá ser revertida.
       </p>
       {error && (
-        <p style={{ marginTop: 10, fontSize: 12, color: "#f87171" }}>{error}</p>
+        <p style={{ marginTop: 10, fontSize: 12, color: "#dc2626" }}>{error}</p>
       )}
     </Modal>
   );
