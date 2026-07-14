@@ -10057,7 +10057,7 @@
   background: rgba(99, 102, 241, 0.05);
 }
 .import-drop-zone-icon { margin-bottom: 8px; color: #64748b; }
-.import-drop-zone-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+.import-drop-zone-title { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
 .import-drop-zone-subtitle { font-size: 11px; color: #64748b; }
 .import-file-selected {
   display: flex;
@@ -10068,7 +10068,7 @@
   border: 1px solid rgba(34, 197, 94, 0.2);
   border-radius: 8px;
   font-size: 12px;
-  color: #86efac;
+  color: #15803d;
 }
 .import-result-row {
   display: flex;
@@ -10078,8 +10078,8 @@
   border-radius: 8px;
   font-size: 12px;
 }
-.import-result-row.success { background: rgba(34,197,94,0.07); color: #86efac; }
-.import-result-row.error { background: rgba(239,68,68,0.07); color: #fca5a5; }
+.import-result-row.success { background: rgba(34,197,94,0.07); color: #15803d; }
+.import-result-row.error { background: rgba(239,68,68,0.07); color: #dc2626; }
 .import-file-name {
   flex: 1;
   overflow: hidden;
@@ -10101,17 +10101,17 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
 .import-preview-summary {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #64748b;
 }
-.import-preview-summary-valid { color: #86efac; font-weight: 600; }
-.import-preview-summary-invalid { color: #fca5a5; font-weight: 600; }
+.import-preview-summary-valid { color: #15803d; font-weight: 600; }
+.import-preview-summary-invalid { color: #dc2626; font-weight: 600; }
 .import-preview-table-wrap {
   max-height: 280px;
   overflow: auto;
@@ -10129,7 +10129,7 @@
   z-index: 1;
   text-align: left;
   padding: 8px 10px;
-  background: rgba(15, 23, 42, 0.95);
+  background: #f8fafc;
   color: #64748b;
   font-weight: 600;
   border-bottom: 1px solid var(--c-border);
@@ -10137,8 +10137,8 @@
 }
 .import-preview-table td {
   padding: 7px 10px;
-  color: #cbd5e1;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.35);
+  color: #0f172a;
+  border-bottom: 1px solid var(--c-border);
   max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -10156,11 +10156,11 @@
 }
 .import-preview-badge.valid {
   background: rgba(34, 197, 94, 0.12);
-  color: #86efac;
+  color: #15803d;
 }
 .import-preview-badge.invalid {
   background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5;
+  color: #dc2626;
   cursor: help;
 }
 .import-preview-errors {
@@ -10173,11 +10173,11 @@
   align-items: flex-start;
   gap: 6px;
   font-size: 11px;
-  color: #fca5a5;
+  color: #dc2626;
 }
 .import-preview-error-more {
   font-size: 11px;
-  color: #94a3b8;
+  color: #64748b;
   padding-left: 20px;
 }
 
