@@ -2276,7 +2276,7 @@
     min-height: 134px;
     padding: 20px 22px;
     border-radius: 14px;
-    background: linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(34,197,94,0.04) 45%, var(--c-s1) 100%);
+    background: linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(34,197,94,0.04) 45%, var(--c-s1) 100%);
     border: 1px solid rgba(99,102,241,0.15);
     overflow: hidden;
   }
@@ -2285,7 +2285,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), rgba(34,197,94,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), rgba(34,197,94,0.2), transparent);
     pointer-events: none;
   }
   .catalog-hero-content {
@@ -2306,15 +2306,15 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #a5b4fc;
-    background: rgba(99,102,241,0.12);
+    color: #4f46e5;
+    background: rgba(99,102,241,0.1);
     border: 1px solid rgba(99,102,241,0.2);
     margin-bottom: 28px;
   }
   .catalog-hero-title {
     font-size: 20px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.2;
   }
@@ -2354,7 +2354,7 @@
     transform: translateY(-50%);
     width: 13px;
     height: 13px;
-    color: #475569;
+    color: #94a3b8;
     pointer-events: none;
   }
   .catalog-search-input {
@@ -2369,11 +2369,11 @@
     outline: none;
     transition: border-color 160ms ease, box-shadow 160ms ease;
   }
-  .catalog-search-input::placeholder { color: #475569; }
+  .catalog-search-input::placeholder { color: #94a3b8; }
   .catalog-search-input:hover { border-color: var(--c-s3); }
   .catalog-search-input:focus {
     border-color: rgba(99,102,241,0.4);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
   }
   .catalog-filter-tabs {
     display: flex;
@@ -2396,17 +2396,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #475569;
+    color: #94a3b8;
     cursor: pointer;
     background: transparent;
     border: none;
     transition: color 140ms ease, background 140ms ease;
   }
-  .catalog-view-btn:hover { color: var(--c-text); background: rgba(255,255,255,0.05); }
+  .catalog-view-btn:hover { color: var(--c-text); background: rgba(15,23,42,0.05); }
   .catalog-view-btn-active {
-    color: #4ade80;
-    background: rgba(34,197,94,0.08);
-    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.2);
+    color: #15803d;
+    background: rgba(34,197,94,0.1);
+    box-shadow: inset 0 0 0 1px rgba(34,197,94,0.25);
   }
   .catalog-add-btn {
     display: inline-flex;
@@ -2418,16 +2418,16 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 500;
-    color: #4ade80;
-    background: rgba(34,197,94,0.08);
-    border: 1px solid rgba(34,197,94,0.2);
+    color: #15803d;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
     cursor: pointer;
     white-space: nowrap;
     transition: background 160ms ease, border-color 160ms ease;
   }
   .catalog-add-btn:hover:not(:disabled) {
-    background: rgba(34,197,94,0.14);
-    border-color: rgba(34,197,94,0.35);
+    background: rgba(34,197,94,0.16);
+    border-color: rgba(34,197,94,0.4);
   }
   .catalog-add-btn:disabled { opacity: 0.7; cursor: default; }
   .catalog-btn-secondary {
@@ -2440,8 +2440,8 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 500;
-    color: #94a3b8;
-    background: rgba(255,255,255,0.02);
+    color: #64748b;
+    background: #f8fafc;
     border: 1px solid var(--c-border);
     cursor: pointer;
     white-space: nowrap;
@@ -2449,7 +2449,7 @@
   }
   .catalog-btn-secondary:hover:not(:disabled) {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
+    background: #f1f5f9;
     border-color: var(--c-s3);
   }
   .catalog-panel {
