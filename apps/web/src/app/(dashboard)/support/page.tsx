@@ -210,7 +210,7 @@ export default function SupportPage() {
           <div className="support-panel-header">
             <div className="support-panel-title">
               <div className="support-panel-title-icon">
-                <LifeBuoy className="w-4 h-4 text-amber-400" strokeWidth={1.8} />
+                <LifeBuoy className="w-4 h-4 text-amber-700" strokeWidth={1.8} />
               </div>
               <div>
                 <span className="support-panel-title-text">Fila de atendimento</span>

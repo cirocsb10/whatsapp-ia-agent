@@ -3999,19 +3999,19 @@
 
   /* Queue panel */
   .support-panel {
-    background: rgba(12,21,38,0.7);
+    background: #ffffff;
     backdrop-filter: blur(16px);
     border: 1px solid var(--c-border);
     border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 32px rgba(15,23,42,0.08);
   }
   .support-panel-header {
     display: flex;
     flex-direction: column;
     gap: 14px;
     padding: 16px 18px;
-    border-bottom: 1px solid rgba(26,45,71,0.8);
+    border-bottom: 1px solid var(--c-border);
     background: linear-gradient(180deg, rgba(245,158,11,0.05) 0%, transparent 100%);
   }
   @media (min-width: 768px) {
@@ -4041,7 +4041,7 @@
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.01em;
   }
   .support-panel-title-meta {
