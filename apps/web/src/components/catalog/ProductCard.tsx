@@ -33,7 +33,7 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
             className="object-cover"
           />
         ) : (
-          <Package className="w-8 h-8" style={{ color: "#334155" }} />
+          <Package className="w-8 h-8" style={{ color: "#94a3b8" }} />
         )}
 
         <div className="product-card-action-overlay" aria-label="Ações do produto">

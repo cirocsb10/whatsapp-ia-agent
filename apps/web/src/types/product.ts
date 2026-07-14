@@ -57,7 +57,7 @@ export const STATUS_LABEL: Record<ProductStatus, string> = {
 
 export const STATUS_COLOR: Record<ProductStatus, string> = {
   ACTIVE: "#22c55e",
-  INACTIVE: "#94a3b8",
+  INACTIVE: "#64748b",
   OUT_OF_STOCK: "#f59e0b",
   DISCONTINUED: "#ef4444",
 };

@@ -50,7 +50,7 @@ export function ProductListRow({ product, onEdit, onDelete }: Props) {
       <div
         style={{
           fontSize: 12,
-          color: isLowStock ? "#f59e0b" : "#94a3b8",
+          color: isLowStock ? "#a16207" : "#64748b",
         }}
       >
         {product.stockQty === 0
