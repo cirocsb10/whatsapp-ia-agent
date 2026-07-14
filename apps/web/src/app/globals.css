@@ -9547,13 +9547,13 @@
     padding: 8px 10px 8px 6px; cursor: default;
     transition: border-color 150ms ease, box-shadow 150ms ease; position: relative;
   }
-  .crm-deal-card:hover { border-color: var(--c-s3); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .crm-deal-card:hover { border-color: var(--c-s3); box-shadow: 0 2px 8px rgba(15,23,42,0.12); }
   .crm-deal-drag {
     flex-shrink: 0; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
     margin-top: 2px; color: var(--c-muted); cursor: grab; background: transparent; border: none;
     border-radius: 4px; padding: 0; transition: color 150ms ease, background 150ms ease;
   }
-  .crm-deal-drag:hover { color: var(--c-text); background: rgba(255,255,255,0.06); }
+  .crm-deal-drag:hover { color: var(--c-text); background: rgba(15,23,42,0.05); }
   .crm-deal-drag:active { cursor: grabbing; }
   .crm-deal-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .crm-deal-title { font-size: 12px; font-weight: 600; color: var(--c-text); line-height: 1.35; margin: 0; word-break: break-word; }
@@ -9569,8 +9569,8 @@
     background: transparent; border: none; color: var(--c-muted); cursor: pointer; padding: 0;
     transition: color 120ms ease, background 120ms ease;
   }
-  .crm-deal-btn:hover { color: var(--c-text); background: rgba(255,255,255,0.07); }
-  .crm-deal-btn--danger:hover { color: #f87171; background: rgba(239,68,68,0.1); }
+  .crm-deal-btn:hover { color: var(--c-text); background: rgba(15,23,42,0.05); }
+  .crm-deal-btn--danger:hover { color: #dc2626; background: rgba(239,68,68,0.1); }
 }
 
 /* ── Landing Page ─────────────────────────────────────────────── */
