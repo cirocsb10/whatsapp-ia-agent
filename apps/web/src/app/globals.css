@@ -21,7 +21,6 @@
     background: var(--c-base);
     color: var(--c-text);
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: 'cv02','cv03','cv04','cv11','ss01';
   }
 
   * { box-sizing: border-box; }
@@ -1003,12 +1002,12 @@
   .header-icon-btn-accent {
     background: rgba(99,102,241,0.08);
     border-color: rgba(99,102,241,0.2);
-    color: #818cf8;
+    color: #4f46e5;
   }
   .header-icon-btn-accent:hover {
     background: rgba(99,102,241,0.14);
     border-color: rgba(99,102,241,0.35);
-    color: #a5b4fc;
+    color: #4338ca;
   }
   /* ── User menu ─────────────────────────────────────────────── */
   .header-user-btn {
@@ -1020,7 +1019,7 @@
     border-radius: 8px;
     background: rgba(99,102,241,0.08);
     border: 1px solid rgba(99,102,241,0.2);
-    color: #818cf8;
+    color: #4f46e5;
     cursor: pointer;
     flex-shrink: 0;
     transition: background 140ms, border-color 140ms, color 140ms;
@@ -1028,14 +1027,14 @@
   .header-user-btn:hover {
     background: rgba(99,102,241,0.14);
     border-color: rgba(99,102,241,0.35);
-    color: #a5b4fc;
+    color: #4338ca;
   }
   .header-user-avatar {
     width: 20px;
     height: 20px;
     border-radius: 6px;
-    background: rgba(99,102,241,0.25);
-    color: #a5b4fc;
+    background: rgba(99,102,241,0.14);
+    color: #4f46e5;
     font-size: 9px;
     font-weight: 700;
     display: inline-flex;
@@ -6774,7 +6773,7 @@
     align-items: center;
     justify-content: center;
     padding: 16px;
-    background: rgba(15,23,42,0.4);
+    background: rgba(15,23,42,0.35);
     backdrop-filter: blur(2px);
     animation: modal-fade-in 200ms ease-out;
   }
@@ -7124,7 +7123,7 @@
     border: none;
     border-radius: 6px;
     background: transparent;
-    color: #475569;
+    color: #334155;
     font-size: 12px;
     font-weight: 500;
     font-variant-numeric: tabular-nums;
