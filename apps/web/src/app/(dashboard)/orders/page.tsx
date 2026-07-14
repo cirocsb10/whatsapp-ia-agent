@@ -18,10 +18,10 @@ import {
 type StatusFilter = "all" | "pending" | "processing" | "delivered" | "cancelled";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
-  pending: { label: "Pendente", color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)", icon: Clock },
-  processing: { label: "Em andamento", color: "#818cf8", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.2)", icon: Loader2 },
-  delivered: { label: "Entregue", color: "#4ade80", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)", icon: CheckCircle2 },
-  cancelled: { label: "Cancelado", color: "#f87171", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.2)", icon: XCircle },
+  pending: { label: "Pendente", color: "#a16207", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)", icon: Clock },
+  processing: { label: "Em andamento", color: "#4f46e5", bg: "rgba(99,102,241,0.1)", border: "rgba(99,102,241,0.2)", icon: Loader2 },
+  delivered: { label: "Entregue", color: "#15803d", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)", icon: CheckCircle2 },
+  cancelled: { label: "Cancelado", color: "#dc2626", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.2)", icon: XCircle },
 };
 
 const STATUS_TABS: { key: StatusFilter; label: string }[] = [
@@ -189,7 +189,7 @@ export default function OrdersPage() {
                 <div className="orders-empty-ring" />
               </div>
               <div className="orders-empty-text">
-                <p className="text-[15px] font-semibold text-[#e2e8f0] leading-tight">
+                <p className="text-[15px] font-semibold text-[#0f172a] leading-tight">
                   {loading ? "Carregando pedidos..." : "Nenhum pedido encontrado"}
                 </p>
                 <p className="text-[12px] text-[#475569] leading-relaxed text-center max-w-[300px]">
@@ -240,7 +240,7 @@ export default function OrdersPage() {
                       {openMenuId === order.id && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50, background: "#0f172a", border: "1px solid rgba(51,65,85,0.8)", borderRadius: 10, padding: "4px 0", minWidth: 180, boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}
+                          style={{ position: "absolute", right: 0, top: "calc(100% + 4px)", zIndex: 50, background: "#ffffff", border: "1px solid var(--c-border)", borderRadius: 10, padding: "4px 0", minWidth: 180, boxShadow: "0 8px 32px rgba(15,23,42,0.16)" }}
                         >
                           {[
                             { label: "Ver detalhes", action: () => { setDetailOrderId(order.id); setOpenMenuId(null); }, danger: false },
@@ -251,8 +251,8 @@ export default function OrdersPage() {
                               key={label}
                               type="button"
                               onClick={action}
-                              style={{ width: "100%", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, color: danger ? "#f87171" : "#94a3b8", display: "block" }}
-                              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "rgba(255,255,255,0.05)"; }}
+                              style={{ width: "100%", padding: "8px 14px", background: "none", border: "none", cursor: "pointer", textAlign: "left", fontSize: 13, color: danger ? "#dc2626" : "#64748b", display: "block" }}
+                              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.background = "rgba(15,23,42,0.05)"; }}
                               onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.background = "none"; }}
                             >
                               {label}
@@ -284,7 +284,7 @@ export default function OrdersPage() {
               <div className="support-info-icon" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.2)" }}>
                 <ShoppingCart className="w-3.5 h-3.5 text-indigo-600" strokeWidth={1.8} />
               </div>
-              <span className="text-[12px] font-semibold text-[#e2e8f0]">Como os pedidos funcionam</span>
+              <span className="text-[12px] font-semibold text-[#0f172a]">Como os pedidos funcionam</span>
             </div>
             <p className="text-[11px] text-[#64748b] leading-relaxed">
               O agente IA cria pedidos automaticamente durante conversas no WhatsApp.
@@ -294,9 +294,9 @@ export default function OrdersPage() {
           <div className="support-info-card">
             <div className="support-info-card-header">
               <div className="support-info-icon" style={{ background: "rgba(34,197,94,0.1)", borderColor: "rgba(34,197,94,0.2)" }}>
-                <Truck className="w-3.5 h-3.5 text-green-400" strokeWidth={1.8} />
+                <Truck className="w-3.5 h-3.5 text-green-600" strokeWidth={1.8} />
               </div>
-              <span className="text-[12px] font-semibold text-[#e2e8f0]">Rastreamento de status</span>
+              <span className="text-[12px] font-semibold text-[#0f172a]">Rastreamento de status</span>
             </div>
             <p className="text-[11px] text-[#64748b] leading-relaxed">
               Atualize status manualmente ou por webhook de pagamento.
