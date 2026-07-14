@@ -212,7 +212,7 @@ export function DealFormModal({ open, onClose, onSaved, deal, initialStageId }: 
             marginTop: 12, padding: "8px 12px",
             background: "rgba(239,68,68,0.08)",
             border: "1px solid rgba(239,68,68,0.2)",
-            borderRadius: 8, color: "#fca5a5", fontSize: 12,
+            borderRadius: 8, color: "#dc2626", fontSize: 12,
           }}>
             {error}
           </div>

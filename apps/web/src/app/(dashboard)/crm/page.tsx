@@ -98,7 +98,7 @@ export default function CrmPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
           {STAT_CARDS.map((s) => (
             <div key={s.label} style={{
-              background: "rgba(15,23,42,0.8)", border: "1px solid var(--c-border)",
+              background: "#ffffff", border: "1px solid var(--c-border)",
               borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12,
             }}>
               <div style={{
@@ -108,7 +108,7 @@ export default function CrmPage() {
                 <s.icon className="w-4 h-4" style={{ color: s.color }} />
               </div>
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: "#e2e8f0" }}>{s.value}</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#0f172a" }}>{s.value}</div>
                 <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{s.label}</div>
               </div>
             </div>
