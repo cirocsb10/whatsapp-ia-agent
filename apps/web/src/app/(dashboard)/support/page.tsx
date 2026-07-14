@@ -414,7 +414,7 @@ export default function SupportPage() {
             <div className="support-info-card-header">
               <div className="support-info-step">2</div>
               <div className="support-info-icon" style={{ background: "rgba(34,197,94,0.12)", borderColor: "rgba(34,197,94,0.25)" }}>
-                <User className="w-4 h-4 text-green-400" strokeWidth={1.8} />
+                <User className="w-4 h-4 text-green-600" strokeWidth={1.8} />
               </div>
               <span className="support-info-title">Retomada pela IA</span>
             </div>
