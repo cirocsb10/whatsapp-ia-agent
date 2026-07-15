@@ -6143,8 +6143,8 @@
   .settings-integ-card {
     padding: 18px;
     border-radius: 12px;
-    background: rgba(7,13,26,0.55);
-    border: 1px solid rgba(26,45,71,0.85);
+    background: #ffffff;
+    border: 1px solid var(--c-border);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -6161,8 +6161,8 @@
   }
   .settings-integ-card:hover {
     border-color: rgba(99,102,241,0.28);
-    background: rgba(12,21,38,0.85);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.2);
+    background: #f8fafc;
+    box-shadow: 0 8px 28px rgba(15,23,42,0.1);
     transform: translateY(-2px);
   }
   .settings-integ-card-top {
@@ -6213,12 +6213,12 @@
     transform: translateY(-1px);
   }
   .settings-integ-btn-connected {
-    color: #94a3b8;
-    background: rgba(17,30,50,0.8);
+    color: #64748b;
+    background: #f8fafc;
     border: 1px solid var(--c-border);
   }
   .settings-integ-btn-connected:hover {
-    background: rgba(26,45,71,0.6);
+    background: #f1f5f9;
     box-shadow: none;
     color: var(--c-text);
     transform: none;
@@ -6241,7 +6241,7 @@
     border-radius: 0 8px 8px 0;
     font-size: 11px;
     font-weight: 600;
-    color: #818cf8;
+    color: #4f46e5;
     background: rgba(99,102,241,0.08);
     border: 1px solid rgba(99,102,241,0.2);
     border-left: none;
