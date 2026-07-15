@@ -6253,14 +6253,14 @@
 
   /* Plan card */
   .settings-plan-card {
-    background: linear-gradient(145deg, rgba(34,197,94,0.1) 0%, rgba(12,21,38,0.95) 48%, rgba(7,13,26,0.98) 100%);
+    background: linear-gradient(145deg, rgba(34,197,94,0.1) 0%, #ffffff 48%, #f8fafc 100%);
     border: 1px solid rgba(34,197,94,0.25);
     border-radius: 16px;
     padding: 24px;
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(12px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+    box-shadow: 0 12px 40px rgba(15,23,42,0.12);
   }
   .settings-plan-card::before {
     content: '';
@@ -6333,7 +6333,7 @@
     border-radius: 9px;
     font-size: 12px;
     font-weight: 600;
-    color: #4ade80;
+    color: #15803d;
     background: rgba(34,197,94,0.1);
     border: 1px solid rgba(34,197,94,0.22);
     cursor: pointer;
@@ -6401,7 +6401,7 @@
   .settings-invoice-amount {
     font-size: 13px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: #0f172a;
     font-variant-numeric: tabular-nums;
   }
   .settings-invoice-link {
@@ -6411,7 +6411,7 @@
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    color: #818cf8;
+    color: #4f46e5;
     background: rgba(99,102,241,0.08);
     border: 1px solid rgba(99,102,241,0.18);
     transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
@@ -6419,7 +6419,7 @@
   }
   .settings-invoice-link:hover {
     background: rgba(99,102,241,0.16);
-    color: #a5b4fc;
+    color: #4f46e5;
     border-color: rgba(99,102,241,0.32);
   }
 
