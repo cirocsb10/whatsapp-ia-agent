@@ -5980,7 +5980,7 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 500;
-    color: #f87171;
+    color: #dc2626;
     background: rgba(239,68,68,0.08);
     border: 1px solid rgba(239,68,68,0.2);
     cursor: pointer;
@@ -6012,7 +6012,7 @@
     border-radius: 7px;
     font-size: 12px;
     font-weight: 500;
-    color: #4ade80;
+    color: #15803d;
     background: rgba(34,197,94,0.08);
     border: 1px solid rgba(34,197,94,0.2);
     cursor: pointer;
@@ -6033,7 +6033,7 @@
     width: 13px;
     height: 13px;
     border: 2px solid rgba(74,222,128,0.3);
-    border-top-color: #4ade80;
+    border-top-color: #15803d;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
@@ -6044,8 +6044,8 @@
     width: 44px;
     height: 26px;
     border-radius: 99px;
-    background: rgba(51,65,85,0.8);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: var(--c-s3);
+    border: 1px solid var(--c-border);
     cursor: pointer;
     padding: 2px;
     display: flex;
@@ -6053,7 +6053,7 @@
     transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
     flex-shrink: 0;
   }
-  .settings-toggle:hover { border-color: rgba(255,255,255,0.12); }
+  .settings-toggle:hover { border-color: var(--c-muted); }
   .settings-toggle-on {
     background: var(--c-green);
     border-color: rgba(34,197,94,0.4);
