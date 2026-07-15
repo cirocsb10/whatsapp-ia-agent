@@ -6080,7 +6080,7 @@
     border: 1px solid;
     margin: 16px 18px 4px;
     border-radius: 99px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(15,23,42,0.02);
   }
   .settings-notif-row {
     display: flex;
@@ -6090,7 +6090,7 @@
     padding: 15px 20px;
     transition: background 160ms ease;
   }
-  .settings-notif-row:hover { background: rgba(255,255,255,0.02); }
+  .settings-notif-row:hover { background: rgba(15,23,42,0.02); }
 
   /* 2FA */
   .settings-2fa-row {
@@ -6118,11 +6118,11 @@
     align-items: center;
     gap: 12px;
     padding: 12px 18px;
-    border-bottom: 1px solid rgba(26,45,71,0.5);
+    border-bottom: 1px solid var(--c-border);
     transition: background 140ms ease;
   }
   .settings-session-row:last-child { border-bottom: none; }
-  .settings-session-row:hover { background: rgba(255,255,255,0.02); }
+  .settings-session-row:hover { background: rgba(15,23,42,0.02); }
   .settings-session-dot {
     width: 7px;
     height: 7px;
