@@ -6383,8 +6383,8 @@
     transition: background 160ms ease, border-color 160ms ease;
   }
   .settings-invoice-row:hover {
-    background: rgba(255,255,255,0.03);
-    border-color: rgba(26,45,71,0.8);
+    background: rgba(15,23,42,0.03);
+    border-color: var(--c-border);
   }
   .settings-invoice-date {
     display: flex;
@@ -6538,7 +6538,7 @@
       flex-direction: row;
       overflow-x: auto;
       border-right: none;
-      border-bottom: 1px solid rgba(26,45,71,0.8);
+      border-bottom: 1px solid var(--c-border);
       padding: 12px 14px;
       gap: 8px;
       scrollbar-width: none;
