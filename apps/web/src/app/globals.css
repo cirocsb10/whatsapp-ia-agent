@@ -5541,8 +5541,8 @@
   .settings-nav {
     width: 228px;
     flex-shrink: 0;
-    border-right: 1px solid rgba(26,45,71,0.8);
-    background: rgba(12,21,38,0.72);
+    border-right: 1px solid var(--c-border);
+    background: #ffffff;
     backdrop-filter: blur(12px);
     padding: 18px 10px;
     display: flex;
@@ -5555,7 +5555,7 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #475569;
+    color: #94a3b8;
     padding: 0 10px 10px;
   }
   .settings-nav-item {
@@ -5576,12 +5576,12 @@
   }
   .settings-nav-item:hover {
     color: var(--c-text);
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.06);
+    background: rgba(15,23,42,0.04);
+    border-color: var(--c-border);
   }
   .settings-nav-item-active {
-    color: #f1f5f9;
-    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+    color: #0f172a;
+    background: linear-gradient(135deg, rgba(15,23,42,0.04) 0%, rgba(15,23,42,0.02) 100%);
     border-color: color-mix(in srgb, var(--nav-accent, #6366f1) 22%, transparent);
     box-shadow:
       inset 3px 0 0 var(--nav-accent, var(--c-green)),
@@ -5596,12 +5596,12 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    background: rgba(15,23,42,0.55);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #f8fafc;
+    border: 1px solid var(--c-border);
     transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
   }
   .settings-nav-item:hover .settings-nav-icon {
-    border-color: rgba(255,255,255,0.1);
+    border-color: var(--c-s3);
   }
   .settings-nav-item-active .settings-nav-icon {
     background: color-mix(in srgb, var(--nav-accent, #6366f1) 14%, transparent);
@@ -5635,8 +5635,8 @@
     background: linear-gradient(
       135deg,
       color-mix(in srgb, var(--hero-accent, #6366f1) 10%, transparent) 0%,
-      rgba(12,21,38,0.92) 55%,
-      rgba(7,13,26,0.98) 100%
+      #ffffff 55%,
+      #f8fafc 100%
     );
     backdrop-filter: blur(16px);
   }
@@ -5701,7 +5701,7 @@
   .settings-hero-title {
     font-size: 20px;
     font-weight: 700;
-    color: #f1f5f9;
+    color: #0f172a;
     letter-spacing: -0.025em;
     line-height: 1.2;
   }
