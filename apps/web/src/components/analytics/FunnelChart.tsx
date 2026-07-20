@@ -45,7 +45,7 @@ export function ConversionFunnel({ data }: { data: FunnelData }) {
             <TrendingDown className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
           </div>
           <div className="analytics-panel-header-text">
-            <p className="text-[13px] font-semibold text-[#e2e8f0]">Funil de Conversão</p>
+            <p className="text-[13px] font-semibold text-[#0f172a]">Funil de Conversão</p>
             <p className="text-[11px] text-[#475569] mt-0.5">Conversas → pagamentos confirmados</p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function ConversionFunnel({ data }: { data: FunnelData }) {
           <div className="overview-insight-empty-icon">
             <TrendingDown className="w-5 h-5 text-indigo-400/40" strokeWidth={1.5} />
           </div>
-          <p className="text-[13px] font-medium text-[#94a3b8]">Funil aguardando dados</p>
+          <p className="text-[13px] font-medium text-[#64748b]">Funil aguardando dados</p>
           <p className="text-[11px] text-[#475569] max-w-[220px] text-center leading-relaxed">
             Conversas e conversões aparecerão após as primeiras interações
           </p>

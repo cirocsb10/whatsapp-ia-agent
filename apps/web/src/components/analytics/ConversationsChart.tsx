@@ -9,15 +9,15 @@ import { BarChart3, ChevronRight } from "lucide-react";
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background:"#0c1526", border:"1px solid #1a2d47", borderRadius:8, padding:"10px 12px", minWidth:140, fontSize:12 }}>
+    <div style={{ background:"#ffffff", border:"1px solid #e2e8f0", borderRadius:8, padding:"10px 12px", minWidth:140, fontSize:12, boxShadow:"0 8px 24px rgba(15,23,42,0.12)" }}>
       <p style={{ color:"#64748b", marginBottom:8, fontWeight:500 }}>{label}</p>
       {payload.map((e: any) => (
         <div key={e.dataKey} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, marginBottom:4 }}>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <span style={{ width:6, height:6, borderRadius:"50%", background:e.color, flexShrink:0 }} />
-            <span style={{ color:"#94a3b8" }}>{e.name}</span>
+            <span style={{ color:"#64748b" }}>{e.name}</span>
           </div>
-          <span style={{ color:"#f1f5f9", fontWeight:600, fontVariantNumeric:"tabular-nums" }}>{e.value}</span>
+          <span style={{ color:"#0f172a", fontWeight:600, fontVariantNumeric:"tabular-nums" }}>{e.value}</span>
         </div>
       ))}
     </div>
@@ -86,7 +86,7 @@ export function ConversationsChart({
             <BarChart3 className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
           </div>
           <div className="analytics-panel-header-text">
-            <p className="text-[13px] font-semibold text-[#e2e8f0] leading-none">Conversas</p>
+            <p className="text-[13px] font-semibold text-[#0f172a] leading-none">Conversas</p>
             <p className="text-[11px] text-[#64748b] mt-1">Volume e resolução por IA</p>
           </div>
         </div>
@@ -125,7 +125,7 @@ export function ConversationsChart({
             <BarChart3 className="w-5 h-5 text-[#475569]" />
           </div>
           <div className="text-center relative z-10">
-            <p className="text-[13px] font-medium text-[#94a3b8]">Nenhuma conversa ainda</p>
+            <p className="text-[13px] font-medium text-[#64748b]">Nenhuma conversa ainda</p>
             <p className="text-[11px] text-[#475569] mt-1">Conecte seu WhatsApp para começar</p>
           </div>
           <Link
@@ -148,10 +148,10 @@ export function ConversationsChart({
                 </linearGradient>
               ))}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#111e32" vertical={false} />
-            <XAxis dataKey="date" tick={{ fill:"#334155", fontSize:10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis allowDecimals={false} tick={{ fill:"#334155", fontSize:10 }} tickLine={false} axisLine={false} width={28} />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke:"#1a2d47", strokeWidth:1 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+            <XAxis dataKey="date" tick={{ fill:"#94a3b8", fontSize:10 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis allowDecimals={false} tick={{ fill:"#94a3b8", fontSize:10 }} tickLine={false} axisLine={false} width={28} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke:"#e2e8f0", strokeWidth:1 }} />
             {SERIES.map((s) => {
               const dashed = s.key === "handoffs";
 

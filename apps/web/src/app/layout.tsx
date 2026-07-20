@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
-import { Outfit, Fraunces } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Providers } from "./providers";
 import { getServerUser } from "@/server/auth";
 import "./globals.css";
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-});
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -27,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${outfit.variable} ${fraunces.variable} bg-[#f8fafc] font-sans text-slate-900 antialiased`}>
+      <body className={`${fraunces.variable} bg-[#f8fafc] text-slate-900 antialiased`}>
         <NextTopLoader color="#22C55E" height={2} showSpinner={false} />
         <Providers initialUser={initialUser}>{children}</Providers>
       </body>

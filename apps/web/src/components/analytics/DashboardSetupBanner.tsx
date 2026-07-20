@@ -82,7 +82,7 @@ export function DashboardSetupBanner({ setup, isEmpty }: DashboardSetupBannerPro
 
           <div className="dashboard-setup-progress-ring" aria-label={`${progress}% concluído`}>
             <svg viewBox="0 0 44 44" className="dashboard-setup-ring-svg">
-              <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#dcfce7" strokeWidth="3" />
               <circle
                 cx="22" cy="22" r="18" fill="none"
                 stroke="#22c55e" strokeWidth="3"
