@@ -1,5 +1,28 @@
 # Reimplementação do Frontend WhatsAgent — Diagnóstico + Arquitetura + Roadmap
 
+## Status de implementação (revisado 2026-07-22, lacunas fechadas no mesmo dia)
+
+Verificação item a item contra o código atual (`apps/web`, `apps/api`, `apps/ai-orchestrator`, `apps/channel-service`).
+
+| Fase | Status | Nota |
+|------|--------|------|
+| F0 — Fundação | ✅ feito | Query client + `HydrationBoundary` + fetcher único + Web Vitals + **Sentry** (`@sentry/nextjs` web, `@sentry/nestjs` api) + **Playwright** (`apps/web/tests/e2e`) + **Lighthouse CI** (`apps/web/lighthouserc.json`, job `e2e-web` no `ci.yml`). |
+| F1 — Data layer & auth | ✅ feito | `user` injetado via RSC (`layout.tsx` → `getServerUser()`), `/api/auth/me` não bloqueia mais mount (`auth-context.tsx`). Query substituiu `useApi` nas telas migradas. |
+| F2 — Dashboard/Analytics | ✅ feito | `GET /analytics/dashboard` agregado + cache Redis (`cached()` em `analytics.service.ts`, TTL aplicado a KPIs/trends/funnel/heatmap/handoff-reasons). |
+| F3 — Inbox real-time | ✅ feito | Mensagens em Query keyed por conversa, patch pontual via socket. `MessageBubble`, `KpiCard`, `DealCard` memoizados. **Virtualização** via `@tanstack/react-virtual` no `MessagesPanel`. **`ConversationRow`** extraído e memoizado (`features/inbox/components/ConversationRow.tsx`), sem closures inline. **Endpoint legado sem paginação removido** — `findMessages` apagado do controller/service, só `findMessagesPage` (cursor) segue ativo. |
+| F4 — IA streaming | ✅ feito | Streaming de tokens real via `llm.astream` → tópico `ai.stream` → socket (`ai_stream_started/token/ended`); `ai_typing_started/stopped` implementado; pacing fixo `setTimeout(400ms)` removido do channel-service. Simulador (B6, unificação com orchestrator) não verificado. |
+| F5 — Restante + cutover | 🟡 parcial | God-components quebrados: `settings/page.tsx` 907→122 linhas (5 tabs extraídas para `features/settings/components/`), `agent/persona/page.tsx` 725→210 (6 seções extraídas para `features/agent/components/persona/`), `inbox/page.tsx` 580→213 (`ConversationsSidebar`, `ChatHeader`, `MessagesPanel` extraídos para `features/inbox/components/`). `catalog/page.tsx` e demais telas menores não tocados. Sem flag/cutover Strangler visível — mudança foi feita in-place, não atrás de flag. |
+
+**Itens do Quick Wins confirmados feitos:** memo em `MessageBubble`/`KpiCard`/`DealCard`/`ConversationRow`, Redis cache nos KPIs, `dynamic()` em recharts/xlsx/emoji-picker, `next/image` em mídia do chat, polling do `agent/knowledge` condicional, virtualização de mensagens, endpoint legado removido. Polling do `overview` continua fixo em 30s via `refetchInterval` do Query (não foi trocado por push via socket).
+
+**Lacunas remanescentes (menor impacto):**
+1. `catalog/page.tsx` (441L) e outras telas médias não foram quebradas em subcomponentes — F5 cobriu só os 3 maiores god-components.
+2. Sem cutover via feature flag — os refactors do F3/F5 foram aplicados diretamente no app único (`apps/web`), não em um app paralelo com flag por rota como o §5 do plano original propunha. Aceitável dado que o rewrite nunca chegou a ser um app separado — o "Strangler Fig" descrito na §5 não se concretizou; a evolução real foi incremental no mesmo app.
+3. Simulador (`chat-simulator.service.ts`, B6) ainda não unificado com o orchestrator real.
+4. Lighthouse CI roda com `continue-on-error: true` no pipeline (thresholds ainda não são hard gate) — baseline de performance em modo dev está baixo (~0.4-0.5), recomenda-se recalibrar contra build de produção antes de tornar bloqueante.
+
+---
+
 ## Context
 
 O back-office web (`apps/web`, Next.js 14 App Router) tem **navegação lenta e sensação constante de lentidão**. A investigação do código-fonte confirmou que isso **não é "culpa do React"** — é a soma de decisões arquiteturais concretas:
