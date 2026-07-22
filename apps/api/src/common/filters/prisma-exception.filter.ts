@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import * as Sentry from "@sentry/nestjs";
 import type { Response } from "express";
 
 @Catch(Prisma.PrismaClientKnownRequestError)
@@ -29,6 +30,7 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     }
 
     this.logger.error(`Prisma error ${exception.code}: ${exception.message}`);
+    Sentry.captureException(exception);
 
     response.status(status).json({
       statusCode: status,

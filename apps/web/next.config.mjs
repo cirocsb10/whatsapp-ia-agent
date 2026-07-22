@@ -1,6 +1,7 @@
 import { createRequire } from "module";
 import { fileURLToPath } from "url";
 import path from "path";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -50,4 +51,12 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Upload de source maps só roda em CI com SENTRY_AUTH_TOKEN/ORG/PROJECT configurados;
+// sem eles o plugin fica no-op (build local não é afetado).
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+});

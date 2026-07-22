@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
+import { SentryModule } from "@sentry/nestjs/setup";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
@@ -24,6 +25,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ["../../.env.local", "../../.env", ".env"],
