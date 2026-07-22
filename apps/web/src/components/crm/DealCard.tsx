@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, User, Pencil, Trash2 } from "lucide-react";
@@ -11,7 +12,7 @@ interface Props {
   onDelete: (deal: Deal) => void;
 }
 
-export function DealCard({ deal, onEdit, onDelete }: Props) {
+function DealCardComponent({ deal, onEdit, onDelete }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: deal.id });
 
@@ -62,3 +63,5 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
     </div>
   );
 }
+
+export const DealCard = memo(DealCardComponent);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Kanban, TrendingUp, LayoutGrid, DollarSign } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { KanbanBoard } from "@/components/crm/KanbanBoard";
@@ -40,11 +40,15 @@ export default function CrmPage() {
     setFormOpen(true);
   }
 
-  function openEdit(deal: Deal) {
+  const openEdit = useCallback((deal: Deal) => {
     setEditDeal(deal);
     setInitialStageId(undefined);
     setFormOpen(true);
-  }
+  }, []);
+
+  const openDeleteTarget = useCallback((deal: Deal) => {
+    setDeleteTarget(deal);
+  }, []);
 
   function handleSaved() {
     setToast({ type: "success", msg: isEditing ? "Negócio atualizado!" : "Negócio criado!" });
@@ -124,7 +128,7 @@ export default function CrmPage() {
             <KanbanBoard
               onAddDeal={openCreate}
               onEditDeal={openEdit}
-              onDeleteDeal={(deal) => setDeleteTarget(deal)}
+              onDeleteDeal={openDeleteTarget}
             />
           </div>
         )}

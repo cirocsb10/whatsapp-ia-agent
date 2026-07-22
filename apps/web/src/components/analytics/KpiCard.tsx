@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { memo } from "react";
 
 interface KpiCardProps {
   title: string;
@@ -34,7 +35,7 @@ function EmptySparkline({ color }: { color: string }) {
   );
 }
 
-export function KpiCard({
+function KpiCardComponent({
   title, value, change, changeLabel = "vs. ontem",
   icon: Icon, iconColor = "text-slate-500",
   accent = "#6366f1",
@@ -95,3 +96,5 @@ export function KpiCard({
     </div>
   );
 }
+
+export const KpiCard = memo(KpiCardComponent);
