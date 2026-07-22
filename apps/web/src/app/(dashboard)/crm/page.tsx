@@ -1,10 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Kanban, TrendingUp, LayoutGrid, DollarSign } from "lucide-react";
 import { Header } from "@/components/layout/Header";
-import { KanbanBoard } from "@/components/crm/KanbanBoard";
 import { DealFormModal } from "@/components/crm/DealFormModal";
+
+// @dnd-kit (core/sortable/utilities) só é necessário para o board em si — o resto
+// da tela (stats, modais) não depende dele. `ssr: false` porque drag-and-drop
+// exige DOM/pointer events (sem ganho em renderizar no servidor).
+const KanbanBoard = dynamic(
+  () => import("@/components/crm/KanbanBoard").then((m) => m.KanbanBoard),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#64748b", fontSize: 13 }}>Carregando funil…</p>
+      </div>
+    ),
+  },
+);
 import { useStages, useDeals, useCrmStats, useDeleteDeal } from "@/features/crm/api/queries";
 import { Deal, formatBRL } from "@/types/crm";
 
