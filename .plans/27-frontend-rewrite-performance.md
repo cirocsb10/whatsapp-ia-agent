@@ -6,7 +6,7 @@ Verificação item a item contra o código atual (`apps/web`, `apps/api`, `apps/
 
 | Fase | Status | Nota |
 |------|--------|------|
-| F0 — Fundação | ✅ feito | Query client + `HydrationBoundary` + fetcher único + Web Vitals + **Sentry** (`@sentry/nextjs` web, `@sentry/nestjs` api) + **Playwright** (`apps/web/tests/e2e`) + **Lighthouse CI** (`apps/web/lighthouserc.json`, job `e2e-web` no `ci.yml`). |
+| F0 — Fundação | 🟡 parcial | Query client + `HydrationBoundary` + fetcher único + Web Vitals + **Sentry** (`@sentry/nextjs` web, `@sentry/nestjs` api) + **Playwright** (só smoke: landing/login/redirect, `apps/web/tests/e2e`) + **Lighthouse CI** (`apps/web/lighthouserc.json`, job `e2e-web` no `ci.yml`, `continue-on-error`). Faltam: error boundaries por rota (§3.7, só existe `global-error.tsx`), `onError`/`QueryCache` central do TanStack Query para toasts padronizados (§3.7), testes de componente com Testing Library (§3.11 — pacote nem instalado). |
 | F1 — Data layer & auth | ✅ feito | `user` injetado via RSC (`layout.tsx` → `getServerUser()`), `/api/auth/me` não bloqueia mais mount (`auth-context.tsx`). Query substituiu `useApi` nas telas migradas. |
 | F2 — Dashboard/Analytics | ✅ feito | `GET /analytics/dashboard` agregado + cache Redis (`cached()` em `analytics.service.ts`, TTL aplicado a KPIs/trends/funnel/heatmap/handoff-reasons). |
 | F3 — Inbox real-time | ✅ feito | Mensagens em Query keyed por conversa, patch pontual via socket. `MessageBubble`, `KpiCard`, `DealCard` memoizados. **Virtualização** via `@tanstack/react-virtual` no `MessagesPanel`. **`ConversationRow`** extraído e memoizado (`features/inbox/components/ConversationRow.tsx`), sem closures inline. **Endpoint legado sem paginação removido** — `findMessages` apagado do controller/service, só `findMessagesPage` (cursor) segue ativo. |
@@ -20,6 +20,12 @@ Verificação item a item contra o código atual (`apps/web`, `apps/api`, `apps/
 2. Sem cutover via feature flag — os refactors do F3/F5 foram aplicados diretamente no app único (`apps/web`), não em um app paralelo com flag por rota como o §5 do plano original propunha. Aceitável dado que o rewrite nunca chegou a ser um app separado — o "Strangler Fig" descrito na §5 não se concretizou; a evolução real foi incremental no mesmo app.
 3. Simulador (`chat-simulator.service.ts`, B6) ainda não unificado com o orchestrator real.
 4. Lighthouse CI roda com `continue-on-error: true` no pipeline (thresholds ainda não são hard gate) — baseline de performance em modo dev está baixo (~0.4-0.5), recomenda-se recalibrar contra build de produção antes de tornar bloqueante.
+5. **Error Boundaries por rota (§3.7)** — `grep -r "export default function.*Error" apps/web/src/app --include=error.tsx` = 0 resultados. Só existe `app/global-error.tsx` (raiz, para o Sentry capturar crashes de render); nenhuma rota tem `error.tsx` próprio, então um erro em `inbox/` ou `settings/` sobe até o boundary global em vez de mostrar um estado de erro local com retry.
+6. **`onError`/`QueryCache` central do TanStack Query (§3.7)** — `apps/web/src/shared/api/query-client.ts` não configura `QueryCache`/`MutationCache` com `onError`; toasts de erro (quando existem) são tratados ad hoc por tela, não normalizados centralmente.
+7. **Testes de componente (§3.11)** — `@testing-library/react` não está instalado; único teste do `apps/web` é `lib/persona.test.ts` (utilitário puro). Nenhuma cobertura de render/optimistic do inbox nem dos formulários de agent.
+8. **E2E além do smoke (§3.11)** — o Playwright cobre só páginas públicas (landing/login/redirect); o fluxo completo do plano (login → navegação cacheada → envio de mensagem → chegada via socket → handoff) exigiria orquestrar api/channel-service/rabbitmq no CI e não foi implementado.
+9. **`dnd-kit` sem `next/dynamic` (§3.2/3.9)** — o Kanban do CRM (`KanbanBoard.tsx`) importa `@dnd-kit/*` estaticamente; recharts/xlsx/emoji-picker já são lazy, dnd-kit não.
+10. **Métrica de latência da IA ponta-a-ponta (§3.12)** — existe `aiLatencyMs` no `analytics.service.ts`, mas mede a resposta completa (inbound → mensagem final), não "inbound → primeiro token" como o plano pede para validar o ganho do streaming (§3.10).
 
 ---
 
