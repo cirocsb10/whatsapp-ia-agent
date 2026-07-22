@@ -100,6 +100,49 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
 
+  e2e-web:
+    name: E2E & Lighthouse (web)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    env:
+      JWT_ACCESS_SECRET: playwright-e2e-access-secret-min-32-chars
+      FRONTEND_URL: http://localhost:3100
+      NEXT_PUBLIC_API_URL: http://localhost:3002
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @whatsagent/web exec playwright install --with-deps chromium
+
+      - name: Run Playwright E2E (smoke)
+        run: pnpm --filter @whatsagent/web test:e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+      - name: Run Lighthouse CI (público, sem sessão)
+        run: pnpm --filter @whatsagent/web exec lhci autorun
+        continue-on-error: true
+
   test-python:
     name: Tests (Python)
     runs-on: ubuntu-latest

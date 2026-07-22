@@ -28,6 +28,11 @@ apps/channel-service/build-info.json
 # Coverage
 coverage/
 
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/.lighthouseci/
+
 # Python
 __pycache__/
 *.py[cod]
