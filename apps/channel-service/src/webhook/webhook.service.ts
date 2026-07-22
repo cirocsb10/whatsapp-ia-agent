@@ -86,7 +86,7 @@ export class WebhookService {
       return;
     }
 
-    const { contact, conversation, justOptedOut } = await this.prisma.$transaction(async (tx) => {
+    const { contact, conversation, isNewContact, justOptedOut } = await this.prisma.$transaction(async (tx) => {
       let isNewContact = false;
       let contact = await tx.contact.findUnique({
         where: { tenantId_phone: { tenantId, phone: msg.from } },
@@ -161,7 +161,9 @@ export class WebhookService {
       return { contact, conversation, isNewContact, justOptedOut: false };
     });
 
-    await this.crmAutoLead.maybeCreateLead(tenantId, contact.id, contact.phone, contact.name ?? undefined);
+    if (isNewContact) {
+      await this.crmAutoLead.maybeCreateLead(tenantId, contact.id, contact.phone, contact.name ?? undefined);
+    }
 
     if (justOptedOut) {
       await this.crmAutoLead.advanceToLost(tenantId, contact.id);
