@@ -30,24 +30,19 @@ export class ConversationsController {
   async findMessages(
     @CurrentTenantId() tenantId: string,
     @Param("id") id: string,
-    @Query("limit") limit?: string,
-    @Query("before") before?: string,
-    @Res({ passthrough: true }) res?: { setHeader(name: string, value: string): void },
+    @Query("limit") limit: string | undefined,
+    @Query("before") before: string | undefined,
+    @Res({ passthrough: true }) res: { setHeader(name: string, value: string): void },
   ) {
-    // Sem `limit` = comportamento legado (array com todas as mensagens, asc).
-    if (limit === undefined) {
-      return this.service.findMessages(tenantId, id);
-    }
-
     // Paginado (B2): corpo segue array (asc); meta vai em headers para não
     // quebrar o contrato atual do frontend.
     const page = await this.service.findMessagesPage(tenantId, id, {
-      limit: Number(limit),
+      limit: limit !== undefined ? Number(limit) : 50,
       ...(before ? { before } : {}),
     });
-    res?.setHeader("X-Has-More", String(page.hasMore));
-    res?.setHeader("Access-Control-Expose-Headers", "X-Has-More, X-Next-Cursor");
-    if (page.nextCursor) res?.setHeader("X-Next-Cursor", page.nextCursor);
+    res.setHeader("X-Has-More", String(page.hasMore));
+    res.setHeader("Access-Control-Expose-Headers", "X-Has-More, X-Next-Cursor");
+    if (page.nextCursor) res.setHeader("X-Next-Cursor", page.nextCursor);
     return page.messages;
   }
 

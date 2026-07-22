@@ -72,7 +72,9 @@ describe("ConversationsService", () => {
   it("throws when conversation is outside tenant", async () => {
     mockPrisma.conversation.findFirst.mockResolvedValue(null);
 
-    await expect(service.findMessages("t-1", "bad")).rejects.toThrow(NotFoundException);
+    await expect(service.findMessagesPage("t-1", "bad", { limit: 50 })).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("returns messages with normalized direction", async () => {
@@ -98,9 +100,9 @@ describe("ConversationsService", () => {
       },
     ]);
 
-    const msgs = await service.findMessages("t-1", "c-1");
-    expect(msgs[0]!.direction).toBe("outbound");
-    expect(msgs[0]!.messageStatus).toBe("delivered");
+    const page = await service.findMessagesPage("t-1", "c-1", { limit: 50 });
+    expect(page.messages[0]!.direction).toBe("outbound");
+    expect(page.messages[0]!.messageStatus).toBe("delivered");
   });
 
   describe("findMessagesPage", () => {

@@ -111,18 +111,6 @@ export class ConversationsService {
     if (!conversation) throw new NotFoundException("Conversation not found");
   }
 
-  async findMessages(tenantId: string, conversationId: string) {
-    await this.assertConversation(tenantId, conversationId);
-
-    const messages = await this.prisma.message.findMany({
-      where: { conversationId, tenantId },
-      orderBy: { sentAt: "asc" },
-      select: ConversationsService.MESSAGE_SELECT,
-    });
-
-    return messages.map((m) => this.mapMessage(m));
-  }
-
   /**
    * Paginação por cursor (B2): retorna as `limit` mensagens mais recentes anteriores
    * ao cursor `before` (sentAt), em ordem ascendente para exibição. `nextCursor` é o
