@@ -23,7 +23,8 @@ async def test_catalog_search_returns_products():
 
     assert "Camiseta Preta Premium" in result
     assert "R$ 59,90" in result
-    assert "10 em estoque" in result
+    # Estoque não faz mais parte do resultado da busca — é responsabilidade do
+    # get_stock_tool (checagem em tempo real), ver test_get_stock_returns_quantity.
 
 
 @pytest.mark.asyncio
@@ -63,27 +64,54 @@ async def test_verify_hours_returns_open_status():
     assert "aberto" in result.lower() or "fechado" in result.lower()
 
 
+def _mock_order_session(*, total_cents: int, item_name: str, item_qty: int):
+    """Sessão SQLAlchemy mocada para o fluxo feliz do add_to_cart_tool: sem pedido
+    DRAFT existente, sem item existente no pedido — cobre os 7 execute() do tool
+    (lookup pedido, insert pedido, lookup item, insert item, soma total, update
+    total, listagem de itens para o resumo)."""
+    no_existing_order = MagicMock(fetchone=MagicMock(return_value=None))
+    insert_order = MagicMock(fetchone=MagicMock(return_value=("order-uuid-1",)))
+    no_existing_item = MagicMock(fetchone=MagicMock(return_value=None))
+    insert_item = MagicMock()
+    total_row = MagicMock(fetchone=MagicMock(return_value=(total_cents,)))
+    update_order = MagicMock()
+    items_result = MagicMock(fetchall=MagicMock(return_value=[(item_name, item_qty, total_cents)]))
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(side_effect=[
+        no_existing_order, insert_order, no_existing_item, insert_item,
+        total_row, update_order, items_result,
+    ])
+    mock_session.commit = AsyncMock()
+
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_ctx.__aexit__ = AsyncMock(return_value=False)
+    return mock_ctx
+
+
 @pytest.mark.asyncio
 async def test_add_to_cart_uses_db_price_not_llm_price():
     """VULN-06: add_to_cart_tool must ignore LLM-supplied price and use DB price."""
     from src.graph.tools import add_to_cart_tool
 
     db_product = {"name": "Camiseta Preta", "price_cents": 5990, "available_qty": 10}
+    mock_ctx = _mock_order_session(total_cents=11980, item_name="Camiseta Preta", item_qty=2)
 
-    with patch("src.graph.tools._get_authoritative_price", AsyncMock(return_value=db_product)):
-        # LLM supplies price_cents=1 (attack attempt), tool must use DB price 5990
+    with patch("src.graph.tools._get_authoritative_price", AsyncMock(return_value=db_product)), \
+         patch("src.db.postgres.get_async_session", return_value=mock_ctx):
+        # LLM não informa preço nem nome — o tool sempre busca ambos no DB (VULN-06).
         result = await add_to_cart_tool.ainvoke({
             "product_id": "prod-uuid-1",
-            "product_name": "Camiseta Preta",
-            "price_cents": 1,
             "quantity": 2,
             "tenant_id": "tenant-123",
+            "contact_id": "contact-1",
+            "contact_phone": "5511999999999",
         })
 
     # Must show authoritative price (R$ 119,80 = 5990*2/100), not attacker price
     assert "119,80" in result
     assert "Camiseta Preta" in result
-    assert "1 centavo" not in result.lower()
 
 
 @pytest.mark.asyncio
@@ -94,10 +122,10 @@ async def test_add_to_cart_returns_error_when_product_not_found():
     with patch("src.graph.tools._get_authoritative_price", AsyncMock(return_value=None)):
         result = await add_to_cart_tool.ainvoke({
             "product_id": "fake-id",
-            "product_name": "Produto Falso",
-            "price_cents": 100,
             "quantity": 1,
             "tenant_id": "tenant-123",
+            "contact_id": "contact-1",
+            "contact_phone": "5511999999999",
         })
 
     assert "não encontrado" in result.lower()
@@ -113,10 +141,10 @@ async def test_add_to_cart_blocks_when_insufficient_stock():
     with patch("src.graph.tools._get_authoritative_price", AsyncMock(return_value=db_product)):
         result = await add_to_cart_tool.ainvoke({
             "product_id": "prod-uuid-1",
-            "product_name": "Produto",
-            "price_cents": 1000,
             "quantity": 5,
             "tenant_id": "tenant-123",
+            "contact_id": "contact-1",
+            "contact_phone": "5511999999999",
         })
 
     assert "2" in result  # shows available qty

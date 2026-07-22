@@ -68,7 +68,8 @@ async def catalog_search_tool(query: str, tenant_id: str) -> str:
         tenant_id: ID do tenant atual
 
     Returns:
-        Lista formatada dos produtos encontrados com nome, descrição, preço e estoque
+        Lista formatada dos produtos encontrados com nome, descrição e preço.
+        Para disponibilidade em tempo real, use get_stock_tool.
     """
     try:
         products = await _vector_search(query, tenant_id, limit=5)
