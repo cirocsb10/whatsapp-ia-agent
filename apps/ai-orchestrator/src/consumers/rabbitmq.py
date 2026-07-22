@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -104,6 +105,7 @@ async def process_inbound_message(
     session_svc: SessionService,
     publisher: RabbitMQPublisher,
 ) -> None:
+    received_at = time.perf_counter()
     async with message.process():
         raw_event = json.loads(message.body.decode())
         try:
@@ -184,6 +186,7 @@ async def process_inbound_message(
                 publisher.publish_stream,
                 tenant_id=tenant_id,
                 conversation_id=session.conversation_id,
+                received_at=received_at,
             )
             try:
                 graph = get_agent_graph()
