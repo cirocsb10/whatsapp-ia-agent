@@ -1,20 +1,17 @@
 "use client";
 import {
   ChevronRight, CheckCircle2, ExternalLink,
-  DollarSign, MessageSquare, Sparkles, CreditCard, X,
+  DollarSign, MessageSquare, Sparkles, CreditCard,
 } from "lucide-react";
 import { useState } from "react";
-import { useCompanySettings, useUpdateWhatsapp } from "@/features/settings/api/queries";
+import { useRouter } from "next/navigation";
+import { useCompanySettings } from "@/features/settings/api/queries";
 import { SectionPanel, FieldRow } from "./shared";
 
 export function TabIntegracoes() {
+  const router = useRouter();
   const companyQuery = useCompanySettings();
-  const updateWhatsapp = useUpdateWhatsapp();
   const company = companyQuery.data ?? null;
-  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
-  const [phoneId, setPhoneId] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [savedWA, setSavedWA] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const webhookUrl = `${process.env.NEXT_PUBLIC_API_URL ?? "https://api.whatsagent.app"}/webhooks/meta`;
@@ -25,20 +22,6 @@ export function TabIntegracoes() {
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const handleSaveWhatsApp = () => {
-    updateWhatsapp.mutate(
-      { whatsappPhoneId: phoneId, metaAccessToken: accessToken },
-      {
-        onSuccess: () => {
-          setSavedWA(true);
-          setShowWhatsAppModal(false);
-          setTimeout(() => setSavedWA(false), 2000);
-        },
-      },
-    );
-  };
-
-  const savingWA = updateWhatsapp.isPending;
   const waStatus = company?.whatsappStatus ?? "DISCONNECTED";
   const isWAConnected = waStatus === "CONNECTED";
 
@@ -50,12 +33,12 @@ export function TabIntegracoes() {
     onAction?: () => void; actionLabel?: string;
   }[] = [
     {
-      id: "meta", name: "Meta Cloud API", desc: "Envio e recebimento via WhatsApp.",
+      id: "meta", name: "Meta Cloud API", desc: "Envio e recebimento via WhatsApp. Gerencie múltiplos números na aba Números.",
       icon: MessageSquare, color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.2)",
       status: isWAConnected ? "connected" : waStatus === "PENDING" ? "pending" : "disconnected",
       badge: isWAConnected ? "Conectado" : waStatus === "PENDING" ? "Pendente" : "Desconectado",
-      onAction: () => { setPhoneId(company?.whatsappPhoneId ?? ""); setAccessToken(""); setShowWhatsAppModal(true); },
-      actionLabel: isWAConnected ? "Gerenciar" : "Configurar",
+      onAction: () => router.push("/settings?tab=numeros"),
+      actionLabel: isWAConnected ? "Gerenciar números" : "Conectar números",
     },
     {
       id: "openai", name: "OpenAI", desc: "Modelo de linguagem e Whisper.",
@@ -137,59 +120,6 @@ export function TabIntegracoes() {
           </div>
         </FieldRow>
       </SectionPanel>
-
-      {showWhatsAppModal && (
-        <div className="settings-modal-overlay" onClick={() => setShowWhatsAppModal(false)}>
-          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="settings-modal-head">
-              <div className="flex items-start gap-3">
-                <div className="settings-modal-icon" style={{ background: "rgba(251,191,36,0.12)", borderColor: "rgba(251,191,36,0.25)" }}>
-                  <MessageSquare className="w-4 h-4 text-amber-700" strokeWidth={1.8} />
-                </div>
-                <div>
-                  <p className="settings-modal-title">Configurar Meta Cloud API</p>
-                  <p className="settings-modal-desc">Conecte seu número WhatsApp Business</p>
-                </div>
-              </div>
-              <button onClick={() => setShowWhatsAppModal(false)} className="settings-modal-close" aria-label="Fechar">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="settings-modal-body settings-modal-form">
-              <FieldRow label="Phone Number ID" hint="Meta for Developers → WhatsApp → Phone Numbers">
-                <input
-                  type="text"
-                  value={phoneId}
-                  onChange={(e) => setPhoneId(e.target.value)}
-                  placeholder="123456789012345"
-                  className="settings-input"
-                />
-              </FieldRow>
-              <FieldRow label="Access Token" hint="Token permanente do Meta Business Suite">
-                <input
-                  type="password"
-                  value={accessToken}
-                  onChange={(e) => setAccessToken(e.target.value)}
-                  placeholder="EAAxxxxxxxxxxxxxxxx"
-                  className="settings-input"
-                />
-              </FieldRow>
-            </div>
-            <div className="settings-modal-footer">
-              <button onClick={() => setShowWhatsAppModal(false)} className="settings-danger-btn">
-                Cancelar
-              </button>
-              <button
-                onClick={handleSaveWhatsApp}
-                disabled={!phoneId || !accessToken || savingWA}
-                className="settings-save-btn settings-save-btn-inline"
-              >
-                {savingWA ? "Salvando…" : savedWA ? "Salvo!" : "Salvar conexão"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

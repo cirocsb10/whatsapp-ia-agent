@@ -1,17 +1,25 @@
 "use client";
 import { Header } from "@/components/layout/Header";
-import { User, Bell, Shield, Plug, CreditCard, ChevronRight } from "lucide-react";
+import { User, Bell, Shield, Plug, CreditCard, Phone, ChevronRight } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TabConta } from "@/features/settings/components/TabConta";
 import { TabNotificacoes } from "@/features/settings/components/TabNotificacoes";
 import { TabSeguranca } from "@/features/settings/components/TabSeguranca";
 import { TabIntegracoes } from "@/features/settings/components/TabIntegracoes";
+import { TabNumeros } from "@/features/settings/components/TabNumeros";
 import { TabPlano } from "@/features/settings/components/TabPlano";
 
-type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "plano";
+type Tab = "conta" | "notificacoes" | "seguranca" | "integracoes" | "numeros" | "plano";
 
-const VALID_TABS = new Set<Tab>(["conta", "notificacoes", "seguranca", "integracoes", "plano"]);
+const VALID_TABS = new Set<Tab>([
+  "conta",
+  "notificacoes",
+  "seguranca",
+  "integracoes",
+  "numeros",
+  "plano",
+]);
 
 function parseTab(value: string | null): Tab {
   return value && VALID_TABS.has(value as Tab) ? (value as Tab) : "conta";
@@ -28,6 +36,7 @@ const TABS: {
   { key: "notificacoes", label: "Notificações",  icon: Bell,       desc: "Alertas de conversas, pedidos e relatórios", accent: "#f59e0b" },
   { key: "seguranca",    label: "Segurança",     icon: Shield,     desc: "Senha, 2FA e sessões ativas",                accent: "#4f46e5" },
   { key: "integracoes",  label: "Integrações",   icon: Plug,       desc: "WhatsApp, pagamentos e serviços conectados", accent: "#22c55e" },
+  { key: "numeros",      label: "Números",       icon: Phone,      desc: "Números WhatsApp conectados e toggle de IA", accent: "#10b981" },
   { key: "plano",        label: "Plano",         icon: CreditCard, desc: "Assinatura, uso e histórico de pagamentos",   accent: "#06b6d4" },
 ];
 
@@ -47,6 +56,7 @@ function SettingsPageContent() {
     notificacoes: <TabNotificacoes />,
     seguranca:    <TabSeguranca />,
     integracoes:  <TabIntegracoes />,
+    numeros:      <TabNumeros />,
     plano:        <TabPlano />,
   };
 
