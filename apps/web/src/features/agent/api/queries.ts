@@ -135,9 +135,15 @@ export function useToggleGuardRule() {
   });
 }
 
+export interface AgentChatReply {
+  reply: string;
+  shouldHandoff: boolean;
+  handoffReason?: string | undefined;
+}
+
 export function useAgentChat() {
   return useMutation({
     mutationFn: (message: string) =>
-      api.post<{ reply: string }>("/agent/chat", { message }),
+      api.post<AgentChatReply>("/agent/chat", { message }),
   });
 }

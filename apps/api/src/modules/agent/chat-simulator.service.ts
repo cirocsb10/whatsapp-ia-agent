@@ -2,6 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AgentConfigService } from "./agent-config.service";
 
+export interface SimulatorReply {
+  reply: string;
+  shouldHandoff: boolean;
+  handoffReason?: string | undefined;
+}
+
 /**
  * Simulador do back-office.
  *
@@ -28,7 +34,10 @@ export class ChatSimulatorService {
     return config;
   }
 
-  private async replyViaOrchestrator(tenantId: string, message: string): Promise<string | null> {
+  private async replyViaOrchestrator(
+    tenantId: string,
+    message: string,
+  ): Promise<SimulatorReply | null> {
     const orchestratorUrl = this.config.get<string>("AI_ORCHESTRATOR_URL");
     const internalToken = this.config.get<string>("INTERNAL_API_TOKEN");
     if (!orchestratorUrl || !internalToken) return null;
@@ -47,17 +56,28 @@ export class ChatSimulatorService {
       return null;
     }
 
-    const body = (await res.json()) as { reply?: string };
-    return body.reply?.trim() || null;
+    const body = (await res.json()) as {
+      reply?: string;
+      shouldHandoff?: boolean;
+      handoffReason?: string | null;
+    };
+    if (!body.reply?.trim()) return null;
+
+    return {
+      reply: body.reply.trim(),
+      shouldHandoff: body.shouldHandoff ?? false,
+      handoffReason: body.handoffReason ?? undefined,
+    };
   }
 
-  private async replyViaOpenAI(tenantId: string, message: string) {
+  private async replyViaOpenAI(tenantId: string, message: string): Promise<SimulatorReply> {
     const cfg = await this.getCachedConfig(tenantId);
     const apiKey = this.config.get<string>("OPENAI_API_KEY");
 
     if (!apiKey) {
       return {
         reply: `${cfg.agentName}: recebi "${message}". Configure OPENAI_API_KEY ou AI_ORCHESTRATOR_URL para respostas reais.`,
+        shouldHandoff: false,
       };
     }
 
@@ -88,19 +108,20 @@ export class ChatSimulatorService {
       const body: any = await res.json();
       const reply = body.choices[0]?.message?.content;
 
-      return { reply: reply || "Nao consegui gerar uma resposta agora." };
+      return { reply: reply || "Nao consegui gerar uma resposta agora.", shouldHandoff: false };
     } catch (err) {
       this.logger.error("OpenAI chat request failed", err);
       return {
         reply: `${cfg.agentName}: nao consegui acessar o modelo agora, mas recebi sua mensagem.`,
+        shouldHandoff: false,
       };
     }
   }
 
-  async reply(tenantId: string, message: string) {
+  async reply(tenantId: string, message: string): Promise<SimulatorReply> {
     try {
       const orchestrated = await this.replyViaOrchestrator(tenantId, message);
-      if (orchestrated) return { reply: orchestrated };
+      if (orchestrated) return orchestrated;
     } catch (err) {
       this.logger.warn("Orchestrator simulate failed — falling back to OpenAI", err as Error);
     }

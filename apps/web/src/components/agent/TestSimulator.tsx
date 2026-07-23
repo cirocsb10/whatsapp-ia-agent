@@ -1,9 +1,13 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Send, RefreshCw, Bot, User, Sparkles } from "lucide-react";
+import { Send, RefreshCw, Bot, User, Sparkles, UserCheck } from "lucide-react";
 import { useAgentChat } from "@/features/agent/api/queries";
 
-interface Msg { role: "user" | "assistant"; content: string; }
+interface Msg {
+  role: "user" | "assistant";
+  content: string;
+  handoffReason?: string | undefined;
+}
 
 export function TestSimulator() {
   const chat = useAgentChat();
@@ -26,7 +30,14 @@ export function TestSimulator() {
     setMessages((p) => [...p, { role: "user", content: msg }]);
     try {
       const data = await chat.mutateAsync(msg);
-      setMessages((p) => [...p, { role: "assistant", content: data.reply ?? "Não consegui responder agora." }]);
+      setMessages((p) => [
+        ...p,
+        {
+          role: "assistant",
+          content: data.reply ?? "Não consegui responder agora.",
+          handoffReason: data.shouldHandoff ? (data.handoffReason ?? "Motivo não informado") : undefined,
+        },
+      ]);
     } catch {
       setMessages((p) => [...p, { role: "assistant", content: "Erro de conexão com o simulador." }]);
     }
@@ -71,23 +82,31 @@ export function TestSimulator() {
 
         <div className="flex flex-col gap-3">
           {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`simulator-msg-row ${m.role === "user" ? "simulator-msg-row--user" : "simulator-msg-row--bot"}`}
-            >
-              {m.role === "assistant" && (
-                <div className="simulator-avatar">
-                  <Bot className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
-                </div>
-              )}
+            <div key={i} className="flex flex-col gap-1.5">
+              <div
+                className={`simulator-msg-row ${m.role === "user" ? "simulator-msg-row--user" : "simulator-msg-row--bot"}`}
+              >
+                {m.role === "assistant" && (
+                  <div className="simulator-avatar">
+                    <Bot className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+                  </div>
+                )}
 
-              <div className={`simulator-bubble ${m.role === "user" ? "simulator-bubble--user" : "simulator-bubble--bot"}`}>
-                <p>{m.content}</p>
+                <div className={`simulator-bubble ${m.role === "user" ? "simulator-bubble--user" : "simulator-bubble--bot"}`}>
+                  <p>{m.content}</p>
+                </div>
+
+                {m.role === "user" && (
+                  <div className="simulator-avatar">
+                    <User className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+                  </div>
+                )}
               </div>
 
-              {m.role === "user" && (
-                <div className="simulator-avatar">
-                  <User className="w-3.5 h-3.5 text-indigo-400" strokeWidth={1.8} />
+              {m.handoffReason && (
+                <div className="simulator-handoff-badge" title={m.handoffReason}>
+                  <UserCheck className="w-3 h-3" strokeWidth={2} />
+                  Handoff acionado — {m.handoffReason}
                 </div>
               )}
             </div>

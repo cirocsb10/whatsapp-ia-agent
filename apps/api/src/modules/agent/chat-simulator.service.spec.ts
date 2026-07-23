@@ -34,6 +34,7 @@ describe("ChatSimulatorService", () => {
 
     expect(result.reply).toContain("Bot");
     expect(result.reply).toContain("Oi");
+    expect(result.shouldHandoff).toBe(false);
   });
 
   it("prefers orchestrator simulate when available", async () => {
@@ -45,7 +46,11 @@ describe("ChatSimulatorService", () => {
 
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ reply: "Resposta do LangGraph" }),
+      json: async () => ({
+        reply: "Resposta do LangGraph",
+        shouldHandoff: true,
+        handoffReason: "Cliente pediu atendente humano",
+      }),
     });
     globalThis.fetch = mockFetch as any;
 
@@ -56,6 +61,8 @@ describe("ChatSimulatorService", () => {
       expect.objectContaining({ method: "POST" }),
     );
     expect(result.reply).toBe("Resposta do LangGraph");
+    expect(result.shouldHandoff).toBe(true);
+    expect(result.handoffReason).toBe("Cliente pediu atendente humano");
   });
 
   it("falls back to OpenAI when orchestrator is unavailable", async () => {
