@@ -200,6 +200,21 @@ describe("UpdateAgentConfigDto", () => {
     });
   });
 
+  describe("crmProgressionEnabled", () => {
+    it("accepts boolean true", async () => {
+      expect(await errors({ crmProgressionEnabled: true })).toHaveLength(0);
+    });
+
+    it("accepts boolean false", async () => {
+      expect(await errors({ crmProgressionEnabled: false })).toHaveLength(0);
+    });
+
+    it("rejects non-boolean value", async () => {
+      const violations = await errors({ crmProgressionEnabled: "yes" });
+      expect(violations.some((v) => v.property === "crmProgressionEnabled")).toBe(true);
+    });
+  });
+
   describe("full valid payload", () => {
     it("accepts all new fields together with no violations", async () => {
       const violations = await errors({

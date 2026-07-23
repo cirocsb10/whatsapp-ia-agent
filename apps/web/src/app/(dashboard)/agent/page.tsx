@@ -12,7 +12,7 @@ import {
 import { useMemo, useState } from "react";
 import {
   Bot, Shield, Database, ChevronRight,
-  Sparkles, BookOpen, Cpu, Sliders,
+  Sparkles, BookOpen, Cpu, Sliders, Kanban,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -82,7 +82,16 @@ export default function AgentPage() {
     }
   }
 
+  async function handleCrmProgressionToggle(enabled: boolean) {
+    try {
+      await updateConfig.mutateAsync({ crmProgressionEnabled: enabled });
+    } catch {
+      setPublishError("Não foi possível atualizar a progressão do funil CRM.");
+    }
+  }
+
   const published = Boolean(config?.isPublished);
+  const crmProgressionEnabled = config?.crmProgressionEnabled !== false;
   const hasPersona = Boolean(config?.agentName && config?.agentName !== "Assistente");
 
   const setupDone = useMemo(() => ({
@@ -175,6 +184,30 @@ export default function AgentPage() {
                 </div>
               ))}
             </div>
+
+            <label className="agent-crm-toggle">
+              <input
+                type="checkbox"
+                checked={crmProgressionEnabled}
+                onChange={(e) => void handleCrmProgressionToggle(e.target.checked)}
+                disabled={loading || publishing}
+                className="sr-only"
+              />
+              <span className={`persona-toggle ${crmProgressionEnabled ? "persona-toggle--on" : ""}`}>
+                <span className="persona-toggle-thumb" />
+              </span>
+              <span className="agent-crm-toggle-text">
+                <span className="agent-crm-toggle-label">
+                  <Kanban className="w-3.5 h-3.5" strokeWidth={1.8} />
+                  Progressão automática do funil CRM
+                </span>
+                <span className="agent-crm-toggle-desc">
+                  {crmProgressionEnabled
+                    ? "Deals avançam automaticamente por conversas, pedidos e pagamentos"
+                    : "Funil permanece manual — eventos não movem stages"}
+                </span>
+              </span>
+            </label>
 
             {!published && (
               <button

@@ -22,6 +22,7 @@ export interface AgentConfig {
   maxResponseLength: number;
   systemPromptBase: string | null;
   isPublished: boolean;
+  crmProgressionEnabled: boolean;
   [key: string]: unknown;
 }
 

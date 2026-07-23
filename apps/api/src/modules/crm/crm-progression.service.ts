@@ -7,7 +7,20 @@ export class CrmProgressionService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  private async isProgressionEnabled(tenantId: string): Promise<boolean> {
+    const config = await this.prisma.agentConfig.findUnique({
+      where: { tenantId },
+      select: { crmProgressionEnabled: true },
+    });
+    return config?.crmProgressionEnabled ?? true;
+  }
+
   async advanceToPosition(tenantId: string, contactId: string, targetPosition: number): Promise<void> {
+    if (!(await this.isProgressionEnabled(tenantId))) {
+      this.logger.debug(`CRM progression disabled for tenant ${tenantId} — skipping advanceToPosition`);
+      return;
+    }
+
     const deal = await this.prisma.deal.findFirst({
       where: { tenantId, contactId },
       include: { stage: true },
@@ -28,6 +41,11 @@ export class CrmProgressionService {
   }
 
   async advanceToWon(tenantId: string, contactId: string): Promise<void> {
+    if (!(await this.isProgressionEnabled(tenantId))) {
+      this.logger.debug(`CRM progression disabled for tenant ${tenantId} — skipping advanceToWon`);
+      return;
+    }
+
     const deal = await this.prisma.deal.findFirst({
       where: { tenantId, contactId },
       include: { stage: true },

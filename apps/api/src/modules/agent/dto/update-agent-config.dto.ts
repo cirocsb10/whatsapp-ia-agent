@@ -115,4 +115,8 @@ export class UpdateAgentConfigDto {
   @IsOptional()
   @IsBoolean()
   isPublished?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  crmProgressionEnabled?: boolean;
 }

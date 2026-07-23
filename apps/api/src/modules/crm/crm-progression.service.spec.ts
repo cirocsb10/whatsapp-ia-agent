@@ -9,6 +9,7 @@ const mockWonStage = { id: "stage-won", position: 5, isWon: true };
 const mockPrisma = {
   deal: { findFirst: jest.fn(), update: jest.fn() },
   funnelStage: { findFirst: jest.fn() },
+  agentConfig: { findUnique: jest.fn() },
 };
 
 describe("CrmProgressionService", () => {
@@ -16,6 +17,7 @@ describe("CrmProgressionService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockPrisma.agentConfig.findUnique.mockResolvedValue({ crmProgressionEnabled: true });
     const module = await Test.createTestingModule({
       providers: [
         CrmProgressionService,
@@ -57,6 +59,24 @@ describe("CrmProgressionService", () => {
       await service.advanceToPosition("tenant-1", "contact-1", 1);
       expect(mockPrisma.deal.update).not.toHaveBeenCalled();
     });
+
+    it("não avança quando crmProgressionEnabled está desabilitado", async () => {
+      mockPrisma.agentConfig.findUnique.mockResolvedValue({ crmProgressionEnabled: false });
+      await service.advanceToPosition("tenant-1", "contact-1", 1);
+      expect(mockPrisma.deal.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.deal.update).not.toHaveBeenCalled();
+    });
+
+    it("avança quando tenant não tem AgentConfig (default true)", async () => {
+      mockPrisma.agentConfig.findUnique.mockResolvedValue(null);
+      mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
+      mockPrisma.funnelStage.findFirst.mockResolvedValue(mockStage1);
+      mockPrisma.deal.update.mockResolvedValue({});
+
+      await service.advanceToPosition("tenant-1", "contact-1", 1);
+
+      expect(mockPrisma.deal.update).toHaveBeenCalled();
+    });
   });
 
   describe("advanceToWon", () => {
@@ -83,6 +103,13 @@ describe("CrmProgressionService", () => {
       mockPrisma.deal.findFirst.mockResolvedValue(mockDeal);
       mockPrisma.funnelStage.findFirst.mockResolvedValue(null);
       await service.advanceToWon("tenant-1", "contact-1");
+      expect(mockPrisma.deal.update).not.toHaveBeenCalled();
+    });
+
+    it("não avança quando crmProgressionEnabled está desabilitado", async () => {
+      mockPrisma.agentConfig.findUnique.mockResolvedValue({ crmProgressionEnabled: false });
+      await service.advanceToWon("tenant-1", "contact-1");
+      expect(mockPrisma.deal.findFirst).not.toHaveBeenCalled();
       expect(mockPrisma.deal.update).not.toHaveBeenCalled();
     });
   });
