@@ -21,6 +21,7 @@ import { CrmModule } from "./modules/crm/crm.module";
 import { CategoriesModule } from "./modules/categories/categories.module";
 import { PlatformEmailModule } from "./modules/platform-email/platform-email.module";
 import { PlatformSettingsModule } from "./modules/platform-settings/platform-settings.module";
+import { PlansModule } from "./modules/plans/plans.module";
 import { SystemLogModule } from "./modules/system-log/system-log.module";
 import { HealthModule } from "./modules/health/health.module";
 import { ChannelsModule } from "./modules/channels/channels.module";
@@ -57,7 +58,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     AuthModule, SettingsModule, ConversationsModule, AgentModule,
     CrmModule, CategoriesModule, PlatformEmailModule, PlatformSettingsModule,
-    SystemLogModule, HealthModule,
+    PlansModule, SystemLogModule, HealthModule,
     ChannelsModule, CampaignsModule,
   ],
   providers: [
