@@ -26,8 +26,15 @@ const mockConversation = { id: "conv-1", status: "ACTIVE" };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockPrisma: Record<string, any> = {
   $transaction: jest.fn((fn: (tx: Record<string, unknown>) => Promise<unknown>) => fn(mockPrisma)),
+  whatsappChannel: {
+    findUnique: jest.fn().mockResolvedValue(null),
+  },
   tenant: {
-    findFirst: jest.fn().mockResolvedValue({ id: "tenant-uuid-123" }),
+    findFirst: jest.fn().mockResolvedValue({
+      id: "tenant-uuid-123",
+      metaAccessToken: "tenant-token",
+      whatsappPhoneId: "pid",
+    }),
   },
   contact: {
     findUnique: jest.fn().mockResolvedValue(null),
@@ -90,7 +97,12 @@ describe("WebhookService", () => {
     mockPrisma.$transaction.mockImplementation((fn: (tx: Record<string, unknown>) => Promise<unknown>) => fn(mockPrisma));
     mockSession.isDuplicate.mockResolvedValue(false);
     mockSession.get.mockResolvedValue(null);
-    mockPrisma.tenant.findFirst.mockResolvedValue({ id: "tenant-uuid-123" });
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue(null);
+    mockPrisma.tenant.findFirst.mockResolvedValue({
+      id: "tenant-uuid-123",
+      metaAccessToken: "tenant-token",
+      whatsappPhoneId: "pid",
+    });
     mockPrisma.contact.findUnique.mockResolvedValue(null);
     mockPrisma.contact.create.mockResolvedValue(mockContact);
     mockPrisma.conversation.findFirst.mockResolvedValue(mockConversation);
@@ -118,23 +130,127 @@ describe("WebhookService", () => {
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
   });
 
-  it("rejects webhook when no tenant found for phone number", async () => {
+  it("rejects webhook when no channel or tenant found for phone number", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue(null);
     mockPrisma.tenant.findFirst.mockResolvedValue(null);
     await service.processWebhook(makeTextPayload("Quero comprar"));
     expect(mockProducer.publishInbound).not.toHaveBeenCalled();
   });
 
-  it("uses cached tenant ID from Redis without hitting DB", async () => {
+  it("uses cached channel from Redis without hitting DB", async () => {
     mockSession.get.mockImplementation((key: string) => {
-      if (key.startsWith("tenant:phone:")) return Promise.resolve("cached-tenant-id");
+      if (key.startsWith("channel:phone:")) {
+        return Promise.resolve(
+          JSON.stringify({
+            tenantId: "cached-tenant-id",
+            channelId: "cached-channel-id",
+            isAiEnabled: true,
+            accessToken: "cached-token",
+            whatsappPhoneId: "pid",
+          }),
+        );
+      }
       if (key.startsWith("agent:published:")) return Promise.resolve("true");
       return Promise.resolve(null);
     });
     await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.whatsappChannel.findUnique).not.toHaveBeenCalled();
     expect(mockPrisma.tenant.findFirst).not.toHaveBeenCalled();
     expect(mockProducer.publishInbound).toHaveBeenCalledWith(
-      expect.objectContaining({ tenantId: "cached-tenant-id" }),
+      expect.objectContaining({
+        tenantId: "cached-tenant-id",
+        channelId: "cached-channel-id",
+      }),
     );
+  });
+
+  it("resolveChannel: hits WhatsappChannel and publishes channelId", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue({
+      id: "ch-1",
+      tenantId: "tenant-uuid-123",
+      isAiEnabled: true,
+      metaAccessToken: "ch-token",
+      whatsappPhoneId: "pid",
+    });
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.whatsappChannel.findUnique).toHaveBeenCalledWith({
+      where: { whatsappPhoneId: "pid" },
+      select: {
+        id: true,
+        tenantId: true,
+        isAiEnabled: true,
+        metaAccessToken: true,
+        whatsappPhoneId: true,
+      },
+    });
+    expect(mockPrisma.tenant.findFirst).not.toHaveBeenCalled();
+    expect(mockProducer.publishInbound).toHaveBeenCalledWith(
+      expect.objectContaining({ channelId: "ch-1", tenantId: "tenant-uuid-123" }),
+    );
+    expect(mockSession.set).toHaveBeenCalledWith(
+      "channel:phone:pid",
+      expect.stringContaining('"channelId":"ch-1"'),
+      3600,
+    );
+  });
+
+  it("resolveChannel: falls back to Tenant scalars when no WhatsappChannel", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue(null);
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.tenant.findFirst).toHaveBeenCalled();
+    expect(mockProducer.publishInbound).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenantId: "tenant-uuid-123",
+        type: "text",
+      }),
+    );
+    const published = mockProducer.publishInbound.mock.calls[0][0] as Record<string, unknown>;
+    expect(published["channelId"]).toBeUndefined();
+  });
+
+  it("sets conversation.channelId when channel is known", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue({
+      id: "ch-1",
+      tenantId: "tenant-uuid-123",
+      isAiEnabled: true,
+      metaAccessToken: "ch-token",
+      whatsappPhoneId: "pid",
+    });
+    mockPrisma.conversation.findFirst.mockResolvedValue(null);
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.conversation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ channelId: "ch-1" }),
+      }),
+    );
+  });
+
+  it("persists inbound but does not publish when channel.isAiEnabled=false", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue({
+      id: "ch-blind",
+      tenantId: "tenant-uuid-123",
+      isAiEnabled: false,
+      metaAccessToken: "ch-token",
+      whatsappPhoneId: "pid",
+    });
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockPrisma.message.create).toHaveBeenCalled();
+    expect(mockProducer.publishInbound).not.toHaveBeenCalled();
+    expect(mockInactivityScheduler.schedule).not.toHaveBeenCalled();
+  });
+
+  it("publishes when isPublished && isAiEnabled", async () => {
+    mockPrisma.whatsappChannel.findUnique.mockResolvedValue({
+      id: "ch-1",
+      tenantId: "tenant-uuid-123",
+      isAiEnabled: true,
+      metaAccessToken: "ch-token",
+      whatsappPhoneId: "pid",
+    });
+    mockPrisma.agentConfig.findFirst.mockResolvedValue({ isPublished: true });
+    await service.processWebhook(makeTextPayload("Olá"));
+    expect(mockProducer.publishInbound).toHaveBeenCalled();
+    expect(mockInactivityScheduler.schedule).toHaveBeenCalled();
   });
 
   it("cria Contact quando não existe antes de publicar", async () => {

@@ -19,6 +19,7 @@ class InboundMessageEvent(BaseModel):
     model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     tenant_id: str = Field(alias="tenantId", min_length=1, max_length=120)
+    channel_id: str | None = Field(default=None, alias="channelId", max_length=120)
     from_phone: str = Field(alias="from", min_length=1, max_length=40)
     whatsapp_phone_id: str = Field(alias="whatsappPhoneId", min_length=1, max_length=120)
     conversation_id: str | None = Field(default=None, alias="conversationId", max_length=120)
@@ -223,6 +224,8 @@ async def process_inbound_message(
                 "contactId": event.contact_id,
                 "inactivityTimeoutMin": agent_config.get("inactivity_timeout_min") or 30,
             }
+            if event.channel_id:
+                response_event["channelId"] = event.channel_id
 
             await publisher.publish_response(response_event)
             log.info("Response published", tenant=tenant_id, msgs=len(final_state["final_messages"]))

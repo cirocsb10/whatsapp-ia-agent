@@ -6,6 +6,20 @@ import { PrismaService } from "../prisma/prisma.service";
 import { InboundProducer } from "./inbound.producer";
 import { InactivitySchedulerService } from "./inactivity-scheduler.service";
 
+type OutboundEvent = {
+  tenantId?: string;
+  channelId?: string;
+  conversationId?: string;
+  waPhoneId: string;
+  toPhone: string;
+  inactivityTimeoutMin?: number;
+  messages: Array<{ type: string; text?: string; imageUrl?: string }>;
+  currentStage?: string;
+  contactId?: string;
+  triggerHandoff?: boolean;
+  handoffReason?: string;
+};
+
 @Injectable()
 export class OutboundConsumer implements OnModuleInit {
   private readonly logger = new Logger(OutboundConsumer.name);
@@ -20,18 +34,26 @@ export class OutboundConsumer implements OnModuleInit {
 
   async handleOutboundMessage(event: {
     tenantId?: string;
+    channelId?: string;
     conversationId?: string;
     waPhoneId: string;
     toPhone: string;
     inactivityTimeoutMin?: number;
     messages: Array<{ type: string; text?: string; imageUrl?: string }>;
   }): Promise<void> {
+    const accessToken = (await this.resolveOutboundToken(event.channelId, event.waPhoneId)) ?? undefined;
+
     for (const m of event.messages) {
-      const waMessageId = await this.messaging.sendMessage(event.waPhoneId, event.toPhone, {
-        type: m.type as "text" | "image" | "template",
-        ...(m.text !== undefined && { text: m.text }),
-        ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
-      });
+      const waMessageId = await this.messaging.sendMessage(
+        event.waPhoneId,
+        event.toPhone,
+        {
+          type: m.type as "text" | "image" | "template",
+          ...(m.text !== undefined && { text: m.text }),
+          ...(m.imageUrl !== undefined && { imageUrl: m.imageUrl }),
+        },
+        accessToken,
+      );
 
       if (event.tenantId && event.conversationId) {
         try {
@@ -85,6 +107,31 @@ export class OutboundConsumer implements OnModuleInit {
     }
   }
 
+  private async resolveOutboundToken(
+    channelId: string | undefined,
+    waPhoneId: string,
+  ): Promise<string | null> {
+    if (channelId) {
+      const byId = await this.prisma.whatsappChannel.findUnique({
+        where: { id: channelId },
+        select: { metaAccessToken: true },
+      });
+      if (byId?.metaAccessToken) return byId.metaAccessToken;
+    }
+
+    const byPhone = await this.prisma.whatsappChannel.findUnique({
+      where: { whatsappPhoneId: waPhoneId },
+      select: { metaAccessToken: true },
+    });
+    if (byPhone?.metaAccessToken) return byPhone.metaAccessToken;
+
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { whatsappPhoneId: waPhoneId },
+      select: { metaAccessToken: true },
+    });
+    return tenant?.metaAccessToken ?? null;
+  }
+
   private resolveCrmPosition(aiStage: string): number | null {
     switch (aiStage) {
       case "greeting":
@@ -115,18 +162,7 @@ export class OutboundConsumer implements OnModuleInit {
       channel.consume(q.queue, async (msg) => {
         if (!msg) return;
         try {
-          const event = JSON.parse(msg.content.toString()) as {
-            tenantId?: string;
-            conversationId?: string;
-            waPhoneId: string;
-            toPhone: string;
-            inactivityTimeoutMin?: number;
-            messages: Array<{ type: string; text?: string; imageUrl?: string }>;
-            currentStage?: string;
-            contactId?: string;
-            triggerHandoff?: boolean;
-            handoffReason?: string;
-          };
+          const event = JSON.parse(msg.content.toString()) as OutboundEvent;
 
           await this.handleOutboundMessage(event);
 

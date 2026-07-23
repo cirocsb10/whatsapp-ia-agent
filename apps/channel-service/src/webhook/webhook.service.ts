@@ -8,6 +8,14 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
 import { MetaWebhookBody, MetaMessage } from "./dto/meta-webhook.dto";
 
+export type ResolvedChannel = {
+  tenantId: string;
+  channelId: string | null;
+  isAiEnabled: boolean;
+  accessToken: string | null;
+  whatsappPhoneId: string;
+};
+
 @Injectable()
 export class WebhookService {
   private readonly logger = new Logger(WebhookService.name);
@@ -43,9 +51,10 @@ export class WebhookService {
   }
 
   private async processStatus(status: import("./dto/meta-webhook.dto").MetaStatus, phoneNumberId: string): Promise<void> {
-    const tenantId = await this.resolveTenantId(phoneNumberId);
-    if (!tenantId) return;
+    const resolved = await this.resolveChannel(phoneNumberId);
+    if (!resolved) return;
 
+    const { tenantId } = resolved;
     const ts = new Date(parseInt(status.timestamp, 10) * 1000);
     const data: Record<string, Date> = {};
     if (status.status === "delivered") data["deliveredAt"] = ts;
@@ -80,11 +89,13 @@ export class WebhookService {
       return;
     }
 
-    const tenantId = await this.resolveTenantId(phoneNumberId);
-    if (!tenantId) {
-      this.logger.warn(`Rejecting webhook — no tenant for phone number ID: ${phoneNumberId}`);
+    const resolved = await this.resolveChannel(phoneNumberId);
+    if (!resolved) {
+      this.logger.warn(`Rejecting webhook — no tenant/channel for phone number ID: ${phoneNumberId}`);
       return;
     }
+
+    const { tenantId, channelId, isAiEnabled } = resolved;
 
     const { contact, conversation, isNewContact, justOptedOut } = await this.prisma.$transaction(async (tx) => {
       let isNewContact = false;
@@ -126,7 +137,13 @@ export class WebhookService {
 
       if (!conversation) {
         conversation = await tx.conversation.create({
-          data: { tenantId, contactId: contact.id, status: "ACTIVE", startedAt: new Date() },
+          data: {
+            tenantId,
+            contactId: contact.id,
+            status: "ACTIVE",
+            startedAt: new Date(),
+            ...(channelId ? { channelId } : {}),
+          },
         });
       }
 
@@ -155,7 +172,10 @@ export class WebhookService {
 
       await tx.conversation.update({
         where: { id: conversation.id },
-        data: { lastMessageAt: new Date() },
+        data: {
+          lastMessageAt: new Date(),
+          ...(channelId ? { channelId } : {}),
+        },
       });
 
       return { contact, conversation, isNewContact, justOptedOut: false };
@@ -172,10 +192,12 @@ export class WebhookService {
 
     if (!conversation) return;
 
-    // Gate: só rotear para IA se o agente estiver publicado
+    // Gate: só rotear para IA se o agente estiver publicado E o canal tiver IA habilitada
     const published = await this.isAgentPublished(tenantId);
-    if (!published) {
-      this.logger.log(`Agent not published for tenant ${tenantId} — message saved but not routed`);
+    if (!published || !isAiEnabled) {
+      this.logger.log(
+        `AI gate closed for tenant ${tenantId} (published=${published}, isAiEnabled=${isAiEnabled}) — message saved but not routed`,
+      );
       return;
     }
 
@@ -189,6 +211,7 @@ export class WebhookService {
       conversationId: conversation.id,
       contactId: contact.id,
       conversationStatus: conversation.status,
+      ...(channelId ? { channelId } : {}),
     };
 
     if (msg.type === "text") {
@@ -288,24 +311,58 @@ export class WebhookService {
     return published;
   }
 
-  private async resolveTenantId(phoneNumberId: string): Promise<string | null> {
-    const key = `tenant:phone:${phoneNumberId}`;
+  /** Resolve WhatsappChannel by phone_number_id; falls back to Tenant scalars for one release. */
+  async resolveChannel(phoneNumberId: string): Promise<ResolvedChannel | null> {
+    const key = `channel:phone:${phoneNumberId}`;
     const cached = await this.session.get(key);
-    if (cached) return cached;
-
-    // Look up in database — NEVER fall back to a hardcoded value
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { whatsappPhoneId: phoneNumberId },
-      select: { id: true },
-    });
-
-    if (!tenant) {
-      this.logger.warn(`No tenant found for phone number ID: ${phoneNumberId}`);
-      return null; // Reject — do not route to wrong tenant
+    if (cached) {
+      try {
+        return JSON.parse(cached) as ResolvedChannel;
+      } catch {
+        this.logger.warn(`Invalid channel cache for ${phoneNumberId}; re-resolving`);
+      }
     }
 
-    await this.session.set(key, tenant.id, 3600);
-    return tenant.id;
+    const channel = await this.prisma.whatsappChannel.findUnique({
+      where: { whatsappPhoneId: phoneNumberId },
+      select: {
+        id: true,
+        tenantId: true,
+        isAiEnabled: true,
+        metaAccessToken: true,
+        whatsappPhoneId: true,
+      },
+    });
+    if (channel) {
+      const resolved: ResolvedChannel = {
+        tenantId: channel.tenantId,
+        channelId: channel.id,
+        isAiEnabled: channel.isAiEnabled,
+        accessToken: channel.metaAccessToken,
+        whatsappPhoneId: channel.whatsappPhoneId,
+      };
+      await this.session.set(key, JSON.stringify(resolved), 3600);
+      return resolved;
+    }
+
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { whatsappPhoneId: phoneNumberId },
+      select: { id: true, metaAccessToken: true, whatsappPhoneId: true },
+    });
+    if (!tenant) {
+      this.logger.warn(`No channel/tenant found for phone number ID: ${phoneNumberId}`);
+      return null;
+    }
+
+    const resolved: ResolvedChannel = {
+      tenantId: tenant.id,
+      channelId: null,
+      isAiEnabled: true,
+      accessToken: tenant.metaAccessToken,
+      whatsappPhoneId: tenant.whatsappPhoneId!,
+    };
+    await this.session.set(key, JSON.stringify(resolved), 3600);
+    return resolved;
   }
 
   verifyWebhook(mode: string, token: string, challenge: string): string | null {
