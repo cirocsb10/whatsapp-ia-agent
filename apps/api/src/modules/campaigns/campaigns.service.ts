@@ -83,6 +83,7 @@ export class CampaignsService {
         `Apenas templates APPROVED podem ser usados em campanhas (status atual: ${template.status})`,
       );
     }
+    this.assertTemplateHasNoVariables(template.bodyText);
 
     return this.prisma.campaign.create({
       data: {
@@ -119,6 +120,7 @@ export class CampaignsService {
         `Template não está APPROVED (status: ${campaign.template.status})`,
       );
     }
+    this.assertTemplateHasNoVariables(campaign.template.bodyText);
 
     if (!campaign.channel.metaAccessToken?.trim()) {
       throw new BadRequestException("Canal sem token Meta");
@@ -131,6 +133,7 @@ export class CampaignsService {
       throw new BadRequestException("Audiência vazia (verifique opt-outs e filtros)");
     }
 
+    // Recipients first; keep DRAFT until queue.add succeeds (avoid stuck SENDING).
     await this.prisma.$transaction(async (tx) => {
       await tx.campaignRecipient.deleteMany({ where: { campaignId } });
       await tx.campaignRecipient.createMany({
@@ -140,22 +143,28 @@ export class CampaignsService {
           status: "PENDING" as const,
         })),
       });
-      await tx.campaign.update({
-        where: { id: campaignId },
-        data: { status: "SENDING", startedAt: new Date() },
-      });
     });
 
-    await this.dispatchQueue.add(
-      "dispatch",
-      { campaignId, tenantId } satisfies CampaignDispatchJobData,
-      {
-        attempts: 3,
-        backoff: { type: "exponential", delay: 5000 },
-        removeOnComplete: 100,
-        removeOnFail: 50,
-      },
-    );
+    try {
+      await this.dispatchQueue.add(
+        "dispatch",
+        { campaignId, tenantId } satisfies CampaignDispatchJobData,
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      );
+    } catch (err) {
+      this.logger.error(`Failed to enqueue campaign ${campaignId} — left as DRAFT`, err);
+      throw err;
+    }
+
+    await this.prisma.campaign.update({
+      where: { id: campaignId },
+      data: { status: "SENDING", startedAt: new Date() },
+    });
 
     this.logger.log(`Campaign ${campaignId} enqueued (${contacts.length} recipients)`);
     return this.findOne(tenantId, campaignId);
@@ -173,6 +182,15 @@ export class CampaignsService {
       where: { id: campaignId },
       data: { status: "CANCELLED" },
     });
+  }
+
+  /** v1: block templates with {{n}} body placeholders (no param substitution yet). */
+  private assertTemplateHasNoVariables(bodyText: string | null | undefined): void {
+    if (bodyText?.includes("{{")) {
+      throw new BadRequestException(
+        "Templates com variáveis ({{n}}) não são suportados nesta versão. Use um template sem placeholders no corpo.",
+      );
+    }
   }
 
   private normalizeAudience(query: CreateCampaignDto["audienceQuery"]): AudienceQuery {

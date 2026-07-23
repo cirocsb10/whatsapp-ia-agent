@@ -7,6 +7,29 @@ const EXCHANGE = "messages";
 const ROUTING_KEY = "campaign.status";
 const QUEUE = "api.campaign.status";
 
+/** Build applyStatusUpdate input without passing `failureReason: undefined` (exactOptionalPropertyTypes). */
+export function toCampaignStatusUpdateInput(event: {
+  tenantId: string;
+  waMessageId: string;
+  status: CampaignDeliveryStatus;
+  timestamp: number;
+  failureReason?: string;
+}): {
+  tenantId: string;
+  waMessageId: string;
+  status: CampaignDeliveryStatus;
+  timestamp: number;
+  failureReason?: string;
+} {
+  return {
+    tenantId: event.tenantId,
+    waMessageId: event.waMessageId,
+    status: event.status,
+    timestamp: event.timestamp,
+    ...(event.failureReason !== undefined ? { failureReason: event.failureReason } : {}),
+  };
+}
+
 @Injectable()
 export class CampaignStatusConsumer implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(CampaignStatusConsumer.name);
@@ -61,13 +84,17 @@ export class CampaignStatusConsumer implements OnModuleInit, OnModuleDestroy {
       };
 
       if (event.tenantId && event.waMessageId && event.status && event.timestamp) {
-        await this.statusService.applyStatusUpdate({
-          tenantId: event.tenantId,
-          waMessageId: event.waMessageId,
-          status: event.status,
-          timestamp: event.timestamp,
-          failureReason: event.failureReason,
-        });
+        await this.statusService.applyStatusUpdate(
+          toCampaignStatusUpdateInput({
+            tenantId: event.tenantId,
+            waMessageId: event.waMessageId,
+            status: event.status,
+            timestamp: event.timestamp,
+            ...(event.failureReason !== undefined
+              ? { failureReason: event.failureReason }
+              : {}),
+          }),
+        );
       }
 
       this.channel.ack(msg);

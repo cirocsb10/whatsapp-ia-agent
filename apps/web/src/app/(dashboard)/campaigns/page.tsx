@@ -443,10 +443,17 @@ function CampaignRow({
 }) {
   const canDispatch = campaign.status === "DRAFT" || campaign.status === "SCHEDULED";
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
-      className={`w-full text-left rounded-lg border px-3 py-3 transition ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`w-full text-left rounded-lg border px-3 py-3 transition cursor-pointer ${
         selected
           ? "border-indigo-300 bg-indigo-50/50"
           : "border-slate-200 bg-white hover:border-slate-300"
@@ -463,25 +470,19 @@ function CampaignRow({
         {statusBadge(campaign.status)}
       </div>
       {canDispatch && (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onDispatch();
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.stopPropagation();
-              onDispatch();
-            }
-          }}
-          className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:underline"
+          disabled={dispatching}
+          className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
         >
           {dispatching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
           Disparar agora
-        </span>
+        </button>
       )}
-    </button>
+    </div>
   );
 }

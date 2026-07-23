@@ -57,6 +57,7 @@ describe("CampaignsService", () => {
         id: "tpl-1",
         status: "PENDING",
         channelId: "ch-1",
+        bodyText: "Olá",
       });
 
       await expect(
@@ -69,6 +70,30 @@ describe("CampaignsService", () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
+    it("rejeita template com variáveis {{n}} no body", async () => {
+      (mockPrisma["whatsappChannel"] as { findFirst: jest.Mock }).findFirst.mockResolvedValue({
+        id: "ch-1",
+        metaAccessToken: "tok",
+        whatsappPhoneId: "pid",
+      });
+      (mockPrisma["messageTemplate"] as { findFirst: jest.Mock }).findFirst.mockResolvedValue({
+        id: "tpl-1",
+        status: "APPROVED",
+        channelId: "ch-1",
+        bodyText: "Olá {{1}}, bem-vindo!",
+      });
+
+      await expect(
+        service.create("tenant-1", {
+          name: "Campanha",
+          channelId: "ch-1",
+          templateId: "tpl-1",
+          audienceQuery: { type: "all" },
+        }),
+      ).rejects.toThrow(/variáveis/);
+      expect((mockPrisma["campaign"] as { create: jest.Mock }).create).not.toHaveBeenCalled();
+    });
+
     it("cria campanha com template APPROVED", async () => {
       (mockPrisma["whatsappChannel"] as { findFirst: jest.Mock }).findFirst.mockResolvedValue({
         id: "ch-1",
@@ -79,6 +104,7 @@ describe("CampaignsService", () => {
         id: "tpl-1",
         status: "APPROVED",
         channelId: "ch-1",
+        bodyText: "Olá, bem-vindo!",
       });
       (mockPrisma["campaign"] as { create: jest.Mock }).create.mockResolvedValue({
         id: "camp-1",
@@ -110,7 +136,7 @@ describe("CampaignsService", () => {
         id: "camp-1",
         status: "DRAFT",
         audienceQuery: { type: "all" },
-        template: { status: "REJECTED" },
+        template: { status: "REJECTED", bodyText: "Oi" },
         channel: { metaAccessToken: "tok" },
       });
 
@@ -120,13 +146,26 @@ describe("CampaignsService", () => {
       expect(mockQueue.add).not.toHaveBeenCalled();
     });
 
+    it("rejeita dispatch se template tem variáveis", async () => {
+      (mockPrisma["campaign"] as { findFirst: jest.Mock }).findFirst.mockResolvedValue({
+        id: "camp-1",
+        status: "DRAFT",
+        audienceQuery: { type: "all" },
+        template: { status: "APPROVED", bodyText: "Olá {{1}}" },
+        channel: { metaAccessToken: "tok" },
+      });
+
+      await expect(service.dispatch("tenant-1", "camp-1")).rejects.toThrow(/variáveis/);
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
     it("enfileira job quando APPROVED e audiência não vazia", async () => {
       (mockPrisma["campaign"] as { findFirst: jest.Mock }).findFirst
         .mockResolvedValueOnce({
           id: "camp-1",
           status: "DRAFT",
           audienceQuery: { type: "all" },
-          template: { status: "APPROVED" },
+          template: { status: "APPROVED", bodyText: "Promo sem vars" },
           channel: { metaAccessToken: "tok" },
         })
         .mockResolvedValueOnce({
@@ -137,6 +176,7 @@ describe("CampaignsService", () => {
           template: {},
         });
       mockAudience.buildAudience.mockResolvedValue([{ id: "c1", phone: "5511", name: "A" }]);
+      mockQueue.add.mockResolvedValue({ id: "job-1" });
 
       await service.dispatch("tenant-1", "camp-1");
 
@@ -148,6 +188,29 @@ describe("CampaignsService", () => {
         { campaignId: "camp-1", tenantId: "tenant-1" },
         expect.any(Object),
       );
+      expect((mockPrisma["campaign"] as { update: jest.Mock }).update).toHaveBeenCalledWith({
+        where: { id: "camp-1" },
+        data: expect.objectContaining({ status: "SENDING" }),
+      });
+    });
+
+    it("em falha de enqueue não marca SENDING (fica DRAFT)", async () => {
+      (mockPrisma["campaign"] as { findFirst: jest.Mock }).findFirst.mockResolvedValue({
+        id: "camp-1",
+        status: "DRAFT",
+        audienceQuery: { type: "all" },
+        template: { status: "APPROVED", bodyText: "Promo" },
+        channel: { metaAccessToken: "tok" },
+      });
+      mockAudience.buildAudience.mockResolvedValue([{ id: "c1", phone: "5511", name: "A" }]);
+      mockQueue.add.mockRejectedValue(new Error("Redis down"));
+
+      await expect(service.dispatch("tenant-1", "camp-1")).rejects.toThrow("Redis down");
+
+      expect(
+        (mockPrisma["campaignRecipient"] as { createMany: jest.Mock }).createMany,
+      ).toHaveBeenCalled();
+      expect((mockPrisma["campaign"] as { update: jest.Mock }).update).not.toHaveBeenCalled();
     });
 
     it("404 se campanha não existe", async () => {
