@@ -20,6 +20,7 @@ import { AgentModule } from "./modules/agent/agent.module";
 import { CrmModule } from "./modules/crm/crm.module";
 import { CategoriesModule } from "./modules/categories/categories.module";
 import { PlatformEmailModule } from "./modules/platform-email/platform-email.module";
+import { SystemLogModule } from "./modules/system-log/system-log.module";
 import { HealthModule } from "./modules/health/health.module";
 import { ChannelsModule } from "./modules/channels/channels.module";
 import { CampaignsModule } from "./modules/campaigns/campaigns.module";
@@ -54,7 +55,7 @@ import { InboxEventsConsumer } from "./queue/inbox-events.consumer";
     PrismaModule, RedisModule, ProductsModule, OrdersModule, PaymentsModule,
     AnalyticsModule, GatewaysModule, BillingModule, SuperAdminModule,
     AuthModule, SettingsModule, ConversationsModule, AgentModule,
-    CrmModule, CategoriesModule, PlatformEmailModule, HealthModule,
+    CrmModule, CategoriesModule, PlatformEmailModule, SystemLogModule, HealthModule,
     ChannelsModule, CampaignsModule,
   ],
   providers: [
