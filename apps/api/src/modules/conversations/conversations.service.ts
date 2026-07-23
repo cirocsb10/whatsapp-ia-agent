@@ -92,11 +92,41 @@ export class ConversationsService {
       },
     });
 
+    const stateByConversation = new Map<
+      string,
+      { human?: OutboundAttendingRow; hasAi: boolean }
+    >();
+
     for (const row of outbounds) {
-      if (!map.has(row.conversationId)) {
-        map.set(row.conversationId, row);
+      const state = stateByConversation.get(row.conversationId) ?? { hasAi: false };
+
+      if (
+        !state.human &&
+        !row.isFromAi &&
+        row.sentByUserId &&
+        row.sentByUser
+      ) {
+        state.human = row;
+      }
+      if (row.isFromAi) {
+        state.hasAi = true;
+      }
+      stateByConversation.set(row.conversationId, state);
+    }
+
+    for (const [conversationId, state] of stateByConversation) {
+      if (state.human) {
+        map.set(conversationId, state.human);
+      } else if (state.hasAi) {
+        map.set(conversationId, {
+          conversationId,
+          isFromAi: true,
+          sentByUserId: null,
+          sentByUser: null,
+        });
       }
     }
+
     return map;
   }
 

@@ -164,6 +164,44 @@ describe("ConversationsService", () => {
       );
     });
 
+    it("keeps human attending when AI replies after human outbound", async () => {
+      const now = new Date();
+      mockPrisma.conversation.findMany.mockResolvedValue([
+        {
+          id: "c-1",
+          contact: { name: "Ana", phone: "5511" },
+          status: "HUMAN_HANDOFF",
+          startedAt: now,
+          lastMessageAt: now,
+          assignedUserId: "u-agent",
+          messages: [{ text: "Resposta IA", sentAt: now, type: "TEXT" }],
+        },
+      ]);
+      mockPrisma.message.findMany.mockResolvedValue([
+        {
+          conversationId: "c-1",
+          isFromAi: true,
+          sentByUserId: null,
+          sentByUser: null,
+        },
+        {
+          conversationId: "c-1",
+          isFromAi: false,
+          sentByUserId: "u-agent",
+          sentByUser: { id: "u-agent", name: "Carlos" },
+        },
+      ]);
+
+      const result = await service.findAll("t-1", ownerUser);
+
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          attendingLabel: "Carlos",
+          attendingUserId: "u-agent",
+        }),
+      );
+    });
+
     it('AI-only outbound → attendingLabel "IA"', async () => {
       const now = new Date();
       mockPrisma.conversation.findMany.mockResolvedValue([
