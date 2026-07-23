@@ -493,6 +493,12 @@ export class AnalyticsService {
       byCategoryMap.set(row.category, catEntry);
     }
 
+    const daysInPeriod = Math.max(
+      1,
+      (to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000),
+    );
+    const projectedMonthlyBrlCents = Math.round((totalBrlCents * 30) / daysInPeriod);
+
     return {
       from: from.toISOString(),
       to: to.toISOString(),
@@ -500,6 +506,7 @@ export class AnalyticsService {
       byCategory: Array.from(byCategoryMap.values()).sort((a, b) => b.costBrlCents - a.costBrlCents),
       totalMessages,
       totalBrlCents,
+      projectedMonthlyBrlCents,
       isEstimate: true as const,
     };
   }

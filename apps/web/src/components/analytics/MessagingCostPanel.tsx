@@ -79,6 +79,15 @@ export function MessagingCostPanel({
             </p>
           </div>
 
+          <div className="flex items-baseline justify-between gap-3 px-0.5 pt-1 border-t border-[#e2e8f0]/80">
+            <div>
+              <p className="text-[11px] text-[#64748b]">Projeção mensal (estimativa)</p>
+              <p className="text-[15px] font-semibold text-[#0f172a] tabular-nums">
+                {formatBrl(data?.projectedMonthlyBrlCents ?? 0)}
+              </p>
+            </div>
+          </div>
+
           {byCategory.length > 0 && (
             <div>
               <p className="text-[11px] font-medium text-[#475569] mb-2">Por categoria</p>

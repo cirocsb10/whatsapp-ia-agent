@@ -232,6 +232,8 @@ describe("AnalyticsService", () => {
       expect(result.isEstimate).toBe(true);
       expect(result.totalMessages).toBe(6);
       expect(result.totalBrlCents).toBe(520);
+      // 22-day period (Jul 1 → Jul 23): 520 * 30 / 22 ≈ 709
+      expect(result.projectedMonthlyBrlCents).toBe(709);
       expect(result.byCategory).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ category: "marketing", messageCount: 2, costBrlCents: 400 }),
@@ -259,9 +261,31 @@ describe("AnalyticsService", () => {
           byCategory: [],
           totalMessages: 0,
           totalBrlCents: 0,
+          projectedMonthlyBrlCents: 0,
           isEstimate: true,
         }),
       );
+    });
+
+    it("extrapola projeção mensal com mínimo de 1 dia no período", async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          channel_id: "ch-1",
+          channel_label: "Vendas",
+          category: "marketing",
+          message_count: 1n,
+        },
+      ]);
+      mockPrisma.messagePricingRate.findMany.mockResolvedValue([
+        { tenantId: null, category: "marketing", priceBrlCents: 3000 },
+      ]);
+
+      const from = new Date("2026-07-23T12:00:00.000Z");
+      const to = new Date("2026-07-23T18:00:00.000Z"); // 6h → daysInPeriod capped at 1
+      const result = await service.getMessagingCost("t-1", from, to);
+
+      expect(result.totalBrlCents).toBe(3000);
+      expect(result.projectedMonthlyBrlCents).toBe(90000); // 3000 * 30 / 1
     });
   });
 });

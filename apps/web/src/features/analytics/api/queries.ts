@@ -52,6 +52,7 @@ export interface MessagingCostData {
   byCategory: MessagingCostCategoryRow[];
   totalMessages: number;
   totalBrlCents: number;
+  projectedMonthlyBrlCents: number;
   isEstimate: true;
 }
 
