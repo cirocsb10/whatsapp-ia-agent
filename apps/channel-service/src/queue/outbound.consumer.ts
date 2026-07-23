@@ -74,6 +74,7 @@ export class OutboundConsumer implements OnModuleInit {
 
           await this.inbound.publishOutbound({
             tenantId: event.tenantId,
+            channelId: event.channelId,
             conversationId: event.conversationId,
             messageId: saved.id,
             waMessageId: waMessageId ?? undefined,
@@ -173,6 +174,7 @@ export class OutboundConsumer implements OnModuleInit {
             });
             await this.inbound.publishOutbound({
               tenantId: event.tenantId,
+              channelId: event.channelId,
               conversationId: event.conversationId,
               type: "handoff",
               handoffReason: event.handoffReason ?? "Solicitado pelo agente IA",
