@@ -64,23 +64,40 @@ export class WebhookService {
     const pricingCategory = status.pricing?.category?.trim();
     if (pricingCategory) data["pricingCategory"] = pricingCategory;
 
-    // "sent" (and unknown) only persist when Meta also sent pricing metadata
-    if (Object.keys(data).length === 0) return;
+    // Message table: "sent" (and unknown) only persist when Meta also sent pricing metadata
+    if (Object.keys(data).length > 0) {
+      const message = await this.prisma.message.findFirst({
+        where: { waMessageId: status.id, tenantId },
+        select: { id: true, conversationId: true },
+      });
+      if (message) {
+        await this.prisma.message.update({ where: { id: message.id }, data });
 
-    const message = await this.prisma.message.findFirst({
-      where: { waMessageId: status.id, tenantId },
-      select: { id: true, conversationId: true },
-    });
-    if (!message) return;
+        if (status.status === "delivered" || status.status === "read" || status.status === "failed") {
+          await this.inbound.publishStatusUpdate({
+            tenantId,
+            conversationId: message.conversationId,
+            waMessageId: status.id,
+            status: status.status,
+          });
+        }
+      }
+    }
 
-    await this.prisma.message.update({ where: { id: message.id }, data });
-
-    if (status.status === "delivered" || status.status === "read" || status.status === "failed") {
-      await this.inbound.publishStatusUpdate({
+    // Campaign delivery tracking — api no-ops if waMessageId is not a campaign recipient
+    if (
+      status.status === "sent" ||
+      status.status === "delivered" ||
+      status.status === "read" ||
+      status.status === "failed"
+    ) {
+      const failureReason = status.errors?.[0]?.title;
+      await this.inbound.publishCampaignStatus({
         tenantId,
-        conversationId: message.conversationId,
         waMessageId: status.id,
         status: status.status,
+        timestamp: parseInt(status.timestamp, 10),
+        ...(failureReason ? { failureReason } : {}),
       });
     }
   }

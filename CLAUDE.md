@@ -141,7 +141,7 @@ Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state),
 
 ### Back-office API modules (`apps/api/src/modules/`)
 
-`auth`, `agent` (persona/rules/knowledge config), `analytics` (`kpis`, `kpi-trends`, `setup-status`, `conversations-chart`, `funnel`, `heatmap`, `handoff-reasons`), `billing` (Stripe — platform subscription/metering), `categories`, `crm` (funnel stages + deals kanban, `crm-progression.service.ts` for auto-progression), `orders`, `payments` (MercadoPago — tenant order payments, distinct from `billing`), `platform-email` (system SMTP sending via BullMQ `email.processor.ts`), `products`, `settings`, `super-admin`, `health`.
+`auth`, `agent` (persona/rules/knowledge config), `analytics` (`kpis`, `kpi-trends`, `setup-status`, `conversations-chart`, `funnel`, `heatmap`, `handoff-reasons`), `billing` (Stripe — platform subscription/metering), `campaigns` (Meta template sync, audience, BullMQ dispatch, delivery status), `categories`, `crm` (funnel stages + deals kanban, `crm-progression.service.ts` for auto-progression), `orders`, `payments` (MercadoPago — tenant order payments, distinct from `billing`), `platform-email` (system SMTP sending via BullMQ `email.processor.ts`), `products`, `settings`, `super-admin`, `health`, `channels`.
 
 - **CRM**: `FunnelStage` (name, color, position, isWon/isLost) and `Deal` (stageId, contactId, title, valueCents, notes, closedAt) Prisma models, both `tenant_id`-scoped. WhatsApp contacts are auto-inserted and advanced through the funnel automatically (see Key Conventions).
 - **Platform SMTP**: `PlatformSmtpSettings` is a **platform-wide singleton** (no `tenant_id`), storing host/port/username/`passwordEncrypted` (AES-256-GCM) for outbound system emails (not per-tenant messaging).
@@ -169,7 +169,7 @@ Dark OLED palette. Primary colors: `#020617` (bg), `#22C55E` (green/CTA), `#6366
 
 - **RabbitMQ exchanges**: `messages` (topic) for inbound, `ai` (topic) for AI responses. Routing keys: `msg.inbound`, `ai.response`.
 - **BullMQ** is used for internal Node.js job queues (within channel-service and api); RabbitMQ is for cross-service communication.
-- **Agents never initiate** conversations — the system is 100% reactive. This keeps Meta Cloud API costs at zero (service conversations) and reduces ban risk.
+- **Agents never initiate** conversations in the LangGraph / reactive pipeline — inbound WhatsApp traffic remains 100% reactive (service conversations, lower ban risk). **Exception:** the isolated `campaigns` module (`apps/api/src/modules/campaigns/`) may send Meta **template** (business-initiated) messages via BullMQ + channel token; only `APPROVED` templates, with opt-out excluded at audience build. Status webhooks publish `campaign.status` for delivery tracking.
 - **Opt-out handling**: if contact sends "parar"/"stop"/"cancelar", channel-service must set `isOptedOut=true` and block further replies.
 - **Guard rails** (`guard_rules` table, per-tenant) control anti-hallucination behavior; the LangGraph `guard_rail` node checks them before every response.
 - **Audio messages**: channel-service downloads the media from Meta, transcribes via OpenAI Whisper, and sends the transcript as text to the AI pipeline.

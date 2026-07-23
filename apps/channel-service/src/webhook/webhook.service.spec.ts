@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
 import { InactivitySchedulerService } from "../queue/inactivity-scheduler.service";
 
-const mockProducer = { publishInbound: jest.fn(), publishStatusUpdate: jest.fn() };
+const mockProducer = { publishInbound: jest.fn(), publishStatusUpdate: jest.fn(), publishCampaignStatus: jest.fn() };
 const mockInactivityScheduler = { schedule: jest.fn().mockResolvedValue(undefined) };
 const mockCrmAutoLead = {
   maybeCreateLead: jest.fn().mockResolvedValue(undefined),
@@ -477,10 +477,24 @@ describe("WebhookService", () => {
       expect(mockProducer.publishStatusUpdate).not.toHaveBeenCalled();
     });
 
-    it("ignora status sent sem pricing", async () => {
+    it("ignora status sent sem pricing na Message, mas publica campaign.status", async () => {
       await service.processWebhook(makeStatusPayload("sent"));
       expect(mockPrisma.message.findFirst).not.toHaveBeenCalled();
       expect(mockPrisma.message.update).not.toHaveBeenCalled();
+      expect(mockProducer.publishCampaignStatus).toHaveBeenCalledWith(
+        expect.objectContaining({
+          waMessageId: "wamid.out-1",
+          status: "sent",
+          timestamp: 1700000000,
+        }),
+      );
+    });
+
+    it("publica campaign.status em delivered", async () => {
+      await service.processWebhook(makeStatusPayload("delivered"));
+      expect(mockProducer.publishCampaignStatus).toHaveBeenCalledWith(
+        expect.objectContaining({ waMessageId: "wamid.out-1", status: "delivered" }),
+      );
     });
   });
 });

@@ -6,7 +6,7 @@ import { api } from "@/shared/api/fetcher";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package, Kanban,
-  ShoppingCart, BarChart3, PhoneCall, Settings, Shield, Mail,
+  ShoppingCart, BarChart3, PhoneCall, Settings, Shield, Mail, Megaphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
@@ -26,6 +26,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     { href: "/inbox",     label: "Conversas",   icon: MessageSquare, badge: "active_conversations" },
     { href: "/support",   label: "Suporte",     icon: PhoneCall,     badge: "pending_handoffs" },
     { href: "/analytics", label: "Analytics",   icon: BarChart3 },
+    { href: "/campaigns", label: "Campanhas",   icon: Megaphone },
   ]},
   { section: "Configurar", items: [
     { href: "/agent",    label: "Agente IA",    icon: Bot },
