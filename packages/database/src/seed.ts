@@ -3,6 +3,9 @@ import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 const DEV_PASSWORD = "devpassword123";
+// ID de telefone fixo (não é um número real da Meta) usado só para o dev-tenant
+// resolver webhooks simulados localmente — ver apps/web/tests/e2e-full.
+const DEV_WHATSAPP_PHONE_ID = "dev-whatsapp-phone-id";
 
 async function main() {
   console.log("🌱 Seeding database...");
@@ -10,7 +13,7 @@ async function main() {
 
   const devTenant = await prisma.tenant.upsert({
     where: { slug: "dev-tenant" },
-    update: {},
+    update: { whatsappPhoneId: DEV_WHATSAPP_PHONE_ID },
     create: {
       name: "Loja Demonstração",
       slug: "dev-tenant",
@@ -18,6 +21,7 @@ async function main() {
       planType: PlanType.GROWTH,
       timezone: "America/Sao_Paulo",
       locale: "pt-BR",
+      whatsappPhoneId: DEV_WHATSAPP_PHONE_ID,
     },
   });
 

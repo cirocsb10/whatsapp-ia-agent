@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "jest",
     "test:e2e": "playwright test",
+    "test:e2e:full": "playwright test --config=playwright.full.config.ts",
     "lhci": "lhci autorun"
   },
   "dependencies": {
