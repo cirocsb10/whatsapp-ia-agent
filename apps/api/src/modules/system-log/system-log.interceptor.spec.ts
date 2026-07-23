@@ -94,6 +94,40 @@ describe("SystemLogInterceptor", () => {
     expect(record.mock.calls[0][0].duration).toBeGreaterThanOrEqual(0);
   });
 
+  it("sanitiza chaves sensíveis por padrão, não só match exato", async () => {
+    const next: CallHandler = { handle: () => of({ ok: true }) };
+
+    await lastValueFrom(
+      interceptor.intercept(
+        buildHttpContext({
+          path: "/auth/change-password",
+          method: "PATCH",
+          statusCode: 200,
+          body: {
+            currentPassword: "old-secret",
+            newPassword: "new-secret",
+            metaAccessToken: "meta-token-123",
+            webhookSecret: "whsec_123",
+            name: "ok to keep",
+          },
+        }),
+        next,
+      ),
+    );
+
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: {
+          currentPassword: "[REDACTED]",
+          newPassword: "[REDACTED]",
+          metaAccessToken: "[REDACTED]",
+          webhookSecret: "[REDACTED]",
+          name: "ok to keep",
+        },
+      }),
+    );
+  });
+
   it("grava também quando o handler falha", async () => {
     const next: CallHandler = {
       handle: () => throwError(() => new Error("boom")),

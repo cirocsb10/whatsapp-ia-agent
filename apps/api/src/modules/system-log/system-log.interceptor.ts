@@ -11,13 +11,7 @@ import { SystemLogService } from "./system-log.service";
 const SKIP_PREFIXES = ["/health", "/webhooks", "/socket.io"];
 const SKIP_EXACT = new Set(["/auth/me"]);
 
-const SENSITIVE_KEYS = new Set([
-  "password",
-  "passwordHash",
-  "refreshToken",
-  "accessToken",
-  "passwordEncrypted",
-]);
+const SENSITIVE_KEY_PATTERN = /password|token|secret|apikey|credential/i;
 
 const MAX_PAYLOAD_CHARS = 8_000;
 
@@ -116,7 +110,7 @@ function redactDeep(value: unknown): unknown {
   if (value !== null && typeof value === "object") {
     const out: Record<string, unknown> = {};
     for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-      if (SENSITIVE_KEYS.has(key)) {
+      if (SENSITIVE_KEY_PATTERN.test(key)) {
         out[key] = "[REDACTED]";
       } else {
         out[key] = redactDeep(child);
