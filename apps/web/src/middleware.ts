@@ -18,6 +18,9 @@ const PROTECTED_PREFIXES = [
   "/support",
   "/tenants",
   "/email",
+  "/plans",
+  "/system-settings",
+  "/system-log",
 ];
 
 const AUTH_PAGES = ["/login", "/register"];

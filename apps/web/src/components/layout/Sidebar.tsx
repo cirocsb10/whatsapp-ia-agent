@@ -7,10 +7,12 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Bot, Package, Kanban,
   ShoppingCart, BarChart3, PhoneCall, Settings, Shield, Mail, Megaphone,
+  CreditCard, SlidersHorizontal, ScrollText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNotificationsStore } from "@/lib/store/notifications.store";
 import { useSidebarStore, SIDEBAR_WIDTH } from "@/lib/store/sidebar.store";
+import { useAuthContext } from "@/contexts/auth-context";
 
 type NavItem = {
   href: string;
@@ -37,6 +39,9 @@ const NAV: { section: string; items: NavItem[] }[] = [
   ]},
   { section: "Plataforma", items: [
     { href: "/tenants", label: "Super Admin", icon: Shield, admin: true },
+    { href: "/plans", label: "Planos", icon: CreditCard, admin: true },
+    { href: "/system-settings", label: "Configurações do Sistema", icon: SlidersHorizontal, admin: true },
+    { href: "/system-log", label: "Logs do Sistema", icon: ScrollText, admin: true },
     { href: "/email",   label: "Email",       icon: Mail,   admin: true },
   ]},
 ];
@@ -47,6 +52,8 @@ export function Sidebar() {
   const badges = useNotificationsStore((s) => s.badges);
   const width = collapsed ? SIDEBAR_WIDTH.collapsed : SIDEBAR_WIDTH.expanded;
   const [apiVersion, setApiVersion] = useState<string | null>(null);
+  const { user } = useAuthContext();
+  const isSuperAdmin = Boolean(user?.isSuperAdmin);
 
   useEffect(() => {
     api
@@ -54,6 +61,15 @@ export function Sidebar() {
       .then((res) => setApiVersion(res.version ?? null))
       .catch(() => {});
   }, []);
+
+  const visibleNav = NAV
+    .map(({ section, items }) => ({
+      section,
+      items: section === "Plataforma" && !isSuperAdmin
+        ? []
+        : items.filter((item) => !item.admin || isSuperAdmin),
+    }))
+    .filter(({ items }) => items.length > 0);
 
   return (
     <aside
@@ -78,7 +94,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-3">
-        {NAV.map(({ section, items }) => (
+        {visibleNav.map(({ section, items }) => (
           <div key={section}>
             {!collapsed && <p className="section-title px-2 pb-1">{section}</p>}
             <div className="space-y-0.5">
