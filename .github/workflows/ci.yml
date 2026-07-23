@@ -141,7 +141,18 @@ jobs:
 
       - name: Run Lighthouse CI (público, sem sessão)
         run: pnpm --filter @whatsagent/web exec lhci autorun
-        continue-on-error: true
+        env:
+          JWT_ACCESS_SECRET: playwright-e2e-access-secret-min-32-chars
+          FRONTEND_URL: http://localhost:3101
+          NEXT_PUBLIC_API_URL: http://localhost:3002
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: apps/web/.lighthouseci/
+          retention-days: 7
 
   test-python:
     name: Tests (Python)
