@@ -1,9 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../common/prisma/prisma.service";
 import { EventsGateway } from "../../gateways/events.gateway";
 import { CrmProgressionService } from "../crm/crm-progression.service";
+import type { UserRole } from "../../common/decorators/roles.decorator";
 
 const META_GRAPH_API = "https://graph.facebook.com/v21.0";
+
+export type ConversationActor = { id: string; role: UserRole };
 
 interface MessageRow {
   id: string;
@@ -23,6 +27,13 @@ interface MessageRow {
   failedAt: Date | null;
 }
 
+type OutboundAttendingRow = {
+  conversationId: string;
+  isFromAi: boolean;
+  sentByUserId: string | null;
+  sentByUser: { id: string; name: string } | null;
+};
+
 @Injectable()
 export class ConversationsService {
   constructor(
@@ -31,9 +42,72 @@ export class ConversationsService {
     private readonly crmProgression: CrmProgressionService,
   ) {}
 
-  async findAll(tenantId: string) {
+  private async channelScopeWhere(
+    user: ConversationActor,
+  ): Promise<Prisma.ConversationWhereInput> {
+    if (user.role !== "AGENT") return {};
+    const memberships = await this.prisma.whatsappChannelMember.findMany({
+      where: { userId: user.id },
+      select: { channelId: true },
+    });
+    return { channelId: { in: memberships.map((m) => m.channelId) } };
+  }
+
+  private deriveAttending(lastOutbound: OutboundAttendingRow | undefined): {
+    attendingLabel: string | null;
+    attendingUserId: string | null;
+  } {
+    if (!lastOutbound) {
+      return { attendingLabel: null, attendingUserId: null };
+    }
+    if (lastOutbound.sentByUserId && lastOutbound.sentByUser) {
+      return {
+        attendingLabel: lastOutbound.sentByUser.name,
+        attendingUserId: lastOutbound.sentByUserId,
+      };
+    }
+    if (lastOutbound.isFromAi) {
+      return { attendingLabel: "IA", attendingUserId: null };
+    }
+    return { attendingLabel: null, attendingUserId: null };
+  }
+
+  private async loadAttendingByConversation(
+    conversationIds: string[],
+  ): Promise<Map<string, OutboundAttendingRow>> {
+    const map = new Map<string, OutboundAttendingRow>();
+    if (conversationIds.length === 0) return map;
+
+    const outbounds = await this.prisma.message.findMany({
+      where: {
+        conversationId: { in: conversationIds },
+        direction: "OUTBOUND",
+      },
+      orderBy: { sentAt: "desc" },
+      select: {
+        conversationId: true,
+        isFromAi: true,
+        sentByUserId: true,
+        sentByUser: { select: { id: true, name: true } },
+      },
+    });
+
+    for (const row of outbounds) {
+      if (!map.has(row.conversationId)) {
+        map.set(row.conversationId, row);
+      }
+    }
+    return map;
+  }
+
+  async findAll(tenantId: string, user: ConversationActor) {
+    const where: Prisma.ConversationWhereInput = {
+      tenantId,
+      ...(await this.channelScopeWhere(user)),
+    };
+
     const conversations = await this.prisma.conversation.findMany({
-      where: { tenantId },
+      where,
       orderBy: [{ lastMessageAt: "desc" }, { startedAt: "desc" }],
       include: {
         contact: { select: { name: true, phone: true } },
@@ -45,8 +119,13 @@ export class ConversationsService {
       },
     });
 
+    const attendingById = await this.loadAttendingByConversation(
+      conversations.map((c) => c.id),
+    );
+
     return conversations.map((conversation) => {
       const lastMessage = conversation.messages[0];
+      const attending = this.deriveAttending(attendingById.get(conversation.id));
       return {
         id: conversation.id,
         contact: conversation.contact,
@@ -56,6 +135,8 @@ export class ConversationsService {
         unreadCount: 0,
         isHandoff: conversation.status === "HUMAN_HANDOFF",
         isAssumed: !!conversation.assignedUserId,
+        attendingLabel: attending.attendingLabel,
+        attendingUserId: attending.attendingUserId,
       };
     });
   }
@@ -103,9 +184,17 @@ export class ConversationsService {
     };
   }
 
-  private async assertConversation(tenantId: string, conversationId: string) {
+  private async assertConversation(
+    tenantId: string,
+    conversationId: string,
+    user: ConversationActor,
+  ) {
     const conversation = await this.prisma.conversation.findFirst({
-      where: { id: conversationId, tenantId },
+      where: {
+        id: conversationId,
+        tenantId,
+        ...(await this.channelScopeWhere(user)),
+      },
       select: { id: true },
     });
     if (!conversation) throw new NotFoundException("Conversation not found");
@@ -122,8 +211,9 @@ export class ConversationsService {
     tenantId: string,
     conversationId: string,
     opts: { limit: number; before?: string },
+    user: ConversationActor,
   ) {
-    await this.assertConversation(tenantId, conversationId);
+    await this.assertConversation(tenantId, conversationId, user);
 
     const limit = Math.min(Math.max(Math.trunc(opts.limit) || 30, 1), 100);
     const beforeDate = opts.before ? new Date(opts.before) : undefined;
@@ -152,7 +242,9 @@ export class ConversationsService {
     return { messages, hasMore, nextCursor };
   }
 
-  async assumeConversation(tenantId: string, conversationId: string, userId: string) {
+  async assumeConversation(tenantId: string, conversationId: string, user: ConversationActor) {
+    await this.assertConversation(tenantId, conversationId, user);
+
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
       select: { id: true, contactId: true },
@@ -166,7 +258,7 @@ export class ConversationsService {
           status: "HUMAN_HANDOFF",
           handoffAt: new Date(),
           handoffReason: "MANUAL",
-          assignedUserId: userId,
+          assignedUserId: user.id,
         },
       }),
       this.prisma.handoffEvent.create({
@@ -175,7 +267,7 @@ export class ConversationsService {
           conversationId,
           reason: "MANUAL",
           triggeredBy: "AGENT",
-          agentUserId: userId,
+          agentUserId: user.id,
         },
       }),
     ]);
@@ -195,7 +287,9 @@ export class ConversationsService {
     return { ok: true };
   }
 
-  async releaseConversation(tenantId: string, conversationId: string, userId: string) {
+  async releaseConversation(tenantId: string, conversationId: string, user: ConversationActor) {
+    await this.assertConversation(tenantId, conversationId, user);
+
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
       select: { id: true },
@@ -229,11 +323,15 @@ export class ConversationsService {
   async sendOperatorMessage(
     tenantId: string,
     conversationId: string,
-    userId: string,
+    user: ConversationActor,
     text: string,
   ) {
     const conversation = await this.prisma.conversation.findFirst({
-      where: { id: conversationId, tenantId },
+      where: {
+        id: conversationId,
+        tenantId,
+        ...(await this.channelScopeWhere(user)),
+      },
       include: {
         contact: { select: { phone: true } },
         tenant: { select: { whatsappPhoneId: true, metaAccessToken: true } },
@@ -265,6 +363,7 @@ export class ConversationsService {
         type: "TEXT",
         text,
         isFromAi: false,
+        sentByUserId: user.id,
         sentAt: new Date(),
       },
     });

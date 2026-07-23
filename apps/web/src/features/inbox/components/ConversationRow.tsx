@@ -70,13 +70,27 @@ function ConversationRowComponent({ conversation: conv, isActive, onSelect }: Co
 
         <div className="inbox-conv-row">
           <p className="inbox-conv-preview">
-            {conv.isHandoff ? (
+            {conv.attendingUserId && conv.attendingLabel ? (
+              <span className="inbox-handoff-hint">
+                <Phone className="w-3 h-3 flex-shrink-0" />
+                Em atendimento por {conv.attendingLabel}
+              </span>
+            ) : conv.isHandoff ? (
               <span className="inbox-handoff-hint">
                 <Phone className="w-3 h-3 flex-shrink-0" />
                 {conv.isAssumed ? "Atendente humano ativo" : "Aguardando atendente"}
               </span>
             ) : (
-              conv.lastMessage ?? "Sem mensagens"
+              <>
+                {conv.attendingLabel === "IA" ? (
+                  <span className="inbox-handoff-hint">
+                    IA
+                    {conv.lastMessage ? ` · ${conv.lastMessage}` : ""}
+                  </span>
+                ) : (
+                  conv.lastMessage ?? "Sem mensagens"
+                )}
+              </>
             )}
           </p>
           {conv.unreadCount > 0 && (

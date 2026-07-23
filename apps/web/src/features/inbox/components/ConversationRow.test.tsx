@@ -78,6 +78,38 @@ describe("ConversationRow", () => {
     expect(screen.queryByText("Oi, tudo bem?")).not.toBeInTheDocument();
   });
 
+  it("shows attending label for human attendant", () => {
+    render(
+      <ConversationRow
+        conversation={makeConversation({
+          attendingLabel: "Carlos",
+          attendingUserId: "u-1",
+        })}
+        isActive={false}
+        onSelect={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Em atendimento por Carlos")).toBeInTheDocument();
+  });
+
+  it('shows "IA" attending label', () => {
+    render(
+      <ConversationRow
+        conversation={makeConversation({
+          attendingLabel: "IA",
+          attendingUserId: null,
+          lastMessage: "Oi, tudo bem?",
+        })}
+        isActive={false}
+        onSelect={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText(/IA/)).toBeInTheDocument();
+    expect(screen.getByText(/Oi, tudo bem\?/)).toBeInTheDocument();
+  });
+
   it("falls back to phone number when contact has no name", () => {
     render(
       <ConversationRow

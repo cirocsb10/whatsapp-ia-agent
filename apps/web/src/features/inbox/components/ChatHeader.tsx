@@ -27,7 +27,17 @@ export function ChatHeader({ conversation, onAssume, onRelease }: Props) {
           {conversation.contact.name ?? conversation.contact.phone}
         </p>
         <p className="inbox-status-line">
-          {conversation.isAssumed ? (
+          {conversation.attendingUserId && conversation.attendingLabel ? (
+            <>
+              <span className="inbox-status-dot inbox-status-dot--indigo" aria-hidden="true" />
+              Em atendimento por {conversation.attendingLabel}
+            </>
+          ) : conversation.attendingLabel === "IA" ? (
+            <>
+              <span className="inbox-status-dot inbox-status-dot--green" aria-hidden="true" />
+              IA
+            </>
+          ) : conversation.isAssumed ? (
             <>
               <span className="inbox-status-dot inbox-status-dot--indigo" aria-hidden="true" />
               Atendente humano ativo

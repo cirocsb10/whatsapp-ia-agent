@@ -29,6 +29,8 @@ export interface InboxConversation {
   unreadCount: number;
   isHandoff: boolean;
   isAssumed: boolean;
+  attendingLabel?: string | null | undefined;
+  attendingUserId?: string | null | undefined;
 }
 
 export const inboxKeys = {
