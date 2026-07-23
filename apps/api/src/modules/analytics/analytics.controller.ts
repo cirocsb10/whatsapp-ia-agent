@@ -50,4 +50,17 @@ export class AnalyticsController {
   getHandoffReasons(@CurrentTenantId() tenantId: string, @Query("days") days?: string) {
     return this.service.getHandoffReasons(tenantId, Number(days ?? 30));
   }
+
+  @Get("messaging-cost")
+  getMessagingCost(
+    @CurrentTenantId() tenantId: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+  ) {
+    const toDate = to ? new Date(to) : new Date();
+    const fromDate = from
+      ? new Date(from)
+      : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000);
+    return this.service.getMessagingCost(tenantId, fromDate, toDate);
+  }
 }

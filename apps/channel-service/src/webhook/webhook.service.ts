@@ -56,11 +56,16 @@ export class WebhookService {
 
     const { tenantId } = resolved;
     const ts = new Date(parseInt(status.timestamp, 10) * 1000);
-    const data: Record<string, Date> = {};
+    const data: Record<string, Date | string> = {};
     if (status.status === "delivered") data["deliveredAt"] = ts;
     else if (status.status === "read") data["readAt"] = ts;
     else if (status.status === "failed") data["failedAt"] = ts;
-    else return;
+
+    const pricingCategory = status.pricing?.category?.trim();
+    if (pricingCategory) data["pricingCategory"] = pricingCategory;
+
+    // "sent" (and unknown) only persist when Meta also sent pricing metadata
+    if (Object.keys(data).length === 0) return;
 
     const message = await this.prisma.message.findFirst({
       where: { waMessageId: status.id, tenantId },
@@ -70,12 +75,14 @@ export class WebhookService {
 
     await this.prisma.message.update({ where: { id: message.id }, data });
 
-    await this.inbound.publishStatusUpdate({
-      tenantId,
-      conversationId: message.conversationId,
-      waMessageId: status.id,
-      status: status.status,
-    });
+    if (status.status === "delivered" || status.status === "read" || status.status === "failed") {
+      await this.inbound.publishStatusUpdate({
+        tenantId,
+        conversationId: message.conversationId,
+        waMessageId: status.id,
+        status: status.status,
+      });
+    }
   }
 
   private async processMessage(msg: MetaMessage, phoneNumberId: string): Promise<void> {

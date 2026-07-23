@@ -45,4 +45,6 @@ export interface MetaStatus {
   timestamp: string;
   recipient_id: string;
   errors?: Array<{ code: number; title: string }>;
+  pricing?: { category?: string; pricing_model?: string };
+  conversation?: { id?: string; origin?: { type?: string } };
 }

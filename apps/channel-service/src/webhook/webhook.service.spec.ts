@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import { CrmAutoLeadService } from "../crm/crm-auto-lead.service";
 import { InactivitySchedulerService } from "../queue/inactivity-scheduler.service";
 
-const mockProducer = { publishInbound: jest.fn() };
+const mockProducer = { publishInbound: jest.fn(), publishStatusUpdate: jest.fn() };
 const mockInactivityScheduler = { schedule: jest.fn().mockResolvedValue(undefined) };
 const mockCrmAutoLead = {
   maybeCreateLead: jest.fn().mockResolvedValue(undefined),
@@ -49,6 +49,8 @@ const mockPrisma: Record<string, any> = {
   message: {
     create: jest.fn(),
     updateMany: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
   },
   agentConfig: {
     findFirst: jest.fn().mockResolvedValue({ isPublished: true }),
@@ -414,5 +416,71 @@ describe("WebhookService", () => {
     // Segunda chamada — deve usar cache, não bater no DB novamente
     await service.processWebhook(makeTextPayload("Msg 2"));
     expect(mockPrisma.agentConfig.findFirst).toHaveBeenCalledTimes(1); // ainda 1
+  });
+
+  describe("processStatus / pricingCategory", () => {
+    function makeStatusPayload(
+      status: "sent" | "delivered" | "read" | "failed",
+      extras: Record<string, unknown> = {},
+    ) {
+      return {
+        object: "whatsapp_business_account" as const,
+        entry: [{
+          id: "waba",
+          changes: [{
+            field: "messages" as const,
+            value: {
+              messaging_product: "whatsapp" as const,
+              metadata: { display_phone_number: "11999", phone_number_id: "pid" },
+              statuses: [{
+                id: "wamid.out-1",
+                status,
+                timestamp: "1700000000",
+                recipient_id: "5511999",
+                ...extras,
+              }],
+            },
+          }],
+        }],
+      };
+    }
+
+    beforeEach(() => {
+      mockPrisma.message.findFirst.mockResolvedValue({ id: "msg-1", conversationId: "conv-1" });
+      mockPrisma.message.update.mockResolvedValue({});
+    });
+
+    it("persiste pricingCategory quando Meta envia pricing.category", async () => {
+      await service.processWebhook(
+        makeStatusPayload("delivered", { pricing: { category: "utility", pricing_model: "PMP" } }),
+      );
+      expect(mockPrisma.message.update).toHaveBeenCalledWith({
+        where: { id: "msg-1" },
+        data: expect.objectContaining({
+          deliveredAt: expect.any(Date),
+          pricingCategory: "utility",
+        }),
+      });
+      expect(mockProducer.publishStatusUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ waMessageId: "wamid.out-1", status: "delivered" }),
+      );
+    });
+
+    it("persiste pricingCategory em status sent (sem timestamp de entrega)", async () => {
+      await service.processWebhook(
+        makeStatusPayload("sent", { pricing: { category: "marketing" } }),
+      );
+      expect(mockPrisma.message.update).toHaveBeenCalledWith({
+        where: { id: "msg-1" },
+        data: { pricingCategory: "marketing" },
+      });
+      expect(mockProducer.publishStatusUpdate).not.toHaveBeenCalled();
+    });
+
+    it("ignora status sent sem pricing", async () => {
+      await service.processWebhook(makeStatusPayload("sent"));
+      expect(mockPrisma.message.findFirst).not.toHaveBeenCalled();
+      expect(mockPrisma.message.update).not.toHaveBeenCalled();
+    });
   });
 });

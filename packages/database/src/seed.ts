@@ -114,6 +114,43 @@ async function main() {
     },
   });
 
+  // Tarifas padrão BR (platform-wide, tenantId=null). Valores em centavos são PLACEHOLDERS
+  // aproximados — editáveis depois via admin; NÃO são a fatura Meta.
+  // Categorias alinhadas ao pricing por conversa da Cloud API (marketing/utility/auth/service).
+  const brRates: Array<{ category: string; priceBrlCents: number }> = [
+    { category: "marketing", priceBrlCents: 250 }, // ~R$ 2,50
+    { category: "utility", priceBrlCents: 40 }, // ~R$ 0,40
+    { category: "authentication", priceBrlCents: 40 }, // ~R$ 0,40
+    { category: "service", priceBrlCents: 0 }, // janela de serviço costuma ser R$ 0
+  ];
+
+  for (const rate of brRates) {
+    const existing = await prisma.messagePricingRate.findFirst({
+      where: {
+        tenantId: null,
+        category: rate.category,
+        countryCode: "BR",
+        effectiveTo: null,
+      },
+    });
+    if (existing) {
+      await prisma.messagePricingRate.update({
+        where: { id: existing.id },
+        data: { priceBrlCents: rate.priceBrlCents },
+      });
+    } else {
+      await prisma.messagePricingRate.create({
+        data: {
+          tenantId: null,
+          category: rate.category,
+          countryCode: "BR",
+          priceBrlCents: rate.priceBrlCents,
+          effectiveFrom: new Date("2024-01-01T00:00:00.000Z"),
+        },
+      });
+    }
+  }
+
   console.log("✅ Seed concluído!");
   console.log(`   Tenant: ${devTenant.name} (ID: ${devTenant.id})`);
 }

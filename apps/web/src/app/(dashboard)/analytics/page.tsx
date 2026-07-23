@@ -5,11 +5,13 @@ import { KpiCard } from "@/components/analytics/KpiCard";
 import { ConversionFunnel } from "@/components/analytics/FunnelChart";
 import { ActivityHeatmap } from "@/components/analytics/HeatmapChart";
 import { HandoffReasons } from "@/components/analytics/HandoffReasons";
+import { MessagingCostPanel } from "@/components/analytics/MessagingCostPanel";
 import {
   useKpis,
   useFunnel,
   useHeatmap,
   useHandoffReasons,
+  useMessagingCost,
   type Kpis,
   type FunnelData,
   type HandoffReasonsData,
@@ -60,6 +62,7 @@ export default function AnalyticsPage() {
   const funnelQuery = useFunnel(period);
   const heatmapQuery = useHeatmap(period);
   const handoffQuery = useHandoffReasons(period);
+  const messagingCostQuery = useMessagingCost(period);
 
   const kpis: Kpis = kpisQuery.data ?? {};
   const funnel: FunnelData = funnelQuery.data ?? EMPTY_FUNNEL;
@@ -156,6 +159,18 @@ export default function AnalyticsPage() {
             <ConversionFunnel data={funnel} />
             <HandoffReasons data={handoffs} />
           </div>
+        </section>
+
+        <section>
+          <div className="analytics-section-head">
+            <div className="analytics-section-accent" style={{ background: "linear-gradient(180deg,#22c55e,#06b6d4)" }} />
+            <p className="analytics-section-label">Uso e custos</p>
+            <span className="text-[10px] text-[#334155]">Estimativa · não é fatura Meta</span>
+          </div>
+          <MessagingCostPanel
+            data={messagingCostQuery.data}
+            loading={messagingCostQuery.isPending}
+          />
         </section>
 
         <section>

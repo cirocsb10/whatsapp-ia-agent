@@ -399,4 +399,108 @@ export class AnalyticsService {
       return acc;
     }, {});
   }
+
+  /**
+   * Estimativa de custo Meta por canal/categoria no período.
+   * Cruza Message.pricingCategory com MessagePricingRate (tenant override > platform default).
+   * Sempre retorna isEstimate: true — não é fatura Meta.
+   */
+  getMessagingCost(tenantId: string, from: Date, to: Date) {
+    const cacheKey = `analytics:${tenantId}:messaging-cost:${from.toISOString()}:${to.toISOString()}`;
+    return this.cached(cacheKey, TTL_AGG, () => this.computeMessagingCost(tenantId, from, to));
+  }
+
+  private async computeMessagingCost(tenantId: string, from: Date, to: Date) {
+    type AggRow = {
+      channel_id: string | null;
+      channel_label: string | null;
+      category: string;
+      message_count: bigint | number;
+    };
+
+    const rows = await this.prisma.$queryRaw<AggRow[]>`
+      SELECT
+        c."channelId" AS channel_id,
+        COALESCE(ch."displayName", ch."whatsappNumber", 'Sem canal') AS channel_label,
+        LOWER(m."pricingCategory") AS category,
+        COUNT(*)::bigint AS message_count
+      FROM "Message" m
+      INNER JOIN "Conversation" c ON c.id = m."conversationId"
+      LEFT JOIN "WhatsappChannel" ch ON ch.id = c."channelId"
+      WHERE m."tenantId" = ${tenantId}
+        AND m."sentAt" >= ${from}
+        AND m."sentAt" < ${to}
+        AND m."pricingCategory" IS NOT NULL
+        AND m.direction = 'OUTBOUND'
+      GROUP BY c."channelId", ch."displayName", ch."whatsappNumber", LOWER(m."pricingCategory")
+    `;
+
+    const rates = await this.prisma.messagePricingRate.findMany({
+      where: {
+        countryCode: "BR",
+        effectiveFrom: { lte: to },
+        AND: [
+          { OR: [{ tenantId }, { tenantId: null }] },
+          { OR: [{ effectiveTo: null }, { effectiveTo: { gt: from } }] },
+        ],
+      },
+      orderBy: [{ effectiveFrom: "desc" }],
+    });
+
+    // Platform defaults first, then tenant overrides win
+    const rateByCategory = new Map<string, number>();
+    for (const rate of rates.filter((r) => r.tenantId == null)) {
+      const key = rate.category.toLowerCase();
+      if (!rateByCategory.has(key)) rateByCategory.set(key, rate.priceBrlCents);
+    }
+    for (const rate of rates.filter((r) => r.tenantId === tenantId)) {
+      rateByCategory.set(rate.category.toLowerCase(), rate.priceBrlCents);
+    }
+
+    const byChannelMap = new Map<
+      string,
+      { channelId: string | null; channelLabel: string; messageCount: number; costBrlCents: number }
+    >();
+    const byCategoryMap = new Map<string, { category: string; messageCount: number; costBrlCents: number }>();
+    let totalBrlCents = 0;
+    let totalMessages = 0;
+
+    for (const row of rows) {
+      const count = Number(row.message_count);
+      const unit = rateByCategory.get(row.category) ?? 0;
+      const cost = count * unit;
+      totalBrlCents += cost;
+      totalMessages += count;
+
+      const channelKey = row.channel_id ?? "none";
+      const channelEntry = byChannelMap.get(channelKey) ?? {
+        channelId: row.channel_id,
+        channelLabel: row.channel_label ?? "Sem canal",
+        messageCount: 0,
+        costBrlCents: 0,
+      };
+      channelEntry.messageCount += count;
+      channelEntry.costBrlCents += cost;
+      byChannelMap.set(channelKey, channelEntry);
+
+      const catEntry = byCategoryMap.get(row.category) ?? {
+        category: row.category,
+        messageCount: 0,
+        costBrlCents: 0,
+      };
+      catEntry.messageCount += count;
+      catEntry.costBrlCents += cost;
+      byCategoryMap.set(row.category, catEntry);
+    }
+
+    return {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      byChannel: Array.from(byChannelMap.values()).sort((a, b) => b.costBrlCents - a.costBrlCents),
+      byCategory: Array.from(byCategoryMap.values()).sort((a, b) => b.costBrlCents - a.costBrlCents),
+      totalMessages,
+      totalBrlCents,
+      isEstimate: true as const,
+    };
+  }
 }

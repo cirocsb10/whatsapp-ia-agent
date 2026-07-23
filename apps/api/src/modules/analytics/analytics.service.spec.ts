@@ -13,6 +13,7 @@ const mockPrisma = {
   payment: { aggregate: jest.fn(), count: jest.fn() },
   contact: { count: jest.fn() },
   message: { aggregate: jest.fn(), findMany: jest.fn() },
+  messagePricingRate: { findMany: jest.fn() },
   analyticsEvent: { count: jest.fn() },
   handoffEvent: { groupBy: jest.fn() },
   tenant: { findUnique: jest.fn() },
@@ -191,6 +192,76 @@ describe("AnalyticsService", () => {
       const result = await service.getHandoffReasons("t-1");
 
       expect(result).toEqual({ GUARD_RAIL: 5, MANUAL: 3 });
+    });
+  });
+
+  describe("getMessagingCost", () => {
+    it("agrega custo estimado por canal/categoria com isEstimate=true", async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          channel_id: "ch-1",
+          channel_label: "Vendas",
+          category: "marketing",
+          message_count: 2n,
+        },
+        {
+          channel_id: "ch-1",
+          channel_label: "Vendas",
+          category: "utility",
+          message_count: 3n,
+        },
+        {
+          channel_id: null,
+          channel_label: "Sem canal",
+          category: "service",
+          message_count: 1n,
+        },
+      ]);
+      mockPrisma.messagePricingRate.findMany.mockResolvedValue([
+        { tenantId: null, category: "marketing", priceBrlCents: 250 },
+        { tenantId: null, category: "utility", priceBrlCents: 40 },
+        { tenantId: null, category: "service", priceBrlCents: 0 },
+        { tenantId: "t-1", category: "marketing", priceBrlCents: 200 }, // override
+      ]);
+
+      const from = new Date("2026-07-01T00:00:00.000Z");
+      const to = new Date("2026-07-23T00:00:00.000Z");
+      const result = await service.getMessagingCost("t-1", from, to);
+
+      // marketing: 2*200=400, utility: 3*40=120, service: 1*0=0 → 520
+      expect(result.isEstimate).toBe(true);
+      expect(result.totalMessages).toBe(6);
+      expect(result.totalBrlCents).toBe(520);
+      expect(result.byCategory).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ category: "marketing", messageCount: 2, costBrlCents: 400 }),
+          expect.objectContaining({ category: "utility", messageCount: 3, costBrlCents: 120 }),
+        ]),
+      );
+      expect(result.byChannel[0]).toEqual(
+        expect.objectContaining({ channelId: "ch-1", channelLabel: "Vendas", costBrlCents: 520 }),
+      );
+    });
+
+    it("retorna totais zerados quando nao ha mensagens precificadas", async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([]);
+      mockPrisma.messagePricingRate.findMany.mockResolvedValue([]);
+
+      const result = await service.getMessagingCost(
+        "t-1",
+        new Date("2026-07-01"),
+        new Date("2026-07-23"),
+      );
+
+      expect(result).toEqual(
+        expect.objectContaining({
+          byChannel: [],
+          byCategory: [],
+          totalMessages: 0,
+          totalBrlCents: 0,
+          isEstimate: true,
+        }),
+      );
     });
   });
 });

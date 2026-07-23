@@ -32,6 +32,29 @@ export interface HeatmapBucket {
   value: number;
 }
 
+export interface MessagingCostChannelRow {
+  channelId: string | null;
+  channelLabel: string;
+  messageCount: number;
+  costBrlCents: number;
+}
+
+export interface MessagingCostCategoryRow {
+  category: string;
+  messageCount: number;
+  costBrlCents: number;
+}
+
+export interface MessagingCostData {
+  from: string;
+  to: string;
+  byChannel: MessagingCostChannelRow[];
+  byCategory: MessagingCostCategoryRow[];
+  totalMessages: number;
+  totalBrlCents: number;
+  isEstimate: true;
+}
+
 export interface DashboardData {
   kpis: Kpis;
   trends: KpiTrends;
@@ -117,6 +140,22 @@ export function useHandoffReasons(days: number, refetchInterval?: number) {
   return useQuery({
     queryKey: ["analytics", "handoff-reasons", days],
     queryFn: () => api.get<HandoffReasonsData>(`/analytics/handoff-reasons?days=${days}`),
+    ...poll(refetchInterval),
+  });
+}
+
+export function useMessagingCost(days: number, refetchInterval?: number) {
+  return useQuery({
+    queryKey: ["analytics", "messaging-cost", days],
+    queryFn: () => {
+      const to = new Date();
+      const from = new Date(to.getTime() - days * 24 * 60 * 60 * 1000);
+      const params = new URLSearchParams({
+        from: from.toISOString(),
+        to: to.toISOString(),
+      });
+      return api.get<MessagingCostData>(`/analytics/messaging-cost?${params}`);
+    },
     ...poll(refetchInterval),
   });
 }
