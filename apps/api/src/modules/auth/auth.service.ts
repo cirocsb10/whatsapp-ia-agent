@@ -16,10 +16,12 @@ import { PrismaService } from "../../common/prisma/prisma.service";
 import { REDIS_CLIENT } from "../../common/redis/redis.module";
 import { RegisterDto } from "./dto/register.dto";
 
-const REFRESH_PREFIX = "refresh:";
+const REFRESH_FAMILY_PREFIX = "refresh-family:";
 const SOCKET_TICKET_PREFIX = "socket-ticket:";
 const SOCKET_TICKET_TTL_SECONDS = 30;
 const BCRYPT_ROUNDS = 10;
+// Hash de um valor fixo, usado apenas para igualar o tempo de resposta ao caminho "usuário existe".
+const DUMMY_PASSWORD_HASH = "$2b$10$CwaJqQ0N.jjxT8y1p8LT9O98QqjqU9YkK4nRZ4b0DvHwGZ8s6R1Xa";
 
 export interface TokenPair {
   accessToken: string;
@@ -30,6 +32,7 @@ interface RefreshPayload {
   sub: string;
   tenantId: string;
   jti: string;
+  familyId: string;
 }
 
 interface GoogleTokenInfo {
@@ -105,6 +108,9 @@ export class AuthService {
     });
 
     if (!user || !user.passwordHash) {
+      // Executa um bcrypt.compare mesmo quando o usuário não existe, para que o tempo de
+      // resposta não permita distinguir "e-mail inexistente" de "senha incorreta".
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
       throw new UnauthorizedException("Credenciais inválidas");
     }
 
@@ -190,7 +196,11 @@ export class AuthService {
     return { ...tokens, user: this.sanitize(user) };
   }
 
-  async generateTokens(userId: string, tenantId: string): Promise<TokenPair> {
+  async generateTokens(
+    userId: string,
+    tenantId: string,
+    familyId: string = randomUUID(),
+  ): Promise<TokenPair> {
     const accessToken = await this.jwt.signAsync(
       { sub: userId, tenantId },
       { secret: this.accessSecret, expiresIn: this.accessExpiresIn as unknown as number },
@@ -198,11 +208,12 @@ export class AuthService {
 
     const jti = randomUUID();
     const refreshToken = await this.jwt.signAsync(
-      { sub: userId, tenantId, jti },
+      { sub: userId, tenantId, jti, familyId },
       { secret: this.refreshSecret, expiresIn: this.refreshExpiresIn as unknown as number },
     );
 
-    await this.redis.set(`${REFRESH_PREFIX}${jti}`, userId, "EX", this.refreshTtlSeconds);
+    // Cada família representa uma cadeia de rotação; só o jti mais recente da família é válido.
+    await this.redis.set(`${REFRESH_FAMILY_PREFIX}${familyId}`, jti, "EX", this.refreshTtlSeconds);
     return { accessToken, refreshToken };
   }
 
@@ -216,14 +227,22 @@ export class AuthService {
       throw new UnauthorizedException("Refresh token inválido ou expirado");
     }
 
-    const key = `${REFRESH_PREFIX}${payload.jti}`;
-    const userId = await this.redis.get(key);
-    if (!userId) {
+    const key = `${REFRESH_FAMILY_PREFIX}${payload.familyId}`;
+    const currentJti = await this.redis.get(key);
+    if (!currentJti) {
       throw new UnauthorizedException("Sessão expirada");
     }
 
+    if (currentJti !== payload.jti) {
+      // O jti apresentado já foi rotacionado — reuso de refresh token (possível roubo).
+      // Revoga a família inteira para forçar novo login.
+      await this.redis.del(key);
+      this.logger.warn(`Reuso de refresh token detectado (família=${payload.familyId})`);
+      throw new UnauthorizedException("Sessão revogada por possível uso indevido");
+    }
+
     await this.redis.del(key);
-    return this.generateTokens(payload.sub, payload.tenantId);
+    return this.generateTokens(payload.sub, payload.tenantId, payload.familyId);
   }
 
   async logout(token: string): Promise<void> {
@@ -231,8 +250,8 @@ export class AuthService {
       const payload = await this.jwt.verifyAsync<RefreshPayload>(token, {
         secret: this.refreshSecret,
       });
-      if (payload?.jti) {
-        await this.redis.del(`${REFRESH_PREFIX}${payload.jti}`);
+      if (payload?.familyId) {
+        await this.redis.del(`${REFRESH_FAMILY_PREFIX}${payload.familyId}`);
       }
     } catch {
       // Token já inválido/expirado — logout é idempotente.

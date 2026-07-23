@@ -1,4 +1,15 @@
-import { Controller, Get, Post, UseGuards, Body, Headers, HttpCode, Req, Logger } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Body,
+  Headers,
+  HttpCode,
+  Req,
+  Logger,
+  BadRequestException,
+} from "@nestjs/common";
 import { BillingService } from "./billing.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
@@ -39,6 +50,9 @@ export class BillingController {
       await this.billingService.handleWebhook(req.rawBody, sig);
     } catch (err) {
       this.logger.error("Stripe webhook error", err);
+      // Retorna um erro (não 200) para que o Stripe repita a entrega em caso de
+      // assinatura inválida ou falha de processamento, em vez de marcar como entregue.
+      throw new BadRequestException("Webhook processing failed");
     }
   }
 }

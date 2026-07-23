@@ -125,8 +125,8 @@ describe("AuthService", () => {
       expect(result.refreshToken).toBeDefined();
       expect((result.user as Record<string, unknown>).passwordHash).toBeUndefined();
       expect(mockRedis.set).toHaveBeenCalledWith(
-        expect.stringMatching(/^refresh:/),
-        "u1",
+        expect.stringMatching(/^refresh-family:/),
+        expect.any(String),
         "EX",
         expect.any(Number),
       );
@@ -215,30 +215,47 @@ describe("AuthService", () => {
   describe("refreshToken (rotação)", () => {
     it("invalida o token antigo e emite um novo par", async () => {
       const tokens = await service.generateTokens("u1", "tenant_1");
-      const decoded = jwt.decode(tokens.refreshToken) as { jti: string };
-      expect(redisStore.has(`refresh:${decoded.jti}`)).toBe(true);
+      const decoded = jwt.decode(tokens.refreshToken) as { familyId: string };
+      expect(redisStore.has(`refresh-family:${decoded.familyId}`)).toBe(true);
 
       const rotated = await service.refreshToken(tokens.refreshToken);
 
-      expect(mockRedis.del).toHaveBeenCalledWith(`refresh:${decoded.jti}`);
-      expect(redisStore.has(`refresh:${decoded.jti}`)).toBe(false);
+      expect(redisStore.has(`refresh-family:${decoded.familyId}`)).toBe(true);
       expect(rotated.refreshToken).toBeDefined();
       expect(rotated.refreshToken).not.toBe(tokens.refreshToken);
 
+      const rotatedDecoded = jwt.decode(rotated.refreshToken) as { familyId: string };
+      expect(rotatedDecoded.familyId).toBe(decoded.familyId);
+    });
+
+    it("rejeita reuso do token já rotacionado e revoga a família", async () => {
+      const tokens = await service.generateTokens("u1", "tenant_1");
+      const decoded = jwt.decode(tokens.refreshToken) as { familyId: string };
+
+      await service.refreshToken(tokens.refreshToken);
+
+      // Reapresentar o token original (já rotacionado) deve ser tratado como reuso.
       await expect(service.refreshToken(tokens.refreshToken)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(redisStore.has(`refresh-family:${decoded.familyId}`)).toBe(false);
+    });
+
+    it("rejeita token expirado/desconhecido", async () => {
+      await expect(service.refreshToken("token-invalido")).rejects.toBeInstanceOf(
         UnauthorizedException,
       );
     });
   });
 
   describe("logout", () => {
-    it("remove a chave Redis do refresh token", async () => {
+    it("remove a chave Redis da família do refresh token", async () => {
       const tokens = await service.generateTokens("u1", "tenant_1");
-      const decoded = jwt.decode(tokens.refreshToken) as { jti: string };
+      const decoded = jwt.decode(tokens.refreshToken) as { familyId: string };
 
       await service.logout(tokens.refreshToken);
 
-      expect(redisStore.has(`refresh:${decoded.jti}`)).toBe(false);
+      expect(redisStore.has(`refresh-family:${decoded.familyId}`)).toBe(false);
     });
 
     it("não lança erro para token inválido", async () => {
