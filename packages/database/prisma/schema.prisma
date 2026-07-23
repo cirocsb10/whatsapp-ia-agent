@@ -614,6 +614,40 @@ model PlatformSmtpSettings {
   updatedAt         DateTime @updatedAt
 }
 
+// Flags e defaults globais da plataforma (singleton, gerenciada pelo super-admin).
+model PlatformSettings {
+  id                        String   @id @default("default")
+  maintenanceMode           Boolean  @default(false)
+  maintenanceMessage        String?
+  newTenantRegistrationOpen Boolean  @default(true)
+  defaultTrialDays          Int      @default(7)
+  defaultConversationsLimit Int      @default(100)
+  planConversationLimits    Json     @default("{\"STARTER\":100,\"GROWTH\":1000,\"SCALE\":5000,\"ENTERPRISE\":20000}")
+  updatedAt                 DateTime @updatedAt
+}
+
+// Log de acesso HTTP completo da API (fire-and-forget via interceptor).
+// Sem FK: precisa sobreviver a delete de tenant/user; tenantId/userId são opcionais.
+model SystemAccessLog {
+  id         String   @id @default(uuid())
+  tenantId   String?
+  userId     String?
+  userEmail  String?
+  method     String
+  endpoint   String
+  statusCode Int
+  payload    Json?
+  ip         String?
+  userAgent  String?
+  duration   Int
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([tenantId, createdAt])
+  @@index([userId])
+  @@index([method])
+}
+
 model FunnelStage {
   id        String   @id @default(uuid())
   tenantId  String
