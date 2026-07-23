@@ -50,6 +50,10 @@ pnpm --filter @whatsagent/api test
 # Frontend (@whatsagent/web) — Next.js 14, port 3000
 pnpm --filter @whatsagent/web dev
 pnpm --filter @whatsagent/web lint
+pnpm --filter @whatsagent/web test          # Jest — unit + component (Testing Library, jsdom per-file)
+pnpm --filter @whatsagent/web test:e2e      # Playwright smoke (public pages only, runs in CI)
+pnpm --filter @whatsagent/web test:e2e:full # Playwright full flow — LOCAL ONLY, see apps/web/tests/e2e-full/README.md
+pnpm --filter @whatsagent/web lhci          # Lighthouse CI against a production build
 
 # Prisma database package (@whatsagent/database)
 pnpm --filter @whatsagent/database migrate:dev
@@ -104,6 +108,9 @@ Nodes in order: `entry → route → reasoning → guard_rail → output → END
 
 The compiled graph is a singleton (`get_agent_graph()`). All config comes from `src/config.py` (pydantic-settings, reads `.env`).
 
+- **Streaming**: `reasoning_node` uses `llm.astream(...)` and emits tokens via `src/services/stream_context.py` (`emit_stream`) to a per-turn contextvar-scoped publisher, routed through RabbitMQ topic `ai.stream` → api → Socket.io (`ai_stream_started/token/ended`, `ai_typing_started/stopped`) → inbox UI renders incrementally. `emit_stream` also logs `ai_first_token_latency` (ms, tenant/conversation) the first time a token fires per turn — the inbound→first-token metric, captured from a `time.perf_counter()` taken when `process_inbound_message` (`src/consumers/rabbitmq.py`) pulls the message off the queue.
+- **Test simulator**: `POST /internal/simulate` (`src/routes/internal.py`, HMAC-less but gated by `x-internal-token` == `INTERNAL_API_TOKEN`) runs the exact same `graph.ainvoke()` as production (persona/tools/guard-rails/RAG) for a synthetic one-shot conversation, without publishing to RabbitMQ or sending WhatsApp messages. Called by `apps/api/src/modules/agent/chat-simulator.service.ts` (`POST /agent/chat`, used by `TestSimulator.tsx` in the agent config screens), which falls back to calling OpenAI directly only if the orchestrator is unreachable. Response includes `shouldHandoff`/`handoffReason`, surfaced in the UI as a badge.
+
 ### Auth (JWT + BFF proxy — Clerk fully removed)
 
 - **api** (`apps/api/src/modules/auth/`): `auth.controller.ts` (register, login, google, refresh, logout, socket-ticket, me, change-password) + `auth.service.ts` — bcrypt password hashing, JWT access/refresh pairs (`@nestjs/jwt`), refresh tokens stored in Redis (`refresh:` prefix), Google OAuth token validation. `strategies/jwt.strategy.ts` is passport-jwt, Bearer token, payload `{ sub, tenantId }`.
@@ -128,7 +135,9 @@ Route groups:
 - `(onboarding)/` — setup wizard, including `setup/plan` (Stripe plan selection)
 - `(public)/` — landing page, login
 
-Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state), `recharts` (charts), `shadcn/ui` + Tailwind CSS v4.
+Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state), `recharts` (charts), `@tanstack/react-query` (server-state/cache), `@tanstack/react-virtual` (message list virtualization), `shadcn/ui` + Tailwind CSS v4.
+
+**Feature-first components**: pages that outgrew a single file (`settings`, `agent/persona`, `inbox`, `catalog`) have their sections/panels split into `apps/web/src/features/<domain>/components/`, with shared form state/types in `features/<domain>/model/` (e.g. `features/agent/model/persona-form.ts`). The route file itself (`app/**/page.tsx`) stays thin — state + handlers + composition, no inline JSX for entire sections. New large pages should follow this pattern rather than growing as a single file.
 
 ### Back-office API modules (`apps/api/src/modules/`)
 
@@ -141,6 +150,21 @@ Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state),
 
 Dark OLED palette. Primary colors: `#020617` (bg), `#22C55E` (green/CTA), `#6366F1` (indigo/AI). Font: Plus Jakarta Sans. Cards use glassmorphism (`bg-slate-900/80` + `backdrop-blur-2xl`). Icons: Lucide React at 20×20px (`w-5 h-5`).
 
+### Observability & Error Handling (web + api)
+
+- **Sentry**: `@sentry/nextjs` (web) and `@sentry/nestjs` (api). No-op when `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN` are unset — dev is unaffected. Web: `apps/web/src/instrumentation.ts` + `instrumentation-client.ts` + `sentry.server.config.ts`/`sentry.edge.config.ts`; `next.config.mjs` wraps with `withSentryConfig` (source-map upload only runs in CI with `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN` set). Api: `apps/api/src/instrument.ts` is the **first** import in `main.ts` (required for automatic instrumentation), `SentryModule` registered in `AppModule`, `SentryGlobalFilter` as the catch-all global filter — registered *after* `PrismaExceptionFilter` in `app.useGlobalFilters()` so Prisma errors keep their custom response shape (which itself calls `Sentry.captureException` directly since it short-circuits before the global filter runs).
+- **Error boundaries**: one `error.tsx` per route group — `app/(dashboard)/error.tsx`, `(admin)`, `(onboarding)`, `(public)` — rendering `components/shared/RouteErrorFallback.tsx` (reports to Sentry, offers retry + a group-appropriate way back). Sits below each group's `layout.tsx`, so a crash in one page doesn't take down the sidebar/nav. `app/global-error.tsx` is the last-resort fallback for errors escaping the root layout itself.
+- **Central error toast**: `shared/api/query-client.ts` wires `QueryCache`/`MutationCache` `onError` to `shared/ui/toast.store.ts` (zustand) + `shared/ui/Toaster.tsx` (mounted once in `app/providers.tsx`) — any failing query/mutation gets a standardized toast without each screen handling it ad hoc. 401s are excluded (middleware/proxy's job to refresh or redirect). Opt out per query/mutation with `meta: { skipToast: true }` for screens with their own inline error state.
+- **Web Vitals**: `shared/monitoring/web-vitals.tsx`, posts to `NEXT_PUBLIC_VITALS_URL` via `sendBeacon`.
+
+### Testing
+
+- **Jest** (`apps/web`, `apps/api`, `apps/channel-service`): unit tests everywhere; `apps/web` also has component tests via `@testing-library/react` — opt into `jsdom` per-file with `/** @jest-environment jsdom */` (global `testEnvironment` stays `node` for plain-logic tests). `jest.setup.ts` wires `@testing-library/jest-dom` matchers via `setupFilesAfterEnv`.
+- **Playwright smoke** (`apps/web/tests/e2e/`, config `playwright.config.ts`): public pages only (landing, login, protected-route redirect) — no backend needed, spins up `next dev` itself, runs in CI (`ci.yml` job `e2e-web`).
+- **Playwright full flow** (`apps/web/tests/e2e-full/`, config `playwright.full.config.ts`, script `test:e2e:full`): login → cached navigation → inbound message via a signed (HMAC) webhook simulating Meta → real-time socket delivery → handoff. **Local only, not in CI** — assumes `pnpm docker:up && pnpm dev` are already running rather than orchestrating postgres/redis/rabbitmq/api/channel-service/ai-orchestrator from scratch. See `tests/e2e-full/README.md`. Requires `META_WEBHOOK_SECRET` in root `.env`/`.env.local` and the seeded dev-tenant (`pnpm db:seed`, which now sets a fixed `whatsappPhoneId` so the simulated webhook resolves to a tenant).
+- **Lighthouse CI** (`apps/web/lighthouserc.json`): runs against a real **production build** (`pnpm build && next start`), not dev — dev-mode scores are meaningless (unminified, no ISR). Hard gate (`error` level) on performance/accessibility/best-practices; part of the `e2e-web` CI job.
+- **pytest** (`apps/ai-orchestrator`): standard, see Commands above.
+
 ## Key Conventions
 
 - **RabbitMQ exchanges**: `messages` (topic) for inbound, `ai` (topic) for AI responses. Routing keys: `msg.inbound`, `ai.response`.
@@ -152,6 +176,7 @@ Dark OLED palette. Primary colors: `#020617` (bg), `#22C55E` (green/CTA), `#6366
 - **Inactivity timer** (`apps/channel-service/src/queue/`, BullMQ `INACTIVITY_QUEUE`): two-phase — a "warn" job sends the tenant's `AgentConfig.inactivityMessage`, then a "close" job (after `CLOSE_GRACE_MINUTES`) sends `AgentConfig.closingMessage`, marks the conversation `CLOSED`, and deletes the Redis session. Timeout is per-tenant via `AgentConfig.inactivityTimeoutMin`.
 - **CRM auto-progression**: WhatsApp contacts are auto-inserted into the CRM and advanced through funnel stages (`crm-progression.service.ts`) based on conversation/order activity.
 - **Two separate payment rails**: `payments` module (MercadoPago) is for tenant-facing order payments; `billing` module (Stripe) is for platform subscription billing of tenants themselves.
+- **Route groups don't add a URL segment** — e.g. a `page.tsx` under `(dashboard)/` at the group root would resolve to the same `/` as the root `app/page.tsx`. Two `page.tsx` resolving to the same path builds without error in `next dev` but corrupts the client reference manifest in a production build (`next start` 500s on that route, dev looks fine). This bit us once (a stray `(dashboard)/page.tsx` duplicating the landing page, since removed) — check for this specifically if a route 500s in production but not in dev.
 
 ## Environment Variables
 
@@ -163,3 +188,4 @@ See `.env.example` at the root. Key groups:
 - `MERCADOPAGO_ACCESS_TOKEN` — tenant order payments (`payments` module)
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_*`, `STRIPE_METER_ID_CONVERSATIONS` — platform subscription billing (`billing` module)
 - `CHANNEL_SERVICE_URL`, `AI_ORCHESTRATOR_URL`, `BACKOFFICE_API_URL` — internal service URLs
+- `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` — error tracking (unset = no-op); `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` — CI-only, for web source-map upload; `NEXT_PUBLIC_VITALS_URL` — Web Vitals beacon endpoint
