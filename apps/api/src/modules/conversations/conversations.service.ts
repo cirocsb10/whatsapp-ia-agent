@@ -364,6 +364,7 @@ export class ConversationsService {
       },
       include: {
         contact: { select: { phone: true } },
+        channel: { select: { whatsappPhoneId: true, metaAccessToken: true } },
         tenant: { select: { whatsappPhoneId: true, metaAccessToken: true } },
       },
     });
@@ -373,12 +374,15 @@ export class ConversationsService {
       throw new BadRequestException("Conversation is not in human handoff mode");
     }
 
-    const whatsappPhoneId = conversation.tenant.whatsappPhoneId
+    // Prefer the conversation's WhatsappChannel credentials; fall back to tenant scalars / env.
+    const whatsappPhoneId = conversation.channel?.whatsappPhoneId
+      ?? conversation.tenant.whatsappPhoneId
       ?? process.env["META_TEST_PHONE_NUMBER_ID"]
       ?? null;
-    const metaAccessToken = conversation.tenant.metaAccessToken
-      ?? process.env["META_SYSTEM_USER_TOKEN"]
-      ?? null;
+    const metaAccessToken = conversation.channel?.metaAccessToken?.trim()
+      || conversation.tenant.metaAccessToken
+      || process.env["META_SYSTEM_USER_TOKEN"]
+      || null;
     const toPhone = conversation.contact.phone;
 
     if (!whatsappPhoneId || !metaAccessToken) {

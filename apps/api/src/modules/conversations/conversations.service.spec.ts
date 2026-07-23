@@ -264,6 +264,7 @@ describe("ConversationsService", () => {
         status: "HUMAN_HANDOFF",
         channelId: "ch-1",
         contact: { phone: "5511" },
+        channel: { whatsappPhoneId: "phone-channel", metaAccessToken: "channel-token" },
         tenant: { whatsappPhoneId: "phone-1", metaAccessToken: "token" },
       });
       mockPrisma.message.create.mockResolvedValue({
@@ -288,6 +289,81 @@ describe("ConversationsService", () => {
           direction: "OUTBOUND",
         }),
       });
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining("phone-channel/messages"),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer channel-token",
+          }),
+        }),
+      );
+
+      fetchSpy.mockRestore();
+    });
+
+    it("usa credenciais do canal da conversa em vez dos scalars do tenant", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({
+        id: "c-1",
+        status: "HUMAN_HANDOFF",
+        channelId: "ch-2",
+        contact: { phone: "5511999" },
+        channel: { whatsappPhoneId: "ch-phone-2", metaAccessToken: "  ch-tok-2  " },
+        tenant: { whatsappPhoneId: "tenant-phone", metaAccessToken: "tenant-tok" },
+      });
+      mockPrisma.message.create.mockResolvedValue({ id: "m-2", sentAt: new Date() });
+      mockPrisma.conversation.update.mockResolvedValue({});
+      mockPrisma.message.update.mockResolvedValue({});
+
+      const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ messages: [{ id: "wa-2" }] }),
+      } as Response);
+
+      await service.sendOperatorMessage("t-1", "c-1", ownerUser, "Oi");
+
+      expect(mockPrisma.conversation.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            channel: { select: { whatsappPhoneId: true, metaAccessToken: true } },
+          }),
+        }),
+      );
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining("ch-phone-2/messages"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer ch-tok-2" }),
+        }),
+      );
+
+      fetchSpy.mockRestore();
+    });
+
+    it("faz fallback para scalars do tenant quando conversa sem canal", async () => {
+      mockPrisma.conversation.findFirst.mockResolvedValue({
+        id: "c-legacy",
+        status: "HUMAN_HANDOFF",
+        channelId: null,
+        contact: { phone: "5511" },
+        channel: null,
+        tenant: { whatsappPhoneId: "tenant-phone", metaAccessToken: "tenant-tok" },
+      });
+      mockPrisma.message.create.mockResolvedValue({ id: "m-3", sentAt: new Date() });
+      mockPrisma.conversation.update.mockResolvedValue({});
+      mockPrisma.message.update.mockResolvedValue({});
+
+      const fetchSpy = jest.spyOn(global, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ messages: [{ id: "wa-3" }] }),
+      } as Response);
+
+      await service.sendOperatorMessage("t-1", "c-legacy", ownerUser, "Fallback");
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.stringContaining("tenant-phone/messages"),
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer tenant-tok" }),
+        }),
+      );
 
       fetchSpy.mockRestore();
     });

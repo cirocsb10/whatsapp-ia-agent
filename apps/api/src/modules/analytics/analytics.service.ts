@@ -402,7 +402,9 @@ export class AnalyticsService {
 
   /**
    * Estimativa de custo Meta por canal/categoria no período.
-   * Cruza Message.pricingCategory com MessagePricingRate (tenant override > platform default).
+   * Cruza Message.pricingCategory + CampaignRecipient (template) com MessagePricingRate
+   * (tenant override > platform default). Campanhas sem Message correspondente entram
+   * como marketing/template; waMessageId duplicado não é contado duas vezes.
    * Sempre retorna isEstimate: true — não é fatura Meta.
    */
   getMessagingCost(tenantId: string, from: Date, to: Date) {
@@ -420,19 +422,46 @@ export class AnalyticsService {
 
     const rows = await this.prisma.$queryRaw<AggRow[]>`
       SELECT
-        c."channelId" AS channel_id,
-        COALESCE(ch."displayName", ch."whatsappNumber", 'Sem canal') AS channel_label,
-        LOWER(m."pricingCategory") AS category,
+        channel_id,
+        channel_label,
+        category,
         COUNT(*)::bigint AS message_count
-      FROM "Message" m
-      INNER JOIN "Conversation" c ON c.id = m."conversationId"
-      LEFT JOIN "WhatsappChannel" ch ON ch.id = c."channelId"
-      WHERE m."tenantId" = ${tenantId}
-        AND m."sentAt" >= ${from}
-        AND m."sentAt" < ${to}
-        AND m."pricingCategory" IS NOT NULL
-        AND m.direction = 'OUTBOUND'
-      GROUP BY c."channelId", ch."displayName", ch."whatsappNumber", LOWER(m."pricingCategory")
+      FROM (
+        SELECT
+          c."channelId" AS channel_id,
+          COALESCE(ch."displayName", ch."whatsappNumber", 'Sem canal') AS channel_label,
+          LOWER(m."pricingCategory") AS category
+        FROM "Message" m
+        INNER JOIN "Conversation" c ON c.id = m."conversationId"
+        LEFT JOIN "WhatsappChannel" ch ON ch.id = c."channelId"
+        WHERE m."tenantId" = ${tenantId}
+          AND m."sentAt" >= ${from}
+          AND m."sentAt" < ${to}
+          AND m."pricingCategory" IS NOT NULL
+          AND m.direction = 'OUTBOUND'
+
+        UNION ALL
+
+        SELECT
+          camp."channelId" AS channel_id,
+          COALESCE(ch."displayName", ch."whatsappNumber", 'Sem canal') AS channel_label,
+          LOWER(COALESCE(NULLIF(TRIM(mt.category), ''), 'marketing')) AS category
+        FROM "CampaignRecipient" cr
+        INNER JOIN "Campaign" camp ON camp.id = cr."campaignId"
+        LEFT JOIN "WhatsappChannel" ch ON ch.id = camp."channelId"
+        LEFT JOIN "MessageTemplate" mt ON mt.id = camp."templateId"
+        LEFT JOIN "Message" existing
+          ON existing."waMessageId" IS NOT NULL
+          AND existing."waMessageId" = cr."waMessageId"
+        WHERE camp."tenantId" = ${tenantId}
+          AND cr."sentAt" IS NOT NULL
+          AND cr."sentAt" >= ${from}
+          AND cr."sentAt" < ${to}
+          AND cr."waMessageId" IS NOT NULL
+          AND cr.status IN ('SENT', 'DELIVERED', 'READ')
+          AND existing.id IS NULL
+      ) billed
+      GROUP BY channel_id, channel_label, category
     `;
 
     const rates = await this.prisma.messagePricingRate.findMany({

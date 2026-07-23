@@ -287,5 +287,49 @@ describe("AnalyticsService", () => {
       expect(result.totalBrlCents).toBe(3000);
       expect(result.projectedMonthlyBrlCents).toBe(90000); // 3000 * 30 / 1
     });
+
+    it("inclui envios de campanha (template) na agregação de custo", async () => {
+      // SQL unifica Message OUTBOUND + CampaignRecipient (sem double-count por waMessageId).
+      // Aqui o mock simula o resultado já agregado: 4 service msgs + 10 marketing (campaign).
+      mockPrisma.$queryRaw.mockResolvedValue([
+        {
+          channel_id: "ch-1",
+          channel_label: "Vendas",
+          category: "service",
+          message_count: 4n,
+        },
+        {
+          channel_id: "ch-1",
+          channel_label: "Vendas",
+          category: "marketing",
+          message_count: 10n,
+        },
+      ]);
+      mockPrisma.messagePricingRate.findMany.mockResolvedValue([
+        { tenantId: null, category: "service", priceBrlCents: 0 },
+        { tenantId: null, category: "marketing", priceBrlCents: 250 },
+      ]);
+
+      const from = new Date("2026-07-01T00:00:00.000Z");
+      const to = new Date("2026-07-23T00:00:00.000Z");
+      const result = await service.getMessagingCost("t-1", from, to);
+
+      expect(result.totalMessages).toBe(14);
+      expect(result.totalBrlCents).toBe(2500); // 10 * 250
+      expect(result.byCategory).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ category: "marketing", messageCount: 10, costBrlCents: 2500 }),
+          expect.objectContaining({ category: "service", messageCount: 4, costBrlCents: 0 }),
+        ]),
+      );
+      expect(result.byChannel[0]).toEqual(
+        expect.objectContaining({
+          channelId: "ch-1",
+          messageCount: 14,
+          costBrlCents: 2500,
+        }),
+      );
+      expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+    });
   });
 });
