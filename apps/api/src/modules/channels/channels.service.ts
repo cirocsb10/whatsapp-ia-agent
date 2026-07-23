@@ -67,6 +67,9 @@ export class ChannelsService {
     }
 
     const phoneId = dto.whatsappPhoneId.trim();
+    if (!phoneId) {
+      throw new BadRequestException("whatsappPhoneId é obrigatório");
+    }
     await this.assertPhoneIdAvailable(phoneId);
 
     if (dto.memberUserIds?.length) {
@@ -117,6 +120,9 @@ export class ChannelsService {
 
     if (dto.whatsappPhoneId !== undefined) {
       const phoneId = dto.whatsappPhoneId.trim();
+      if (!phoneId) {
+        throw new BadRequestException("whatsappPhoneId é obrigatório");
+      }
       if (phoneId !== existing.whatsappPhoneId) {
         await this.assertPhoneIdAvailable(phoneId, id);
       }
@@ -196,22 +202,40 @@ export class ChannelsService {
       }
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.whatsappChannel.delete({ where: { id } });
-
-      if (channel.isDefault && total > 1) {
-        const next = await tx.whatsappChannel.findFirst({
-          where: { tenantId },
-          orderBy: { createdAt: "asc" },
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Avoid FK violation: Conversation.channelId has no onDelete cascade.
+        await tx.conversation.updateMany({
+          where: { channelId: id },
+          data: { channelId: null },
         });
-        if (next) {
-          await tx.whatsappChannel.update({
-            where: { id: next.id },
-            data: { isDefault: true },
+
+        await tx.whatsappChannel.delete({ where: { id } });
+
+        if (channel.isDefault && total > 1) {
+          const next = await tx.whatsappChannel.findFirst({
+            where: { tenantId },
+            orderBy: { createdAt: "asc" },
           });
+          if (next) {
+            await tx.whatsappChannel.update({
+              where: { id: next.id },
+              data: { isDefault: true },
+            });
+          }
         }
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2003"
+      ) {
+        throw new BadRequestException(
+          "Não é possível remover o canal: ainda há registros vinculados (ex.: campanhas).",
+        );
       }
-    });
+      throw err;
+    }
 
     await this.invalidateChannelCache(channel.whatsappPhoneId);
     this.logger.log(`Channel deleted tenant=${tenantId} id=${id}`);

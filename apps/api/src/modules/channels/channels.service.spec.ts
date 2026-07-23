@@ -41,6 +41,7 @@ const mockPrisma = {
   },
   conversation: {
     count: jest.fn(),
+    updateMany: jest.fn(),
   },
   user: {
     findMany: jest.fn(),
@@ -78,6 +79,16 @@ describe("ChannelsService", () => {
           whatsappPhoneId: "phone-1",
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it("requer whatsappPhoneId não vazio após trim", async () => {
+      await expect(
+        service.create("t-1", {
+          displayName: "Canal",
+          whatsappPhoneId: "   ",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockPrisma.whatsappChannel.create).not.toHaveBeenCalled();
     });
 
     it("cria canal com displayName e phoneId únicos; primeiro vira default", async () => {
@@ -230,6 +241,15 @@ describe("ChannelsService", () => {
 
       expect(mockRedis.del).toHaveBeenCalledWith("channel:phone:phone-1");
     });
+
+    it("rejeita whatsappPhoneId vazio após trim", async () => {
+      mockPrisma.whatsappChannel.findFirst.mockResolvedValue(mockChannel);
+
+      await expect(
+        service.update("t-1", "ch-1", { whatsappPhoneId: "   " }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(mockPrisma.whatsappChannel.update).not.toHaveBeenCalled();
+    });
   });
 
   describe("remove", () => {
@@ -242,6 +262,28 @@ describe("ChannelsService", () => {
         BadRequestException,
       );
       expect(mockPrisma.whatsappChannel.delete).not.toHaveBeenCalled();
+      expect(mockPrisma.conversation.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("nullifica channelId nas conversas antes de excluir", async () => {
+      mockPrisma.whatsappChannel.findFirst.mockResolvedValue({
+        ...mockChannel,
+        isDefault: false,
+      });
+      mockPrisma.whatsappChannel.count.mockResolvedValue(2);
+      mockPrisma.conversation.updateMany.mockResolvedValue({ count: 5 });
+      mockPrisma.whatsappChannel.delete.mockResolvedValue(mockChannel);
+
+      await service.remove("t-1", "ch-1");
+
+      expect(mockPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { channelId: "ch-1" },
+        data: { channelId: null },
+      });
+      expect(mockPrisma.whatsappChannel.delete).toHaveBeenCalledWith({
+        where: { id: "ch-1" },
+      });
+      expect(mockRedis.del).toHaveBeenCalledWith("channel:phone:phone-1");
     });
 
     it("reassigna default ao excluir canal default com outros canais", async () => {
@@ -249,11 +291,16 @@ describe("ChannelsService", () => {
         .mockResolvedValueOnce(mockChannel)
         .mockResolvedValueOnce({ id: "ch-2", tenantId: "t-1" });
       mockPrisma.whatsappChannel.count.mockResolvedValue(2);
+      mockPrisma.conversation.updateMany.mockResolvedValue({ count: 0 });
       mockPrisma.whatsappChannel.delete.mockResolvedValue(mockChannel);
       mockPrisma.whatsappChannel.update.mockResolvedValue({ id: "ch-2", isDefault: true });
 
       await service.remove("t-1", "ch-1");
 
+      expect(mockPrisma.conversation.updateMany).toHaveBeenCalledWith({
+        where: { channelId: "ch-1" },
+        data: { channelId: null },
+      });
       expect(mockPrisma.whatsappChannel.delete).toHaveBeenCalledWith({ where: { id: "ch-1" } });
       expect(mockPrisma.whatsappChannel.update).toHaveBeenCalledWith({
         where: { id: "ch-2" },
