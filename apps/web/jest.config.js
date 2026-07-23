@@ -8,5 +8,8 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   testMatch: ["**/*.test.ts", "**/*.test.tsx"],
+  // jest-dom matchers (toBeInTheDocument etc.) só se aplicam a testes de componente
+  // (.test.tsx), que declaram `@jest-environment jsdom` no topo do arquivo.
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
   rootDir: ".",
 };
