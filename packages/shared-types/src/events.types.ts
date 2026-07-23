@@ -14,10 +14,12 @@ export const ROUTING_KEYS = {
   HANDOFF_CREATE: "handoff.create",
   HANDOFF_ACCEPT: "handoff.accept",
   NOTIFICATION_PUSH: "notification.push",
+  CAMPAIGN_STATUS: "campaign.status",
 } as const;
 
 export interface InboundMessageEvent {
   tenantId: string;
+  channelId?: string;
   whatsappPhoneId: string;
   waMessageId: string;
   from: string;
@@ -38,6 +40,7 @@ export interface InboundMessageEvent {
 
 export interface AiResponseEvent {
   tenantId: string;
+  channelId?: string;
   conversationId: string;
   waPhoneId: string;
   toPhone: string;
@@ -52,6 +55,14 @@ export interface OutboundMessage {
   imageUrl?: string;
   templateName?: string;
   templateParams?: string[];
+}
+
+export interface CampaignStatusEvent {
+  tenantId: string;
+  waMessageId: string;
+  status: "sent" | "delivered" | "read" | "failed";
+  timestamp: number;
+  failureReason?: string;
 }
 
 export interface HandoffCreatedEvent {
