@@ -5,6 +5,8 @@ import {
 import { timingSafeEqual } from "crypto";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { RolesGuard } from "../../common/guards/roles.guard";
+import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentTenantId } from "../../common/decorators/current-tenant.decorator";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { CreateInternalOrderDto } from "./dto/create-internal-order.dto";
@@ -30,7 +32,8 @@ export class OrdersController {
   }
 
   @Patch(":id/status")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("OWNER", "ADMIN", "AGENT")
   updateStatus(
     @CurrentTenantId() tenantId: string,
     @Param("id") id: string,
@@ -40,14 +43,16 @@ export class OrdersController {
   }
 
   @Patch(":id/cancel")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("OWNER", "ADMIN", "AGENT")
   cancelOrder(@CurrentTenantId() tenantId: string, @Param("id") id: string) {
     return this.service.cancelOrder(tenantId, id);
   }
 
   @Post()
   @HttpCode(201)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("OWNER", "ADMIN", "AGENT")
   createFromUi(
     @CurrentTenantId() tenantId: string,
     @Body() body: CreateOrderDto,

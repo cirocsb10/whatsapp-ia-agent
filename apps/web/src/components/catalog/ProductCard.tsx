@@ -29,6 +29,7 @@ export function ProductCard({ product, onEdit, onDelete }: Props) {
             src={imageUrl}
             alt={product.name}
             fill
+            unoptimized
             sizes="(max-width: 768px) 50vw, 220px"
             className="object-cover"
           />

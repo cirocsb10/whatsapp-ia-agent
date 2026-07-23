@@ -20,16 +20,41 @@ const mockPrisma: MockPrisma = {
 };
 
 const redisStore = new Map<string, string>();
+const redisSets = new Map<string, Set<string>>();
 const mockRedis = {
   set: jest.fn((key: string, value: string) => {
     redisStore.set(key, value);
     return Promise.resolve("OK");
   }),
   get: jest.fn((key: string) => Promise.resolve(redisStore.get(key) ?? null)),
-  del: jest.fn((key: string) => {
-    const existed = redisStore.delete(key);
-    return Promise.resolve(existed ? 1 : 0);
+  getdel: jest.fn((key: string) => {
+    const value = redisStore.get(key) ?? null;
+    redisStore.delete(key);
+    return Promise.resolve(value);
   }),
+  del: jest.fn((...keys: string[]) => {
+    let count = 0;
+    for (const key of keys) {
+      if (redisStore.delete(key)) count += 1;
+      if (redisSets.delete(key)) count += 1;
+    }
+    return Promise.resolve(count);
+  }),
+  sadd: jest.fn((key: string, member: string) => {
+    const set = redisSets.get(key) ?? new Set<string>();
+    set.add(member);
+    redisSets.set(key, set);
+    return Promise.resolve(1);
+  }),
+  srem: jest.fn((key: string, member: string) => {
+    const set = redisSets.get(key);
+    const removed = set?.delete(member) ?? false;
+    return Promise.resolve(removed ? 1 : 0);
+  }),
+  smembers: jest.fn((key: string) => {
+    return Promise.resolve(Array.from(redisSets.get(key) ?? []));
+  }),
+  expire: jest.fn(() => Promise.resolve(1)),
 };
 
 const configValues: Record<string, string> = {
@@ -37,6 +62,7 @@ const configValues: Record<string, string> = {
   JWT_REFRESH_SECRET: "test_refresh_secret",
   JWT_ACCESS_EXPIRES_IN: "15m",
   JWT_REFRESH_EXPIRES_IN: "7d",
+  GOOGLE_CLIENT_ID: "test_google_client_id",
 };
 
 const activeTenant = { id: "tenant_1", slug: "acme-abc123", status: "ACTIVE", name: "Acme" };
@@ -68,6 +94,7 @@ describe("AuthService", () => {
     jwt = moduleRef.get(JwtService);
     jest.clearAllMocks();
     redisStore.clear();
+    redisSets.clear();
     mockPrisma.$transaction.mockImplementation(
       (fn: (tx: MockPrisma) => Promise<unknown>) => fn(mockPrisma),
     );
@@ -193,6 +220,7 @@ describe("AuthService", () => {
           email: "a@b.com",
           sub: "g1",
           name: "A",
+          aud: "test_google_client_id",
         }),
       }) as unknown as typeof fetch;
 

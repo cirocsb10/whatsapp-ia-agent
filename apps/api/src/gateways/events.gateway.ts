@@ -37,16 +37,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     try {
       const key = `${SOCKET_TICKET_PREFIX}${ticket}`;
-      const userId = await this.redis.get(key);
+      // GETDEL is atomic: concurrent handshakes with the same ticket cannot both read a
+      // non-null value, so the ticket is enforced as truly single-use (no GET+DEL race).
+      const userId = await this.redis.getdel(key);
 
       if (!userId) {
         this.logger.warn(`Socket ${client.id} rejected: invalid or expired ticket`);
         client.disconnect();
         return;
       }
-
-      // Ticket de uso único.
-      await this.redis.del(key);
 
       const user = await this.prisma.user.findUnique({
         where: { id: userId },

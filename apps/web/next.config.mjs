@@ -17,7 +17,10 @@ const nextConfig = {
     // Tree-shake lucide/recharts no bundle (F5 §3.9).
     optimizePackageImports: ["lucide-react", "recharts"],
   },
-  // URLs de produto (MinIO/S3) e mídia WhatsApp (Meta CDN) são arbitrárias por tenant.
+  // Mídia MinIO/S3 e WhatsApp (Meta CDN) passam pelo otimizador de imagens do Next.
+  // URLs de produto são arbitrárias por tenant e não passam por remotePatterns — os
+  // componentes que as renderizam usam `unoptimized` para que o Next.js server nunca
+  // busque uma URL controlada pelo tenant (evita SSRF via /_next/image?url=).
   images: {
     remotePatterns: [
       { protocol: "http", hostname: "localhost", pathname: "/**" },
@@ -26,8 +29,6 @@ const nextConfig = {
       { protocol: "https", hostname: "**.cdn.whatsapp.net", pathname: "/**" },
       { protocol: "https", hostname: "mmg.whatsapp.net", pathname: "/**" },
       { protocol: "https", hostname: "**.fbcdn.net", pathname: "/**" },
-      { protocol: "https", hostname: "**", pathname: "/**" },
-      { protocol: "http", hostname: "**", pathname: "/**" },
     ],
   },
   env: {
@@ -45,6 +46,20 @@ const nextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "geolocation=(), microphone=(), camera=()" },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "frame-ancestors 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https: http:",
+              "font-src 'self' data:",
+              "connect-src 'self' https: wss: ws:",
+            ].join("; "),
+          },
         ],
       },
     ];

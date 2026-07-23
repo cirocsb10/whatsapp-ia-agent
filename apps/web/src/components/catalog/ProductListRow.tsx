@@ -28,6 +28,7 @@ export function ProductListRow({ product, onEdit, onDelete }: Props) {
             src={imageUrl}
             alt={product.name}
             fill
+            unoptimized
             sizes="36px"
             className="object-cover"
           />

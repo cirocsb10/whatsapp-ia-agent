@@ -7,12 +7,30 @@ export class SuperAdminService {
 
   async getAllTenants(page = 1, limit = 25) {
     const skip = (page - 1) * limit;
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       this.prisma.tenant.findMany({
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          status: true,
+          planType: true,
+          whatsappPhoneId: true,
+          whatsappStatus: true,
+          whatsappNumber: true,
+          whatsappQualityRating: true,
+          whatsappQualityCheckedAt: true,
+          timezone: true,
+          segment: true,
+          locale: true,
+          logoUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          metaAccessToken: true,
+          stripeCustomerId: true,
           _count: { select: { conversations: true } },
           billing: {
             select: { conversationsThisMonth: true, conversationsLimit: true },
@@ -21,6 +39,15 @@ export class SuperAdminService {
       }),
       this.prisma.tenant.count(),
     ]);
+
+    // Nunca expor credenciais vivas (token do WhatsApp Cloud API) na listagem do
+    // super-admin — apenas indicar presença, como já é feito em ChannelsService.toPublic().
+    const items = rawItems.map(({ metaAccessToken, stripeCustomerId, ...rest }) => ({
+      ...rest,
+      hasMetaAccessToken: Boolean(metaAccessToken),
+      hasStripeCustomer: Boolean(stripeCustomerId),
+    }));
+
     return { items, total };
   }
 

@@ -17,6 +17,7 @@ import { REDIS_CLIENT } from "../../common/redis/redis.module";
 import { RegisterDto } from "./dto/register.dto";
 
 const REFRESH_FAMILY_PREFIX = "refresh-family:";
+const USER_SESSIONS_PREFIX = "user-sessions:";
 const SOCKET_TICKET_PREFIX = "socket-ticket:";
 const SOCKET_TICKET_TTL_SECONDS = 30;
 const BCRYPT_ROUNDS = 10;
@@ -143,6 +144,12 @@ export class AuthService {
   }
 
   async googleLogin(accessToken: string) {
+    if (!this.googleClientId) {
+      // Sem client ID configurado não há como validar o audience do token — recusar
+      // em vez de aceitar qualquer token do Google emitido para outra aplicação.
+      throw new UnauthorizedException("Login com Google não está configurado");
+    }
+
     const response = await fetch(
       `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
     );
@@ -157,7 +164,7 @@ export class AuthService {
       throw new UnauthorizedException("E-mail do Google não verificado");
     }
 
-    if (this.googleClientId && info.aud !== this.googleClientId && info.azp !== this.googleClientId) {
+    if (info.aud !== this.googleClientId && info.azp !== this.googleClientId) {
       throw new UnauthorizedException("Token do Google não foi emitido para esta aplicação");
     }
 
@@ -203,17 +210,32 @@ export class AuthService {
   ): Promise<TokenPair> {
     const accessToken = await this.jwt.signAsync(
       { sub: userId, tenantId },
-      { secret: this.accessSecret, expiresIn: this.accessExpiresIn as unknown as number },
+      {
+        secret: this.accessSecret,
+        expiresIn: this.accessExpiresIn as unknown as number,
+        algorithm: "HS256",
+      },
     );
 
     const jti = randomUUID();
     const refreshToken = await this.jwt.signAsync(
       { sub: userId, tenantId, jti, familyId },
-      { secret: this.refreshSecret, expiresIn: this.refreshExpiresIn as unknown as number },
+      {
+        secret: this.refreshSecret,
+        expiresIn: this.refreshExpiresIn as unknown as number,
+        algorithm: "HS256",
+      },
     );
 
     // Cada família representa uma cadeia de rotação; só o jti mais recente da família é válido.
     await this.redis.set(`${REFRESH_FAMILY_PREFIX}${familyId}`, jti, "EX", this.refreshTtlSeconds);
+
+    // Índice de famílias ativas por usuário, usado para revogar todas as sessões
+    // (ex.: troca de senha) sem depender do cliente apresentar cada refresh token.
+    const sessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+    await this.redis.sadd(sessionsKey, familyId);
+    await this.redis.expire(sessionsKey, this.refreshTtlSeconds);
+
     return { accessToken, refreshToken };
   }
 
@@ -222,6 +244,7 @@ export class AuthService {
     try {
       payload = await this.jwt.verifyAsync<RefreshPayload>(token, {
         secret: this.refreshSecret,
+        algorithms: ["HS256"],
       });
     } catch {
       throw new UnauthorizedException("Refresh token inválido ou expirado");
@@ -252,6 +275,7 @@ export class AuthService {
       });
       if (payload?.familyId) {
         await this.redis.del(`${REFRESH_FAMILY_PREFIX}${payload.familyId}`);
+        await this.redis.srem(`${USER_SESSIONS_PREFIX}${payload.sub}`, payload.familyId);
       }
     } catch {
       // Token já inválido/expirado — logout é idempotente.
@@ -285,6 +309,18 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash },
     });
+
+    await this.revokeAllSessions(userId);
+  }
+
+  /** Revoga todas as famílias de refresh token ativas de um usuário, forçando novo login em todos os dispositivos. */
+  private async revokeAllSessions(userId: string): Promise<void> {
+    const sessionsKey = `${USER_SESSIONS_PREFIX}${userId}`;
+    const familyIds = await this.redis.smembers(sessionsKey);
+    if (familyIds.length > 0) {
+      await this.redis.del(...familyIds.map((familyId) => `${REFRESH_FAMILY_PREFIX}${familyId}`));
+    }
+    await this.redis.del(sessionsKey);
   }
 
   private async createTenantAndUser(input: CreateTenantUserInput) {
