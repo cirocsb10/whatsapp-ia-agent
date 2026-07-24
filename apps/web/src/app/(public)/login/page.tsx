@@ -99,7 +99,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setAuthView("login")}
-            className="mt-6 w-full text-sm text-slate-400 hover:text-white"
+            className="mt-6 w-full text-sm text-slate-500 hover:text-slate-900"
           >
             Voltar para o login
           </button>
@@ -107,7 +107,7 @@ export default function LoginPage() {
       >
         <form onSubmit={(e) => void handleForgot(e)} className="space-y-4">
           <label className="block">
-            <span className="mb-2 block text-sm text-slate-300">E-mail</span>
+            <span className="mb-2 block text-sm text-slate-600">E-mail</span>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input
@@ -115,7 +115,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-4 outline-none ring-[#22C55E]/40 focus:ring-2"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
                 placeholder="voce@empresa.com"
               />
             </div>
@@ -139,13 +139,13 @@ export default function LoginPage() {
         title="Verifique seu e-mail"
         subtitle="Se existir uma conta com esse endereço, enviaremos instruções em breve."
       >
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 text-sm text-slate-300">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">
           Caso não receba em alguns minutos, confira a caixa de spam ou tente novamente.
         </div>
         <button
           type="button"
           onClick={() => setAuthView("login")}
-          className="mt-6 w-full rounded-xl border border-white/10 py-3 text-sm text-slate-200 hover:bg-white/5"
+          className="mt-6 w-full rounded-xl border border-slate-200 py-3 text-sm text-slate-700 hover:bg-slate-50"
         >
           Voltar para o login
         </button>
@@ -167,7 +167,7 @@ export default function LoginPage() {
     >
       <form onSubmit={(e) => void handleLogin(e)} className="space-y-4">
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">E-mail</span>
+          <span className="mb-2 block text-sm text-slate-600">E-mail</span>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -175,14 +175,14 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-4 outline-none ring-[#22C55E]/40 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
               placeholder="voce@empresa.com"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">Senha</span>
+          <span className="mb-2 block text-sm text-slate-600">Senha</span>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -190,13 +190,13 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-12 outline-none ring-[#22C55E]/40 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-12 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
               placeholder="••••••••"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -210,14 +210,14 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-slate-900 accent-[#22C55E]"
+              className="h-4 w-4 rounded border-slate-300 bg-white accent-[#22C55E]"
             />
             Lembrar-me
           </label>
           <button
             type="button"
             onClick={() => setAuthView("forgot")}
-            className="text-[#6366F1] hover:underline"
+            className="text-[#22C55E] hover:underline"
           >
             Esqueci a senha
           </button>
@@ -235,16 +235,16 @@ export default function LoginPage() {
       </form>
 
       <div className="my-6 flex items-center gap-3">
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-slate-200" />
         <span className="text-xs uppercase tracking-wide text-slate-500">ou</span>
-        <div className="h-px flex-1 bg-white/10" />
+        <div className="h-px flex-1 bg-slate-200" />
       </div>
 
       <button
         type="button"
         onClick={() => googleLogin()}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-slate-900/60 py-3 text-sm font-medium text-slate-100 hover:bg-white/5 disabled:opacity-60"
+        className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
       >
         <span className="text-base">G</span>
         Continuar com Google
@@ -252,7 +252,7 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-xs text-slate-500">
         Ao continuar, você concorda com os{" "}
-        <Link href="/" className="text-slate-300 hover:underline">
+        <Link href="/" className="text-slate-600 hover:underline">
           termos de uso
         </Link>
         .

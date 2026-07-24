@@ -58,7 +58,7 @@ export default function RegisterPage() {
     >
       <form onSubmit={(e) => void handleRegister(e)} className="space-y-4">
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">Nome</span>
+          <span className="mb-2 block text-sm text-slate-600">Nome</span>
           <div className="relative">
             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -66,14 +66,14 @@ export default function RegisterPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-4 outline-none ring-[#22C55E]/40 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
               placeholder="Seu nome"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">E-mail</span>
+          <span className="mb-2 block text-sm text-slate-600">E-mail</span>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -81,14 +81,14 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-4 outline-none ring-[#22C55E]/40 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
               placeholder="voce@empresa.com"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">Senha</span>
+          <span className="mb-2 block text-sm text-slate-600">Senha</span>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
@@ -97,13 +97,13 @@ export default function RegisterPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-slate-900/80 py-3 pl-10 pr-12 outline-none ring-[#22C55E]/40 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-12 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
               placeholder="Mínimo 8 caracteres"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -112,12 +112,12 @@ export default function RegisterPage() {
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm text-slate-300">Nome da empresa (opcional)</span>
+          <span className="mb-2 block text-sm text-slate-600">Nome da empresa (opcional)</span>
           <input
             type="text"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 outline-none ring-[#22C55E]/40 focus:ring-2"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none ring-[#22C55E]/40 focus:ring-2"
             placeholder="Minha Loja"
           />
         </label>
