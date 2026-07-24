@@ -135,7 +135,7 @@ Route groups:
 - `(onboarding)/` — setup wizard, including `setup/plan` (Stripe plan selection)
 - `(public)/` — landing page, login
 
-Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state), `recharts` (charts), `@tanstack/react-query` (server-state/cache), `@tanstack/react-virtual` (message list virtualization), `shadcn/ui` + Tailwind CSS v4.
+Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state), `recharts` (charts), `@tanstack/react-query` (server-state/cache), `@tanstack/react-virtual` (message list virtualization), Tailwind CSS v4. No shadcn/ui CLI setup (no `components.json`, no Radix deps) — `apps/web/src/components/ui/` holds a handful of hand-rolled primitives (`Modal.tsx`, `FormSelect.tsx`, etc.) using `class-variance-authority`/`tailwind-merge`, not generated shadcn components.
 
 **Feature-first components**: pages that outgrew a single file (`settings`, `agent/persona`, `inbox`, `catalog`) have their sections/panels split into `apps/web/src/features/<domain>/components/`, with shared form state/types in `features/<domain>/model/` (e.g. `features/agent/model/persona-form.ts`). The route file itself (`app/**/page.tsx`) stays thin — state + handlers + composition, no inline JSX for entire sections. New large pages should follow this pattern rather than growing as a single file.
 
@@ -148,7 +148,7 @@ Key libs: `ky` (HTTP client), `socket.io-client` (real-time), `zustand` (state),
 
 ### Design System
 
-Dark OLED palette. Primary colors: `#020617` (bg), `#22C55E` (green/CTA), `#6366F1` (indigo/AI). Font: Plus Jakarta Sans. Cards use glassmorphism (`bg-slate-900/80` + `backdrop-blur-2xl`). Icons: Lucide React at 20×20px (`w-5 h-5`).
+Light theme only — no dark mode (`tailwind.config.ts` has no `darkMode` key, zero `dark:` variants anywhere). Primary color is green `#22C55E` (with `--c-green-dark: #16A34A` and `--c-green-tint`/`--c-green-ink` for pastel active-states/badges), `#6366F1` indigo kept as a secondary accent for AI-specific UI (e.g. `--kpi-accent` override on KPI cards). Neutrals: `--c-base: #f8fafc` (page bg), `#ffffff` (card surfaces), `--c-border: #e2e8f0`, `--c-text: #0f172a`, `--c-muted: #64748b`. Font: Outfit (self-hosted variable font, `@font-face` in `globals.css`) — matches the visual identity of the reference PrevConsulta backoffice project, just with green swapped in for its blue. Cards follow a flat, bordered style (`rounded-2xl border border-slate-200 bg-white`, no glassmorphism/blur) rather than the old dark glass look. Tokens live in `apps/web/src/app/globals.css` `:root` plus a component-class layer (`.kpi`, `.nav-item`, `.tag-*`, `.modal-panel`); `tailwind.config.ts` only carries `primary`/`accent` color scales on top of that — no single fully-tokenized system, so brand hex values are still spot-used inline in many `.tsx` files. Icons: Lucide React at 20×20px (`w-5 h-5`). See `.plans/32-remover-dark-theme-identidade-prevconsulta.md` for the migration history.
 
 ### Observability & Error Handling (web + api)
 
