@@ -26,7 +26,7 @@ export function AuthShell({
       <div className="flex min-h-screen">
         <aside className="relative hidden w-[46%] min-w-[430px] overflow-hidden border-r border-slate-200 bg-white lg:flex lg:flex-col lg:justify-between lg:p-12">
           <div className="relative z-10">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3 no-underline">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#22C55E]/15 text-[#22C55E]">
                 <MessageSquare className="h-5 w-5" />
               </div>
@@ -34,7 +34,7 @@ export function AuthShell({
                 <p className="text-lg font-semibold text-slate-900">WhatsAgent</p>
                 <p className="text-sm text-slate-500">Atendimento IA no WhatsApp</p>
               </div>
-            </div>
+            </Link>
 
             <h1 className="mt-12 max-w-md text-4xl font-bold leading-tight text-slate-900">
               Venda e atenda clientes com IA, sem perder o controle humano.
@@ -58,12 +58,12 @@ export function AuthShell({
         <main className="flex flex-1 items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-md">
             <div className="mb-8 lg:hidden">
-              <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-3 no-underline">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#22C55E]/15 text-[#22C55E]">
                   <MessageSquare className="h-5 w-5" />
                 </div>
                 <p className="text-lg font-semibold text-slate-900">WhatsAgent</p>
-              </div>
+              </Link>
             </div>
 
             <div className="mb-8">

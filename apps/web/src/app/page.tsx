@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { useAuthContext } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
@@ -17,22 +17,6 @@ function useAuthRedirect() {
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace("/overview");
   }, [isLoaded, isSignedIn, router]);
-}
-
-/* ─── Intersection observer for scroll reveals ───────────────── */
-function useReveal() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry?.isIntersecting) { el.classList.add("revealed"); obs.disconnect(); } },
-      { threshold: 0.12 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return ref;
 }
 
 /* ─── Data ───────────────────────────────────────────────────── */
@@ -134,8 +118,7 @@ function ChatMockup() {
 
 /* ─── Section wrappers ───────────────────────────────────────── */
 function RevealSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const ref = useReveal();
-  return <div ref={ref} className={`reveal-section ${className}`}>{children}</div>;
+  return <div className={`reveal-section ${className}`}>{children}</div>;
 }
 
 /* ─── Main Page ──────────────────────────────────────────────── */
