@@ -184,7 +184,7 @@ export default function HomePage() {
               <h1 className="lp-headline">
                 Atendimento automático<br />
                 que <span className="lp-gradient-text">vende enquanto</span><br />
-                <span className="lp-headline-serif">você dorme</span>
+                <span className="lp-gradient-text">você dorme</span>
               </h1>
               <p className="lp-subheadline">
                 Conecte sua loja ao WhatsApp e deixe a IA responder clientes,
