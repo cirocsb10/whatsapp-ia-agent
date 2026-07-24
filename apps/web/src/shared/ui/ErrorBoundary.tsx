@@ -34,20 +34,20 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-8 text-center backdrop-blur-2xl">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-            <AlertTriangle className="h-6 w-6 text-red-400" aria-hidden="true" />
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-slate-200 bg-white p-8 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+            <AlertTriangle className="h-6 w-6 text-red-500" aria-hidden="true" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-slate-100">Algo deu errado</p>
-            <p className="max-w-xs text-[13px] leading-relaxed text-slate-400">
+            <p className="text-sm font-semibold text-slate-900">Algo deu errado</p>
+            <p className="max-w-xs text-[13px] leading-relaxed text-slate-500">
               Não foi possível carregar esta seção. Tente novamente.
             </p>
           </div>
           <button
             type="button"
             onClick={this.handleReset}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-[13px] font-medium text-slate-100 transition-colors duration-200 hover:bg-slate-700"
+            className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#22C55E] px-4 py-2 text-[13px] font-medium text-white transition-colors duration-200 hover:brightness-110"
           >
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Tentar novamente
