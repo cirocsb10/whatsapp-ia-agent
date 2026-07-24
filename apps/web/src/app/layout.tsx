@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
-import { Fraunces } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import { Providers } from "./providers";
 import { getServerUser } from "@/server/auth";
 import "./globals.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  style: ["normal", "italic"],
-  axes: ["opsz", "SOFT", "WONK"],
-});
 
 export const metadata: Metadata = {
   title: { default: "WhatsAgent — Atendimento IA pelo WhatsApp", template: "%s | WhatsAgent" },
@@ -22,7 +14,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${fraunces.variable} bg-[#f8fafc] text-slate-900 antialiased`}>
+      <body className="bg-[#f8fafc] text-slate-900 antialiased">
         <NextTopLoader color="#22C55E" height={2} showSpinner={false} />
         <Providers initialUser={initialUser}>{children}</Providers>
       </body>
