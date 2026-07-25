@@ -1,5 +1,5 @@
 import "./instrument";
-import { NestFactory } from "@nestjs/core";
+import { HttpAdapterHost, NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { SentryGlobalFilter } from "@sentry/nestjs/setup";
 import helmet from "helmet";
@@ -25,7 +25,8 @@ async function bootstrap() {
   );
   // Ordem importa: PrismaExceptionFilter (específico) primeiro, SentryGlobalFilter
   // (catch-all, reporta ao Sentry e delega formatação padrão) por último.
-  app.useGlobalFilters(new PrismaExceptionFilter(), new SentryGlobalFilter());
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new PrismaExceptionFilter(), new SentryGlobalFilter(httpAdapter));
 
   await app.listen(process.env.PORT ?? 3002);
 }
