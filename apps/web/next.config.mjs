@@ -12,8 +12,8 @@ const buildInfo = getBuildInfo(path.join(__dirname, "package.json"));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: [],
   experimental: {
-    serverComponentsExternalPackages: [],
     // Tree-shake lucide/recharts no bundle (F5 §3.9).
     optimizePackageImports: ["lucide-react", "recharts"],
   },

@@ -22,7 +22,7 @@ export function MessagingCostPanel({
   data,
   loading,
 }: {
-  data?: MessagingCostData | null;
+  data?: MessagingCostData | null | undefined;
   loading?: boolean;
 }) {
   const byCategory = data?.byCategory ?? [];

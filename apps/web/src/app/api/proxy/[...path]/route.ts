@@ -7,7 +7,7 @@ import {
   setAuthCookies,
 } from "@/lib/auth/cookies";
 
-type RouteContext = { params: { path: string[] } };
+type RouteContext = { params: Promise<{ path: string[] }> };
 
 async function tryRefreshTokens(
   cookieStore: Awaited<ReturnType<typeof cookies>>,
@@ -83,12 +83,13 @@ async function proxyRequest(
 }
 
 async function handle(req: NextRequest, context: RouteContext) {
+  const params = await context.params;
   const cookieStore = await cookies();
   const token = cookieStore.get(ACCESS_COOKIE)?.value;
   if (!token) {
     return NextResponse.json({ message: "Não autenticado" }, { status: 401 });
   }
-  return proxyRequest(req, context.params, token);
+  return proxyRequest(req, params, token);
 }
 
 export const GET = (req: NextRequest, context: RouteContext) => handle(req, context);
