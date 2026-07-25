@@ -41,6 +41,23 @@ assume que você já tem a stack local rodando, e testa contra ela de verdade.
    pnpm test:e2e:full
    ```
 
+## Login RBAC (`login-rbac.spec.ts`)
+
+Requer dois usuários no banco local (consulte a especificação de design). As
+credenciais podem ser sobrescritas por variáveis de ambiente:
+
+```powershell
+# PowerShell
+$env:E2E_CLIENT_EMAIL="ciroviski@gmail.com"
+$env:E2E_CLIENT_PASSWORD="123456"
+$env:E2E_ADMIN_EMAIL="owner@dev-tenant.com"
+$env:E2E_ADMIN_PASSWORD="devpassword123"
+pnpm --filter @whatsagent/web test:e2e:full -- login-rbac
+```
+
+Quando as variáveis não estão definidas, o spec usa por padrão as personas
+locais acima. Essa suíte é exclusivamente local e não roda no CI.
+
 ## O que é simulado vs. real
 
 - **Real**: login (BFF + cookies httpOnly), navegação com cache do TanStack
