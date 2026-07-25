@@ -47,7 +47,7 @@ pnpm --filter @whatsagent/channel-service test:e2e
 pnpm --filter @whatsagent/api dev
 pnpm --filter @whatsagent/api test
 
-# Frontend (@whatsagent/web) — Next.js 14, port 3000
+# Frontend (@whatsagent/web) — Next.js 15, port 3000
 pnpm --filter @whatsagent/web dev
 pnpm --filter @whatsagent/web lint
 pnpm --filter @whatsagent/web test          # Jest — unit + component (Testing Library, jsdom per-file)
@@ -78,7 +78,7 @@ pytest -k "test_name"              # Run specific test
 ### Service Map
 
 ```
-port 3000 — web         (Next.js 14 App Router, JWT+BFF Auth, Zustand, Recharts)
+port 3000 — web         (Next.js 15 App Router, JWT+BFF Auth, Zustand, Recharts)
 port 3001 — channel-service  (NestJS, receives Meta webhook, pushes to RabbitMQ)
 port 3002 — api         (NestJS, back-office REST + Socket.io real-time)
 port 8000 — ai-orchestrator  (FastAPI + LangGraph, consumes RabbitMQ)
