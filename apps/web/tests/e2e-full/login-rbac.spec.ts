@@ -16,8 +16,6 @@ async function login(page: Page, email: string, password: string) {
   await page.getByPlaceholder("••••••••").fill(password);
   await page.getByRole("button", { name: /^entrar$/i }).click();
   await expect(page).toHaveURL(/\/overview/, { timeout: 15_000 });
-  // Recarrega a rota protegida para que o layout raiz leia a sessão recém-criada.
-  await page.reload();
 }
 
 test.describe("Login RBAC — cliente vs admin", () => {

@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { AuthLinkFooter, AuthShell } from "@/components/auth/AuthShell";
+import { useAuthContext } from "@/contexts/auth-context";
 import { isGoogleAuthConfigured } from "@/lib/auth/google-client";
 
 type AuthView = "login" | "forgot" | "sent";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useAuthContext();
   const googleEnabled = isGoogleAuthConfigured();
   const [authView, setAuthView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
@@ -36,6 +38,7 @@ export default function LoginPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.message ?? "Credenciais inválidas");
       }
+      await refreshUser();
       router.push("/overview");
       router.refresh();
     } catch (err) {
@@ -81,6 +84,7 @@ export default function LoginPage() {
           body: JSON.stringify({ accessToken: tokenResponse.access_token }),
         });
         if (!res.ok) throw new Error("Falha no login com Google");
+        await refreshUser();
         router.push("/overview");
         router.refresh();
       } catch (err) {

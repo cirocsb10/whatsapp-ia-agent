@@ -6,10 +6,15 @@ import userEvent from "@testing-library/user-event";
 
 const mockPush = jest.fn();
 const mockRefresh = jest.fn();
+const mockRefreshUser = jest.fn().mockResolvedValue(undefined);
 const mockGoogleLogin = jest.fn();
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+}));
+
+jest.mock("@/contexts/auth-context", () => ({
+  useAuthContext: () => ({ refreshUser: mockRefreshUser }),
 }));
 
 jest.mock("next/link", () => ({
@@ -76,6 +81,20 @@ describe("LoginPage", () => {
     expect(screen.getByText(/recuperar senha/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /voltar para o login/i }));
     expect(screen.getByText(/bem-vindo de volta/i)).toBeInTheDocument();
+  });
+
+  it("atualiza sessão e navega após login bem-sucedido", async () => {
+    const user = userEvent.setup();
+    (global.fetch as jest.Mock).mockResolvedValue({ ok: true });
+    render(<LoginPage />);
+    await user.type(screen.getByPlaceholderText("voce@empresa.com"), "a@b.com");
+    await user.type(screen.getByPlaceholderText("••••••••"), "secret");
+    await user.click(screen.getByRole("button", { name: /^entrar$/i }));
+    await waitFor(() => {
+      expect(mockRefreshUser).toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith("/overview");
+      expect(mockRefresh).toHaveBeenCalled();
+    });
   });
 
   it("exibe erro quando login falha", async () => {
