@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { AuthLinkFooter, AuthShell } from "@/components/auth/AuthShell";
+import { isGoogleAuthConfigured } from "@/lib/auth/google-client";
 
 type AuthView = "login" | "forgot" | "sent";
 
 export default function LoginPage() {
   const router = useRouter();
+  const googleEnabled = isGoogleAuthConfigured();
   const [authView, setAuthView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -242,13 +244,21 @@ export default function LoginPage() {
 
       <button
         type="button"
-        onClick={() => googleLogin()}
-        disabled={loading}
+        onClick={() => {
+          if (!googleEnabled) return;
+          googleLogin();
+        }}
+        disabled={loading || !googleEnabled}
         className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span className="text-base">G</span>
         Continuar com Google
       </button>
+      {!googleEnabled && (
+        <p className="mt-2 text-center text-xs text-slate-500">
+          Login com Google indisponível neste ambiente.
+        </p>
+      )}
 
       <p className="mt-6 text-center text-xs text-slate-500">
         Ao continuar, você concorda com os{" "}
