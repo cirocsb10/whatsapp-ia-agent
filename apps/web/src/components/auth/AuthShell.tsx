@@ -26,7 +26,7 @@ export function AuthShell({
       <div className="flex min-h-screen">
         <aside className="relative hidden w-[46%] min-w-[430px] overflow-hidden border-r border-slate-200 bg-white lg:flex lg:flex-col lg:justify-between lg:p-12">
           <div className="relative z-10">
-            <Link href="/" className="flex items-center gap-3 no-underline">
+            <Link href="/" className="flex cursor-pointer items-center gap-3 no-underline">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#22C55E]/15 text-[#22C55E]">
                 <MessageSquare className="h-5 w-5" />
               </div>
@@ -58,7 +58,7 @@ export function AuthShell({
         <main className="flex flex-1 items-center justify-center px-6 py-12 sm:px-10">
           <div className="w-full max-w-md">
             <div className="mb-8 lg:hidden">
-              <Link href="/" className="flex items-center gap-3 no-underline">
+              <Link href="/" className="flex cursor-pointer items-center gap-3 no-underline">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#22C55E]/15 text-[#22C55E]">
                   <MessageSquare className="h-5 w-5" />
                 </div>
@@ -92,7 +92,7 @@ export function AuthLinkFooter({
   return (
     <p className="mt-8 text-center text-sm text-slate-500">
       {text}{" "}
-      <Link href={href} className="font-medium text-[#22C55E] hover:underline">
+      <Link href={href} className="cursor-pointer font-medium text-[#22C55E] hover:underline">
         {linkText}
       </Link>
     </p>

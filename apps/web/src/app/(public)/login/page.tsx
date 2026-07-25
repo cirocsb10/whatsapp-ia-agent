@@ -99,7 +99,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setAuthView("login")}
-            className="mt-6 w-full text-sm text-slate-500 hover:text-slate-900"
+            className="mt-6 w-full cursor-pointer text-sm text-slate-500 hover:text-slate-900"
           >
             Voltar para o login
           </button>
@@ -124,7 +124,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-[#22C55E] py-3 font-semibold text-[#020617] transition hover:brightness-110 disabled:opacity-60"
+            className="w-full cursor-pointer rounded-xl bg-[#22C55E] py-3 font-semibold text-[#020617] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Enviando..." : "Enviar instruções"}
           </button>
@@ -145,7 +145,7 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={() => setAuthView("login")}
-          className="mt-6 w-full rounded-xl border border-slate-200 py-3 text-sm text-slate-700 hover:bg-slate-50"
+          className="mt-6 w-full cursor-pointer rounded-xl border border-slate-200 py-3 text-sm text-slate-700 hover:bg-slate-50"
         >
           Voltar para o login
         </button>
@@ -196,7 +196,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-500 hover:text-slate-700"
               aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -205,7 +205,7 @@ export default function LoginPage() {
         </label>
 
         <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center gap-2 text-slate-400">
+          <label className="flex cursor-pointer items-center gap-2 text-slate-400">
             <input
               type="checkbox"
               checked={rememberMe}
@@ -217,7 +217,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setAuthView("forgot")}
-            className="text-[#22C55E] hover:underline"
+            className="cursor-pointer text-[#22C55E] hover:underline"
           >
             Esqueci a senha
           </button>
@@ -228,7 +228,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-[#22C55E] py-3 font-semibold text-[#020617] transition hover:brightness-110 disabled:opacity-60"
+          className="w-full cursor-pointer rounded-xl bg-[#22C55E] py-3 font-semibold text-[#020617] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Entrando..." : "Entrar"}
         </button>
@@ -244,7 +244,7 @@ export default function LoginPage() {
         type="button"
         onClick={() => googleLogin()}
         disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span className="text-base">G</span>
         Continuar com Google
