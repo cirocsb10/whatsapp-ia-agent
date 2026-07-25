@@ -65,3 +65,42 @@
 - API direta: `POST /auth/login` admin → 200 + `isSuperAdmin: true` (janela API estável).
 - Postgres: `User` rows para ambos e-mails; bcrypt offline confirma mismatch cliente.
 - Código: `apps/web/src/app/(public)/login/page.tsx`, `Sidebar.tsx` L65–72, `middleware.ts` L19–24, `super-admin.guard.ts`.
+
+## Pós-correção
+
+**Data:** 2026-07-25 (re-verificação Task 6)
+
+### Correções aplicadas
+
+| Correção | Commit / ação | Resultado |
+|----------|---------------|-----------|
+| API não cai mais em 401 (`SentryGlobalFilter` + `httpAdapter`) | `ba8c450` | `POST /auth/login` inválido → 401; `GET /health` permanece 200 |
+| Cursor `pointer` em controles clicáveis do login | `43c9ed8` | Entrar, Esqueci, toggle, Google, Lembrar-me = `pointer` |
+| UX Google honesta quando `NEXT_PUBLIC_GOOGLE_CLIENT_ID` vazio | `447a873` | Botão disabled + texto "Login com Google indisponível neste ambiente." |
+| Senha cliente alinhada à spec (`123456`) | reset manual no Postgres | Login `ciroviski@gmail.com` / `123456` → 200 |
+| Sidebar RBAC pós-login sem reload | `f28cf86` | `refreshUser()` após login; menu Plataforma aparece para admin imediatamente |
+
+### Re-check automatizado
+
+| Item | Status | Detalhe |
+|------|--------|---------|
+| Cursor pointer | PASS | Jest: botão Entrar inclui `cursor-pointer` (Task 4) |
+| Google disabled UX | PASS | Jest: aviso + botão disabled quando ID ausente |
+| Jest login + google-client | PASS | `login/page.test` 6/6; `google-client.test.ts` 2/2 |
+| Playwright login-rbac | PASS | 3/3 — cliente sem Plataforma; admin com Plataforma; cliente 403 em `/super-admin/tenants` |
+| Sidebar unit isolation (já existia) | PASS | `Sidebar.test.tsx` 2/2 |
+
+### Pós-login (re-validado)
+
+| Check | Cliente (`ciroviski@gmail.com`) | Admin (`owner@dev-tenant.com`) |
+|-------|--------------------------------|--------------------------------|
+| Redirect `/overview` | PASS | PASS |
+| Menu Plataforma | ausente (PASS) | presente (PASS) |
+| API super-admin | 403 (PASS) | 200 (PASS) |
+
+### Gaps remanescentes (aceitos)
+
+- Lembrar-me não enviado no body do login
+- Forgot stub 501
+- Termos apontam para `/` (landing)
+- Link "termos de uso" sem `cursor-pointer` (fora do escopo Task 2)
