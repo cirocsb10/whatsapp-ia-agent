@@ -9,7 +9,8 @@ const DEV_WHATSAPP_PHONE_ID = "dev-whatsapp-phone-id";
 
 async function main() {
   console.log("🌱 Seeding database...");
-  console.log(`   Dev login: owner@dev-tenant.com / ${DEV_PASSWORD}`);
+  console.log(`   Dev login (super-admin): owner@dev-tenant.com / ${DEV_PASSWORD}`);
+  console.log(`   Dev login (client): client@dev-tenant.com / ${DEV_PASSWORD}`);
 
   const devTenant = await prisma.tenant.upsert({
     where: { slug: "dev-tenant" },
@@ -37,6 +38,19 @@ async function main() {
       passwordHash,
       role: UserRole.OWNER,
       isSuperAdmin: true,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "client@dev-tenant.com" },
+    update: { passwordHash, isActive: true, isSuperAdmin: false },
+    create: {
+      tenantId: devTenant.id,
+      email: "client@dev-tenant.com",
+      name: "Cliente Dev",
+      passwordHash,
+      role: UserRole.OWNER,
+      isSuperAdmin: false,
     },
   });
 

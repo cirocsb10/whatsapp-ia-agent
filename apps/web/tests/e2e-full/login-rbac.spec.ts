@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const CLIENT = {
-  email: process.env.E2E_CLIENT_EMAIL ?? "ciroviski@gmail.com",
-  password: process.env.E2E_CLIENT_PASSWORD ?? "123456",
+  email: process.env.E2E_CLIENT_EMAIL ?? "client@dev-tenant.com",
+  password: process.env.E2E_CLIENT_PASSWORD ?? "devpassword123",
 };
 
 const ADMIN = {

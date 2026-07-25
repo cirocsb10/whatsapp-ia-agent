@@ -14,7 +14,7 @@ assume que você já tem a stack local rodando, e testa contra ela de verdade.
    ```bash
    pnpm docker:up          # Postgres + Redis + RabbitMQ
    pnpm db:migrate
-   pnpm db:seed             # cria o dev-tenant + owner@dev-tenant.com
+   pnpm db:seed             # cria o dev-tenant + owner@dev-tenant.com + client@dev-tenant.com
    ```
 
 2. Em um terminal, suba os serviços Node:
@@ -43,20 +43,22 @@ assume que você já tem a stack local rodando, e testa contra ela de verdade.
 
 ## Login RBAC (`login-rbac.spec.ts`)
 
-Requer dois usuários no banco local (consulte a especificação de design). As
-credenciais podem ser sobrescritas por variáveis de ambiente:
+Requer dois usuários no banco local (criados pelo seed). As credenciais podem
+ser sobrescritas por variáveis de ambiente:
 
 ```powershell
-# PowerShell
-$env:E2E_CLIENT_EMAIL="ciroviski@gmail.com"
-$env:E2E_CLIENT_PASSWORD="123456"
+# PowerShell — defaults do seed (não precisa setar se rodou pnpm db:seed)
+$env:E2E_CLIENT_EMAIL="client@dev-tenant.com"
+$env:E2E_CLIENT_PASSWORD="devpassword123"
 $env:E2E_ADMIN_EMAIL="owner@dev-tenant.com"
 $env:E2E_ADMIN_PASSWORD="devpassword123"
 pnpm --filter @whatsagent/web test:e2e:full -- login-rbac
 ```
 
-Quando as variáveis não estão definidas, o spec usa por padrão as personas
-locais acima. Essa suíte é exclusivamente local e não roda no CI.
+Quando as variáveis não estão definidas, o spec usa por padrão `client@dev-tenant.com`
+(non-super-admin) e `owner@dev-tenant.com` (super-admin). Contas pessoais locais
+(ex.: `ciroviski@gmail.com`) continuam válidas se sobrescritas via env. Essa suíte
+é exclusivamente local e não roda no CI.
 
 ## O que é simulado vs. real
 
